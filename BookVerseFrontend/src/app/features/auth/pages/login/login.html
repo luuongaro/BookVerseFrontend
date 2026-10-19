@@ -1,1 +1,129 @@
-<p>login works!</p>
+<main class="auth-layout">
+  <section class="auth-art">
+    <img
+      class="auth-image"
+      src="/assets/login-library.png"
+      alt="La entrada luminosa a una biblioteca mágica"
+    />
+
+    <a class="auth-brand" routerLink="/" aria-label="BookVerse, inicio">
+      <span class="brand-symbol" aria-hidden="true">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M12 5C8 2 4 3 2 4v15c3-1 6-1 10 2 4-3 7-3 10-2V4c-2-1-6-1-10 1Zm0 0v16" />
+        </svg>
+      </span>
+      Book<span>Verse</span><sup aria-hidden="true">✦</sup>
+    </a>
+
+    <div class="auth-quote">
+      <span class="eyebrow">HAY UN LUGAR PARA VOS</span>
+
+      <h1>
+        Tu mundo te espera<br />
+        justo donde lo <em>dejaste.</em>
+      </h1>
+
+      <p>
+        Un rincón tranquilo. Mil aventuras.<br />
+        Y un poco de magia entre páginas.
+      </p>
+
+      <span class="quote-stars" aria-hidden="true">✧ &nbsp; ✦ &nbsp; ✧</span>
+    </div>
+
+    <span class="auth-art-bottom">
+      LOS LIBROS NOS UNEN. LAS HISTORIAS NOS HACEN QUEDAR.
+    </span>
+  </section>
+
+  <section class="auth-form-wrap">
+    <a class="back-link" routerLink="/">← Volver al universo</a>
+
+    <div class="auth-form">
+      <span class="eyebrow">OTRO CAPÍTULO TE ESPERA</span>
+
+      <h2>Qué bueno verte de nuevo.</h2>
+      <p>Tus libros, tus historias, tu gente. Todo te espera acá.</p>
+
+      <form
+        [formGroup]="loginForm"
+        (ngSubmit)="onSubmit()"
+        aria-label="Iniciar sesión"
+      >
+        <label for="email">Correo electrónico</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="tu@correo.com"
+          autocomplete="email"
+        />
+
+        @if (loginForm.controls.email.touched &&
+        loginForm.controls.email.hasError('required')) {
+          <small class="field-error">Ingresá tu correo electrónico.</small>
+        }
+
+        @if (loginForm.controls.email.touched &&
+        loginForm.controls.email.hasError('email')) {
+          <small class="field-error">Ingresá un correo válido.</small>
+        }
+
+        <label for="password">Contraseña</label>
+        <div class="input-with-icon">
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            placeholder="Ingresá tu contraseña"
+            autocomplete="current-password"
+          />
+
+          <svg
+            class="lock-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="5" y="10" width="14" height="11" rx="2" />
+            <path d="M8 10V6a4 4 0 0 1 8 0v4" />
+          </svg>
+        </div>
+
+        @if (loginForm.controls.password.touched &&
+        loginForm.controls.password.hasError('required')) {
+          <small class="field-error">Ingresá tu contraseña.</small>
+        }
+
+        <div class="form-footnote">
+          <span aria-hidden="true">✦</span>
+          Tu próxima aventura te está esperando.
+        </div>
+
+        <button class="button primary full" type="submit">
+          Entrar a mi universo
+        </button>
+
+        <span class="form-switch">
+          ¿Todavía no tenés cuenta?
+          <a routerLink="/register">Crear una cuenta</a>
+        </span>
+      </form>
+    </div>
+
+    <span class="auth-bottom">
+      Un universo creado para quienes aman las historias.
+    </span>
+  </section>
+</main>
