@@ -1,0 +1,41 @@
+:host {
+  display: block;
+}
+
+.public-footer {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1420px;
+  margin: 0 auto;
+  padding: 20px 6% 90px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-top: 1px solid #e8e2ef;
+  color: #9d95a9;
+  font-family: 'DM Sans', Arial, sans-serif;
+}
+
+.footer-tagline {
+  font-size: 14px;
+}
+
+.footer-copyright {
+  color: #9d95a9;
+  font-size: 12px;
+  text-align: right;
+}
+
+@media (max-width: 700px) {
+  .public-footer {
+    padding: 20px 7% 50px;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 13px;
+  }
+
+  .footer-copyright {
+    align-self: flex-end;
+  }
+}
