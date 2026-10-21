@@ -1,1 +1,339 @@
-<p>group-list works!</p>
+<div class="dashboard-layout">
+  <aside class="sidebar">
+    <a
+      class="sidebar-brand"
+      routerLink="/dashboard"
+      aria-label="BookVerse, Mi espacio"
+    >
+      <span class="brand-symbol" aria-hidden="true">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M12 5C8 2 4 3 2 4v15c3-1 6-1 10 2 4-3 7-3 10-2V4c-2-1-6-1-10 1Z"
+          />
+          <path d="M12 5v16" />
+        </svg>
+      </span>
+      <span class="brand-wordmark">Book<span>Verse</span><sup>✦</sup></span>
+    </a>
+
+    <p class="sidebar-label">TU PEQUEÑO UNIVERSO</p>
+
+    <nav class="sidebar-nav" aria-label="Navegación principal">
+      <a class="sidebar-link" routerLink="/dashboard">
+        <svg
+          class="nav-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path
+            d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-6v-7h-4v7H4a1 1 0 0 1-1-1V10Z"
+          />
+        </svg>
+        <span>Mi espacio</span>
+      </a>
+
+      <a class="sidebar-link" routerLink="/stories">
+        <svg
+          class="nav-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M4 5h4v14H4zM10 5h4v14h-4zM16 5h4v14h-4z" />
+        </svg>
+        <span>Mi biblioteca</span>
+      </a>
+
+      <a class="sidebar-link" routerLink="/writer">
+        <svg
+          class="nav-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path
+            d="M20 4c-8 0-14 4-14 11a5 5 0 0 0 5 5c7 0 11-6 9-16Z"
+          />
+          <path d="M4 22c2-5 6-9 12-12" />
+        </svg>
+        <span>Escritorio de escritura</span>
+      </a>
+
+      <a
+        class="sidebar-link active"
+        routerLink="/groups"
+        aria-current="page"
+      >
+        <svg
+          class="nav-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="10" cy="7" r="4" />
+          <path
+            d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"
+          />
+        </svg>
+        <span>Grupos de lectura</span>
+        <span class="active-dot"></span>
+      </a>
+    </nav>
+
+    <div class="sidebar-quote">
+      <span class="quote-sparkle" aria-hidden="true">✧</span>
+      <p>“Un lector vive<br />mil vidas.”</p>
+      <span class="sidebar-reminder">UN PEQUEÑO RECORDATORIO</span>
+    </div>
+
+    <div class="sidebar-bottom">
+      <a class="sidebar-link" routerLink="/profile">
+        <svg
+          class="nav-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 21a8 8 0 0 1 16 0" />
+        </svg>
+        <span>Mi perfil</span>
+      </a>
+
+      <a class="sidebar-link" routerLink="/login">
+        <svg
+          class="nav-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M10 17l5-5-5-5M15 12H3" />
+          <path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7" />
+        </svg>
+        <span>Cerrar sesión</span>
+      </a>
+
+      <a class="account-link" routerLink="/profile">
+        <span class="avatar">AL</span>
+        <span class="account-info">
+          <strong>Alex Lane</strong>
+          <small>Lector y soñador</small>
+        </span>
+        <span class="account-arrow" aria-hidden="true">›</span>
+      </a>
+    </div>
+  </aside>
+
+  <div class="dashboard-body">
+    <header class="topbar">
+      <div class="breadcrumb">
+        <a routerLink="/dashboard">Mi universo</a>
+        <span aria-hidden="true">/</span>
+        <strong>Grupos de lectura</strong>
+      </div>
+
+      <div class="topbar-right">
+        <span class="topbar-message">
+          <span aria-hidden="true">☾</span>
+          Un buen día para un nuevo capítulo
+        </span>
+        <span class="avatar">AL</span>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="intro">
+        <div class="intro-copy">
+          <p class="eyebrow">LAS HISTORIAS SE DISFRUTAN MÁS EN COMPAÑÍA</p>
+          <h1>Encontrá a tu <em>gente lectora.</em></h1>
+          <p class="intro-description">
+            Un buen libro te acerca. Las personas indicadas hacen que te quedes.
+          </p>
+        </div>
+
+        <a class="primary-button" routerLink="/groups/new">
+          Crear un círculo de lectura
+          <span aria-hidden="true">＋</span>
+        </a>
+      </section>
+
+      <section class="hero" aria-label="Un club de lectura diferente">
+        <div class="hero-copy">
+          <p class="eyebrow">UN LIBRO. MUCHAS MIRADAS.</p>
+          <h2>Un club de lectura<br /><em>a tu manera.</em></h2>
+          <p>
+            Objetivos compartidos, charlas que inspiran<br />
+            y cero spoilers antes de tiempo.
+          </p>
+        </div>
+
+        <div class="hero-art" aria-hidden="true">
+          <div class="orbit"></div>
+          <div class="orbit orbit-two"></div>
+
+          <span class="person person-one">JM</span>
+          <span class="person person-two">SK</span>
+          <span class="person person-three">EL</span>
+          <span class="person person-main">AL</span>
+
+          <div class="book book-one">
+            ☾
+            <small>UN CAPÍTULO<br />MÁS</small>
+          </div>
+
+          <div class="book book-two">
+            ✧
+            <small>ENTRE<br />PÁGINAS</small>
+          </div>
+
+          <span class="star star-one">✧</span>
+          <span class="star star-two">✦</span>
+          <span class="star star-three">✧</span>
+        </div>
+      </section>
+
+      <section class="circles">
+        <div class="circles-heading">
+          <h2>
+            Tus círculos de lectura
+            <small>{{ filteredGroups.length }}</small>
+          </h2>
+          <p>Siempre hay un lugar para vos.</p>
+        </div>
+
+        @if (isLoading) {
+          <p class="state-message" role="status">
+            Cargando círculos de lectura…
+          </p>
+        } @else if (errorMessage) {
+          <p class="state-message state-error" role="alert">
+            {{ errorMessage }}
+          </p>
+        } @else if (filteredGroups.length === 0) {
+          <div class="empty-state">
+            <span class="empty-sparkle" aria-hidden="true">✧</span>
+
+            @if (searchTerm) {
+              <h3>No encontramos ese círculo.</h3>
+              <p>Probá buscar con otro nombre.</p>
+            } @else {
+              <h3>Tu primer círculo te espera.</h3>
+              <p>Creá un grupo para compartir tu próxima lectura.</p>
+              <a class="primary-button" routerLink="/groups/new">
+                Crear un círculo <span aria-hidden="true">→</span>
+              </a>
+            }
+          </div>
+        } @else {
+          <div class="cards">
+            @for (group of filteredGroups; track group.idExternal; let i = $index) {
+              <a
+                class="group-card"
+                [routerLink]="['/groups', group.idExternal]"
+              >
+                <div
+                  class="card-banner"
+                  [class.banner-lilac]="i % 3 === 0"
+                  [class.banner-green]="i % 3 === 1"
+                  [class.banner-pink]="i % 3 === 2"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.4"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    @if (i % 3 === 0) {
+                      <path
+                        d="M20.8 13A8.5 8.5 0 0 1 11 3.2 8.5 8.5 0 1 0 20.8 13Z"
+                      />
+                    } @else if (i % 3 === 1) {
+                      <path
+                        d="M12 5C8 2 4 3 2 4v15c3-1 6-1 10 2 4-3 7-3 10-2V4c-2-1-6-1-10 1Zm0 0v16"
+                      />
+                    } @else {
+                      <path
+                        d="M20 4c-8 0-14 4-14 11a5 5 0 0 0 5 5c7 0 11-6 9-16Z"
+                      />
+                      <path d="M4 22c2-5 6-9 12-12" />
+                    }
+                  </svg>
+
+                  <span>
+                    {{ group.storyId ? 'CÍRCULO DE HISTORIA' : 'CÍRCULO DE LIBRO' }}
+                  </span>
+                </div>
+
+                <div class="card-content">
+                  <p class="card-type">
+                    {{ group.storyId ? 'HISTORIA DE LA COMUNIDAD' : 'LIBRO PUBLICADO' }}
+                  </p>
+
+                  <h3>{{ group.name }}</h3>
+
+                  <p class="card-description">
+                    Un espacio para compartir lecturas, ideas y conversaciones.
+                  </p>
+
+                  <div class="card-divider"></div>
+
+                  <p class="card-meta-label">CÍRCULO CREADO</p>
+                  <p class="card-date">{{ group.createdAt | date: 'd MMM yyyy' }}</p>
+
+                  <div class="card-bottom">
+                    <span class="group-status">
+                      <span aria-hidden="true"></span>
+                      Grupo activo
+                    </span>
+                    <span class="card-arrow" aria-hidden="true">→</span>
+                  </div>
+                </div>
+              </a>
+            }
+          </div>
+        }
+      </section>
+
+      <footer class="app-footer">
+        <span>Un pequeño mundo propio.</span>
+        <span>BOOKVERSE ✦</span>
+      </footer>
+    </main>
+  </div>
+</div>

@@ -5,10 +5,12 @@ import { Login } from './features/auth/pages/login/login';
 import { Register } from './features/auth/pages/register/register';
 import { Dashboard } from './features/dashboard/pages/dashboard/dashboard';
 import { Profile } from './features/profile/pages/profile/profile';
+import { groupsRoutes } from './features/groups/groups.routes';
 
 export const routes: Routes = [
   { path: '', component: Home },
   { path: 'stories', children: storiesRoutes }, // Registers all story feature routes under the /stories URL prefix
+  { path: 'groups', children: groupsRoutes }, 
   { path: 'login', component: Login },
   { path: 'register', component: Register },
   { path: 'dashboard', component: Dashboard },
