@@ -1,1 +1,184 @@
-<p>group-form works!</p>
+<div class="dashboard-layout">
+  <aside class="sidebar">
+    <a
+      class="sidebar-brand"
+      routerLink="/dashboard"
+      aria-label="BookVerse, Mi espacio"
+    >
+      <span class="brand-symbol" aria-hidden="true">✧</span>
+      <span class="brand-wordmark">Book<span>Verse</span><sup>✦</sup></span>
+    </a>
+
+    <p class="sidebar-label">TU PEQUEÑO UNIVERSO</p>
+
+    <nav class="sidebar-nav" aria-label="Navegación principal">
+      <a class="sidebar-link" routerLink="/dashboard">
+        <span aria-hidden="true">⌂</span>
+        <span>Mi espacio</span>
+      </a>
+
+      <a class="sidebar-link" routerLink="/stories">
+        <span aria-hidden="true">▤</span>
+        <span>Mi biblioteca</span>
+      </a>
+
+      <a class="sidebar-link" routerLink="/writer">
+        <span aria-hidden="true">✎</span>
+        <span>Escritorio de escritura</span>
+      </a>
+
+      <a class="sidebar-link active" routerLink="/groups" aria-current="page">
+        <span aria-hidden="true">♧</span>
+        <span>Grupos de lectura</span>
+        <span class="active-dot"></span>
+      </a>
+    </nav>
+
+    <div class="sidebar-quote">
+      <span aria-hidden="true">✧</span>
+      <p>“Un lector vive<br />mil vidas.”</p>
+      <small>UN PEQUEÑO RECORDATORIO</small>
+    </div>
+
+    <div class="sidebar-bottom">
+      <a class="sidebar-link" routerLink="/profile">
+        <span aria-hidden="true">♙</span>
+        <span>Mi perfil</span>
+      </a>
+
+      <a class="sidebar-link" routerLink="/login">
+        <span aria-hidden="true">↪</span>
+        <span>Cerrar sesión</span>
+      </a>
+
+      <a class="account-link" routerLink="/profile">
+        <span class="avatar">AL</span>
+        <span>
+          <strong>Alex Lane</strong>
+          <small>Lector y soñador</small>
+        </span>
+        <span class="account-arrow" aria-hidden="true">›</span>
+      </a>
+    </div>
+  </aside>
+
+  <div class="dashboard-body">
+    <header class="topbar">
+      <div class="breadcrumb">
+        <a routerLink="/dashboard">Mi universo</a>
+        <span aria-hidden="true">/</span>
+        <a routerLink="/groups">Grupos de lectura</a>
+        <span aria-hidden="true">/</span>
+        <strong>Crear círculo</strong>
+      </div>
+
+      <div class="topbar-note">
+        <span aria-hidden="true">☾</span>
+        <span>Un buen día para un nuevo capítulo</span>
+        <span class="avatar">AL</span>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <a class="back-link" routerLink="/groups">← Volver a grupos</a>
+
+      <section class="form-card">
+        <div class="form-heading">
+          <p class="eyebrow">UNA HISTORIA SE DISFRUTA MÁS EN COMPAÑÍA</p>
+          <h1>Empezá un círculo<br /><em>de lectura.</em></h1>
+          <p>
+            Reuní lectores alrededor de un libro o una historia que quieras
+            compartir.
+          </p>
+        </div>
+
+        <form [formGroup]="groupForm" (ngSubmit)="onSubmit()">
+          <div class="field">
+            <label for="name">Nombre del círculo</label>
+            <input
+              id="name"
+              type="text"
+              formControlName="name"
+              placeholder="Por ejemplo: Los búhos nocturnos"
+              maxlength="60"
+            />
+
+            @if (
+              groupForm.controls.name.touched &&
+              groupForm.controls.name.hasError('required')
+            ) {
+              <small class="field-error">Ingresá un nombre para el círculo.</small>
+            }
+
+            @if (
+              groupForm.controls.name.touched &&
+              groupForm.controls.name.hasError('maxlength')
+            ) {
+              <small class="field-error">
+                El nombre no puede superar los 60 caracteres.
+              </small>
+            }
+          </div>
+
+          <div class="field">
+            <label for="workType">¿Qué van a leer?</label>
+            <select id="workType" formControlName="workType">
+              <option value="book">Un libro publicado</option>
+              <option value="story">Una historia de la comunidad</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="referenceId">{{ referenceLabel }}</label>
+            <input
+              id="referenceId"
+              type="text"
+              formControlName="referenceId"
+              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+              autocomplete="off"
+            />
+            <small class="field-hint">
+              Ingresá el UUID de la obra que compartirán.
+            </small>
+
+            @if (
+              groupForm.controls.referenceId.touched &&
+              groupForm.controls.referenceId.hasError('required')
+            ) {
+              <small class="field-error">Ingresá el UUID de la obra.</small>
+            }
+
+            @if (
+              groupForm.controls.referenceId.touched &&
+              groupForm.controls.referenceId.hasError('pattern')
+            ) {
+              <small class="field-error">Ingresá un UUID válido.</small>
+            }
+          </div>
+
+          @if (errorMessage) {
+            <p class="form-error" role="alert">{{ errorMessage }}</p>
+          }
+
+          <div class="form-actions">
+            <a class="secondary-button" routerLink="/groups">Cancelar</a>
+
+            <button
+              class="primary-button"
+              type="submit"
+              [disabled]="isSaving"
+            >
+              {{ isSaving ? 'Creando círculo…' : 'Crear mi círculo' }}
+              <span aria-hidden="true">→</span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <footer class="app-footer">
+        <span>Un pequeño mundo propio.</span>
+        <span>BOOKVERSE ✦</span>
+      </footer>
+    </main>
+  </div>
+</div>
