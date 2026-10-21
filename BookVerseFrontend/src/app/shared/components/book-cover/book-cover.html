@@ -1,0 +1,8 @@
+@if (src() && failedSrc() !== src()) {
+  <img [src]="src()" [alt]="title()" loading="lazy" (error)="failedSrc.set(src())" />
+} @else {
+  <div role="img" [attr.aria-label]="'Portada no disponible: ' + title()">
+    <span aria-hidden="true">✦</span><span>{{ title() }}</span
+    ><small>Portada no disponible</small>
+  </div>
+}
