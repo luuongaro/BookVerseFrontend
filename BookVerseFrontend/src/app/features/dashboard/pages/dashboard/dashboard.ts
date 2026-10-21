@@ -8,7 +8,7 @@ import { RouterLink } from '@angular/router';
   templateUrl: './dashboard.html',
 })
 export class Dashboard {
-  nombreUsuario = 'Alex';
-  nombreCompleto = 'Alex Lane';
-  inicialesUsuario = 'AL';
+  userName = 'Alex';
+  fullName = 'Alex Lane';
+  initials = 'AL';
 }

@@ -137,11 +137,11 @@
       <a
         class="account-link"
         routerLink="/profile"
-        aria-label="Ir al perfil de {{ nombreCompleto }}"
+        [attr.aria-label]="'Ir al perfil de ' + fullName"
       >
-        <span class="avatar">{{ inicialesUsuario }}</span>
+        <span class="avatar">{{ initials }}</span>
         <span class="account-info">
-          <strong>{{ nombreCompleto }}</strong>
+          <strong>{{ fullName }}</strong>
           <small>Lector y soñador</small>
         </span>
         <span class="account-arrow" aria-hidden="true">›</span>
@@ -159,7 +159,7 @@
 
       <div class="topbar-right">
         <span>☾ &nbsp; Un buen día para un nuevo capítulo</span>
-        <span class="avatar">{{ inicialesUsuario }}</span>
+        <span class="avatar">{{ initials }}</span>
       </div>
     </header>
 
@@ -167,7 +167,7 @@
       <section class="page-heading">
         <div>
           <p class="eyebrow">TU PEQUEÑO RINCÓN DEL UNIVERSO</p>
-          <h1>Qué bueno verte, <em>{{ nombreUsuario }}.</em></h1>
+          <h1>Qué bueno verte, <em>{{ userName }}.</em></h1>
           <p>Algunos días pasás las páginas. Otros, las escribís.</p>
         </div>
       </section>
