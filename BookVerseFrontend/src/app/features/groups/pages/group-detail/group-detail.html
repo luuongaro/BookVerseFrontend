@@ -1,1 +1,286 @@
-<p>group-detail works!</p>
+<div class="detail-layout">
+  <aside class="sidebar">
+    <a class="sidebar-brand" routerLink="/dashboard" aria-label="BookVerse, inicio">
+      <span class="brand-symbol" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5C8 2 4 3 2 4v15c3-1 6-1 10 2 4-3 7-3 10-2V4c-2-1-6-1-10 1Z" />
+          <path d="M12 5v16" />
+        </svg>
+      </span>
+      <span class="brand-wordmark">Book<span>Verse</span><sup>✦</sup></span>
+    </a>
+
+    <p class="sidebar-label">TU PEQUEÑO UNIVERSO</p>
+
+    <nav class="sidebar-nav" aria-label="Navegación principal">
+      <a class="sidebar-link" routerLink="/dashboard">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-6v-7h-4v7H4a1 1 0 0 1-1-1V10Z" />
+        </svg>
+        <span>Mi espacio</span>
+      </a>
+
+      <a class="sidebar-link" routerLink="/stories">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 5h4v14H4zM10 5h4v14h-4zM16 5h4v14h-4z" />
+        </svg>
+        <span>Mi biblioteca</span>
+      </a>
+
+      <a class="sidebar-link" routerLink="/writer">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20 4c-8 0-14 4-14 11a5 5 0 0 0 5 5c7 0 11-6 9-16Z" />
+          <path d="M4 22c2-5 6-9 12-12" />
+        </svg>
+        <span>Escritorio de escritura</span>
+      </a>
+
+      <a class="sidebar-link active" routerLink="/groups" aria-current="page">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="10" cy="7" r="4" />
+          <path d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+        <span>Grupos de lectura</span>
+        <span class="active-dot"></span>
+      </a>
+    </nav>
+
+    <div class="sidebar-quote">
+      <span class="quote-sparkle" aria-hidden="true">✧</span>
+      <p>“Un lector vive<br />mil vidas.”</p>
+      <small>UN PEQUEÑO RECORDATORIO</small>
+    </div>
+
+    <div class="sidebar-bottom">
+      <a class="sidebar-link" routerLink="/profile">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 21a8 8 0 0 1 16 0" />
+        </svg>
+        <span>Mi perfil</span>
+      </a>
+
+      <a class="sidebar-link" routerLink="/login">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10 17l5-5-5-5M15 12H3" />
+          <path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7" />
+        </svg>
+        <span>Cerrar sesión</span>
+      </a>
+
+      <a class="account-link" routerLink="/profile">
+        <span class="avatar">AL</span>
+        <span class="account-info">
+          <strong>Alex Lane</strong>
+          <small>Lector y soñador</small>
+        </span>
+        <span class="account-arrow" aria-hidden="true">›</span>
+      </a>
+    </div>
+  </aside>
+
+  <div class="detail-body">
+    <header class="topbar">
+      <div class="breadcrumb">
+        <a routerLink="/dashboard">Mi universo</a>
+        <span>/</span>
+        <a routerLink="/groups">Grupos de lectura</a>
+        <span>/</span>
+        @if (group) {
+          <strong>{{ group.name }}</strong>
+        }
+      </div>
+
+      <div class="topbar-right">
+        <span class="topbar-message">☾ &nbsp; Un buen día para un nuevo capítulo</span>
+        <span class="avatar topbar-avatar">AL</span>
+      </div>
+    </header>
+
+    <main class="detail-main">
+      @if (isLoading) {
+        <p class="state-message" role="status">Cargando el círculo…</p>
+      } @else if (errorMessage) {
+        <p class="state-message state-error" role="alert">{{ errorMessage }}</p>
+      } @else if (group) {
+        <section class="group-heading">
+          <div class="book-cover" aria-label="Portada ilustrativa del libro">
+            <span class="cover-author">BOOKVERSE</span>
+            <span class="cover-title">Una historia<br />compartida</span>
+            <span class="cover-art" aria-hidden="true">✦</span>
+          </div>
+
+          <div class="group-intro">
+            <h1>{{ group.name }}</h1>
+
+            <div class="group-meta">
+              <span class="meta-icon" aria-hidden="true">▤</span>
+              <span>{{ group.storyId ? 'Círculo de historia' : 'Círculo de libro' }}</span>
+              <span class="status-badge">
+                <span></span>
+                {{ group.isActive ? 'Activo' : 'Inactivo' }}
+              </span>
+            </div>
+
+            <p class="group-description">
+              Un espacio para conversar sobre historias que nos hacen preguntar
+              qué pasaría si… Exploramos libros sobre segundas oportunidades,
+              vidas paralelas y la magia de lo cotidiano.
+            </p>
+
+            <div class="reading-now">
+              <span aria-hidden="true">▤</span>
+              <div>
+                <strong>Lectura vinculada al círculo</strong>
+                <small>UUID: {{ group.bookId || group.storyId }}</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="heading-actions">
+            <a class="button button-outline" [routerLink]="['/groups', group.idExternal, 'edit']">
+              <span aria-hidden="true">✎</span>
+              Editar círculo
+            </a>
+            <button class="button button-primary" type="button">
+              <span aria-hidden="true">♧</span>
+              Invitar lectores
+            </button>
+          </div>
+        </section>
+
+        <section class="overview-grid">
+          <article class="panel goal-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="panel-label">META DE LECTURA</p>
+                <h2>Leer 12 capítulos</h2>
+              </div>
+              <div class="due-date">
+                <span aria-hidden="true">▢</span>
+                <span>Fecha límite<br /><strong>30 abr. 2025</strong></span>
+              </div>
+            </div>
+
+            <p class="goal-book">La lectura compartida del círculo</p>
+
+            <div
+              class="progress-track"
+              role="progressbar"
+              aria-label="Progreso de la meta de lectura"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="64"
+            >
+              <span></span>
+            </div>
+
+            <div class="progress-caption">
+              <span>8 de 12 capítulos leídos</span>
+              <strong>64%</strong>
+            </div>
+
+            <button class="button button-primary progress-button" type="button">
+              Actualizar progreso
+            </button>
+          </article>
+
+          <article class="panel members-panel">
+            <div class="panel-heading">
+              <p class="panel-label">MIEMBROS</p>
+              <span class="member-total">6 lectores</span>
+            </div>
+
+            <div class="member-avatars" aria-label="Miembros del grupo">
+              <span class="member-avatar avatar-lilac">AL<small>Vos</small></span>
+              <span class="member-avatar avatar-rose">JM</span>
+              <span class="member-avatar avatar-blue">SK</span>
+              <span class="member-avatar avatar-green">EL</span>
+              <span class="member-avatar avatar-pink">MP</span>
+              <span class="member-avatar avatar-more">+1</span>
+            </div>
+
+            <a class="members-link" routerLink="/groups">
+              Ver todos <span aria-hidden="true">›</span>
+            </a>
+          </article>
+        </section>
+
+        <section class="panel conversation-panel">
+          <div class="conversation-heading">
+            <h2><span aria-hidden="true">◯</span> Conversación</h2>
+            <span class="conversation-count">Conversación del círculo</span>
+          </div>
+
+          <div class="comment-list">
+            <article class="comment">
+              <span class="comment-avatar avatar-rose">JM</span>
+              <div class="comment-content">
+                <div class="comment-author">
+                  <strong>Javier Mora</strong>
+                  <span>hace 2 días</span>
+                </div>
+                <p>
+                  ¡Qué capítulo tan potente! Me encantó cómo empieza a abrirse
+                  este mundo de posibilidades.
+                </p>
+              </div>
+              <span class="comment-reaction" aria-label="3 reacciones">♡ 3</span>
+              <button class="more-button" type="button" aria-label="Más opciones">···</button>
+            </article>
+
+            <article class="comment">
+              <span class="comment-avatar avatar-blue">SK</span>
+              <div class="comment-content">
+                <div class="comment-author">
+                  <strong>Sofía Kim</strong>
+                  <span>hace 1 día</span>
+                </div>
+                <p>
+                  Totalmente de acuerdo. ¿Ustedes también sintieron que este
+                  capítulo fue un punto de inflexión?
+                </p>
+              </div>
+              <span class="comment-reaction" aria-label="2 reacciones">♡ 2</span>
+              <button class="more-button" type="button" aria-label="Más opciones">···</button>
+            </article>
+
+            <article class="comment">
+              <span class="comment-avatar avatar-green">EL</span>
+              <div class="comment-content">
+                <div class="comment-author">
+                  <strong>Elena López</strong>
+                  <span>hace 6 horas</span>
+                </div>
+                <p>
+                  Me encanta cómo esta historia nos recuerda que siempre hay
+                  otro camino esperándonos. ✨
+                </p>
+              </div>
+              <span class="comment-reaction" aria-label="4 reacciones">♡ 4</span>
+              <button class="more-button" type="button" aria-label="Más opciones">···</button>
+            </article>
+          </div>
+
+          <form class="comment-form">
+            <span class="comment-avatar avatar-lilac">AL</span>
+            <label class="visually-hidden" for="newComment">Escribí un comentario</label>
+            <input
+              id="newComment"
+              type="text"
+              placeholder="Escribí un comentario…"
+            />
+            <button class="button button-primary" type="button">Publicar</button>
+          </form>
+        </section>
+
+        <footer class="page-footer">
+          <span>Un pequeño mundo propio.</span>
+          <span>BOOKVERSE ✦</span>
+        </footer>
+      }
+    </main>
+  </div>
+</div>
