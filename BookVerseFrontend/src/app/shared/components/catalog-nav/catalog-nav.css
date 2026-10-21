@@ -1,0 +1,27 @@
+:host {
+  display: block;
+}
+nav {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #e8e2ef;
+  padding: 22px 5%;
+  background: white;
+}
+a {
+  color: #665498;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+:focus-visible {
+  outline: 3px solid #8e9fe1;
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  nav {
+    gap: 14px;
+  }
+}

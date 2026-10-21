@@ -10,7 +10,7 @@ import { groupsRoutes } from './features/groups/groups.routes';
 export const routes: Routes = [
   { path: '', component: Home },
   { path: 'stories', children: storiesRoutes }, // Registers all story feature routes under the /stories URL prefix
-  { path: 'groups', children: groupsRoutes }, 
+  { path: 'groups', children: groupsRoutes },
   { path: 'login', component: Login },
   { path: 'register', component: Register },
   { path: 'dashboard', component: Dashboard },
