@@ -1,1 +1,34 @@
-<p>book-list works!</p>
+<app-catalog-nav />
+<main>
+  <span class="eyebrow">UN MUNDO ENTRE PÁGINAS</span>
+  <h1>Tu próxima gran lectura.</h1>
+  <p>Explorá los libros de BookVerse y compartí lo que te hicieron sentir.</p>
+  <a class="button" routerLink="/google-books">Buscar en Google Books</a>
+  @if (loading()) {
+    <p class="state" role="status">Cargando libros…</p>
+  } @else if (error()) {
+    <div class="state error" role="alert">
+      {{ error() }} <button (click)="load()">Reintentar</button>
+    </div>
+  } @else if (result(); as page) {
+    <p>{{ page.totalElements }} libros en el catálogo</p>
+    <div class="grid">
+      @for (book of page.content; track book.idExternal) {
+        <a class="card" [routerLink]="['/books', book.idExternal]">
+          <app-book-cover class="cover" [src]="book.thumbnailUrl" [title]="book.title" />
+          <h3>{{ book.title }}</h3>
+          <p>{{ book.authors?.join(', ') || 'Autor desconocido' }}</p></a
+        >
+      } @empty {
+        <p class="state">Todavía no hay libros. Descubrí uno en Google Books.</p>
+      }
+    </div>
+    @if (page.totalPages > 1) {
+      <div class="actions">
+        <button [disabled]="page.first" (click)="load(page.number - 1)">Anterior</button
+        ><span>Página {{ page.number + 1 }} de {{ page.totalPages }}</span
+        ><button [disabled]="page.last" (click)="load(page.number + 1)">Siguiente</button>
+      </div>
+    }
+  }
+</main>

@@ -1,3 +1,4 @@
+import { booksRoutes } from './features/books/books.routes';
 import { Routes } from '@angular/router';
 import { Home } from './features/home/pages/home/home';
 import { storiesRoutes } from './features/stories/stories.routes';
@@ -15,5 +16,6 @@ export const routes: Routes = [
   { path: 'register', component: Register },
   { path: 'dashboard', component: Dashboard },
   { path: 'profile', component: Profile },
+  { path: 'books', children: booksRoutes },
   { path: '**', redirectTo: '' },
 ];

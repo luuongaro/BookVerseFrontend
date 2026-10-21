@@ -1,1 +1,44 @@
-<p>book-detail works!</p>
+<app-catalog-nav />
+<main>
+  <a routerLink="/books">← Todos los libros</a>
+  @if (loading()) {
+    <p class="state" role="status">Cargando libro…</p>
+  } @else if (error()) {
+    <div class="state error" role="alert">
+      {{ error() }} <button (click)="load()">Reintentar</button>
+    </div>
+  } @else if (book(); as book) {
+    <section class="detail">
+      <div class="panel">
+        <app-book-cover class="cover" [src]="book.thumbnailUrl" [title]="book.title" />
+      </div>
+      <div>
+        <span class="eyebrow">UN LIBRO, MUCHAS VIDAS</span>
+        <h1>{{ book.title }}</h1>
+        <p>{{ book.authors?.join(', ') || 'Autor desconocido' }}</p>
+        <p>{{ book.categories }}</p>
+        <p class="prose">{{ book.description || 'Este libro todavía no tiene descripción.' }}</p>
+        <dl>
+          <dt>Editorial</dt>
+          <dd>{{ book.publisher || 'Sin información' }}</dd>
+          <dt>Publicación</dt>
+          <dd>{{ book.publishedDate || 'Sin información' }}</dd>
+          <dt>ISBN</dt>
+          <dd>{{ book.isbn || 'Sin información' }}</dd>
+          <dt>Idioma</dt>
+          <dd>{{ book.language || 'Sin información' }}</dd>
+        </dl>
+        <div class="actions">
+          <a class="button" routerLink="/reviews" [queryParams]="{ bookId: book.idExternal }"
+            >Ver reseñas</a
+          ><a
+            class="button secondary"
+            routerLink="/reviews/new"
+            [queryParams]="{ bookId: book.idExternal }"
+            >Escribir una reseña</a
+          >
+        </div>
+      </div>
+    </section>
+  }
+</main>
