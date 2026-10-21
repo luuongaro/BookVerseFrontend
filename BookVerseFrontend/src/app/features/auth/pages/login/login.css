@@ -14,8 +14,8 @@
 }
 
 .auth-layout {
-  min-height: 100vh;
   display: grid;
+  min-height: 100vh;
   grid-template-columns: 1fr 1fr;
   background: var(--paper);
 }
@@ -42,7 +42,6 @@
   position: absolute;
   z-index: -1;
   inset: 0;
-  content: '';
   background: linear-gradient(
     180deg,
     #241b3b50,
@@ -50,15 +49,16 @@
     #26173acf 80%,
     #251934ed
   );
+  content: '';
 }
 
 .auth-brand {
   position: absolute;
   top: 0;
   left: 0;
-  padding: 38px 45px;
   display: inline-flex;
   align-items: center;
+  padding: 38px 45px;
   color: #fff;
   font-family: var(--serif);
   font-size: 30px;
@@ -74,10 +74,10 @@
 }
 
 .auth-brand .brand-symbol {
+  display: grid;
   width: 36px;
   height: 38px;
   margin-right: 10px;
-  display: grid;
   place-items: center;
   border-radius: 12px 12px 12px 3px;
   background: #ffffff26;
@@ -153,11 +153,11 @@
 }
 
 .auth-form-wrap {
-  min-width: 0;
-  padding: 42px 12%;
   display: flex;
+  min-width: 0;
   flex-direction: column;
   justify-content: space-between;
+  padding: 42px 12%;
   background: var(--paper);
 }
 
@@ -205,17 +205,17 @@
 }
 
 .auth-form form {
-  margin-top: 33px;
   display: flex;
   flex-direction: column;
   gap: 19px;
+  margin-top: 33px;
 }
 
 .auth-form form > label {
-  margin-bottom: -14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-bottom: -14px;
   color: var(--ink);
   font-size: 14px;
   font-weight: 550;
@@ -248,14 +248,35 @@
   padding-right: 42px;
 }
 
-.lock-icon {
+.visibility-toggle {
   position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 16px;
-  height: 16px;
+  top: 50%;
+  right: 10px;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  background: transparent;
   color: #a99eb8;
-  pointer-events: none;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.visibility-toggle:hover {
+  color: var(--lavender);
+}
+
+.visibility-toggle:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--lavender);
+  outline-offset: 2px;
+}
+
+.visibility-toggle svg {
+  width: 18px;
+  height: 18px;
 }
 
 .field-error {

@@ -11,6 +11,8 @@ import { RouterLink } from '@angular/router';
 export class Register {
   private formBuilder = inject(FormBuilder);
 
+  showPassword = false;
+
   registerForm = this.formBuilder.group({
     username: [
       '',
@@ -25,10 +27,16 @@ export class Register {
       '',
       [
         Validators.required,
-        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/),
+        Validators.pattern(
+          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/,
+        ),
       ],
     ],
   });
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
+  }
 
   onSubmit(): void {
     if (this.registerForm.invalid) {
@@ -36,6 +44,5 @@ export class Register {
       return;
     }
 
-  
   }
 }
