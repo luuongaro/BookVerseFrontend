@@ -14,10 +14,16 @@ export class Login {
   private authService = inject(AuthService);
   private router = inject(Router);
 
+  showPassword = false;
+
   loginForm = this.formBuilder.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required],
   });
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
+  }
 
   onSubmit(): void {
     if (this.loginForm.invalid) {
