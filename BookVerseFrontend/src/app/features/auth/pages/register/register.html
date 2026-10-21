@@ -1,1 +1,157 @@
-<p>register works!</p>
+<main class="auth-layout">
+  <section class="auth-art">
+    <img
+      class="auth-image"
+      src="/assets/sign-in-library.png"
+      alt="Una biblioteca mágica donde comienza tu historia"
+    />
+
+    <a class="auth-brand" routerLink="/" aria-label="BookVerse, inicio">
+      <span class="brand-symbol" aria-hidden="true">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M12 5C8 2 4 3 2 4v15c3-1 6-1 10 2 4-3 7-3 10-2V4c-2-1-6-1-10 1Zm0 0v16" />
+        </svg>
+      </span>
+      Book<span>Verse</span><sup aria-hidden="true">✦</sup>
+    </a>
+
+    <div class="auth-quote">
+      <span class="eyebrow">HAY UN LUGAR PARA VOS</span>
+
+      <h1>
+        Cada gran historia<br />
+        empieza con <em>vos.</em>
+      </h1>
+
+      <p>
+        Un rincón tranquilo. Mil aventuras.<br />
+        Y un poco de magia entre páginas.
+      </p>
+
+      <span class="quote-stars" aria-hidden="true">✧ &nbsp; ✦ &nbsp; ✧</span>
+    </div>
+
+    <span class="auth-art-bottom">
+      LOS LIBROS NOS UNEN. LAS HISTORIAS NOS HACEN QUEDAR.
+    </span>
+  </section>
+
+  <section class="auth-form-wrap">
+    <a class="back-link" routerLink="/">← Volver al universo</a>
+
+    <div class="auth-form">
+      <span class="eyebrow">TU PRIMER CAPÍTULO</span>
+
+      <h2>Sentite como en casa.</h2>
+      <p>Un poco sobre vos, y el universo será tuyo.</p>
+
+      <form
+        [formGroup]="registerForm"
+        (ngSubmit)="onSubmit()"
+        aria-label="Crear una cuenta"
+      >
+        <label for="username">Nombre de usuario</label>
+        <input
+          id="username"
+          type="text"
+          formControlName="username"
+          placeholder="Tu seudónimo"
+          autocomplete="username"
+        />
+        <small class="field-hint">De 3 a 15 caracteres. Hacelo tuyo.</small>
+
+        @if (registerForm.controls.username.touched &&
+        registerForm.controls.username.hasError('required')) {
+          <small class="field-error">Ingresá un nombre de usuario.</small>
+        }
+
+        @if (registerForm.controls.username.touched &&
+        (registerForm.controls.username.hasError('minlength') ||
+        registerForm.controls.username.hasError('maxlength'))) {
+          <small class="field-error">
+            Debe tener entre 3 y 15 caracteres.
+          </small>
+        }
+
+        <label for="email">Correo electrónico</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="tu@correo.com"
+          autocomplete="email"
+        />
+
+        @if (registerForm.controls.email.touched &&
+        registerForm.controls.email.hasError('required')) {
+          <small class="field-error">Ingresá tu correo electrónico.</small>
+        }
+
+        @if (registerForm.controls.email.touched &&
+        registerForm.controls.email.hasError('email')) {
+          <small class="field-error">Ingresá un correo válido.</small>
+        }
+
+        <label for="password">Contraseña</label>
+        <div class="input-with-icon">
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            placeholder="Creá una contraseña"
+            autocomplete="new-password"
+          />
+
+          <svg
+            class="lock-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="5" y="10" width="14" height="11" rx="2" />
+            <path d="M8 10V6a4 4 0 0 1 8 0v4" />
+          </svg>
+        </div>
+        <small class="field-hint">
+          8 o más caracteres, mayúscula, minúscula, número y símbolo.
+        </small>
+
+        @if (registerForm.controls.password.touched &&
+        registerForm.controls.password.hasError('required')) {
+          <small class="field-error">Ingresá una contraseña.</small>
+        }
+
+        @if (registerForm.controls.password.touched &&
+        registerForm.controls.password.hasError('pattern')) {
+          <small class="field-error">
+            La contraseña no cumple con los requisitos.
+          </small>
+        }
+
+        <button class="button primary full" type="submit">
+          Crear mi cuenta
+        </button>
+
+        <span class="form-switch">
+          ¿Ya tenés una cuenta?
+          <a routerLink="/login">Iniciar sesión</a>
+        </span>
+      </form>
+    </div>
+
+    <span class="auth-bottom">
+      Un universo creado para quienes aman las historias.
+    </span>
+  </section>
+</main>
