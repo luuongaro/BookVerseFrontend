@@ -34,7 +34,7 @@ export class Login {
     this.authService.login(this.loginForm.getRawValue()).subscribe({
       next: (response) => {
         localStorage.setItem('token', response.token);
-        void this.router.navigate(['/stories']);
+        void this.router.navigate(['/dashboard']);
       },
       error: () => {
         alert('No se pudo iniciar sesión. Revisá el email y la contraseña.');
