@@ -1,0 +1,59 @@
+<app-catalog-nav />
+<main>
+  <span class="eyebrow">MÁS ALLÁ DE TU ESTANTERÍA</span>
+  <h1>Encontrá tu próxima historia.</h1>
+  <p>Buscá en Google Books y agregá un libro al catálogo de BookVerse.</p>
+  <form class="search panel" [formGroup]="form" (ngSubmit)="search()">
+    <div>
+      <label for="type">Buscar por</label
+      ><select id="type" formControlName="type">
+        <option value="query">Palabra clave</option>
+        <option value="title">Título</option>
+        <option value="author">Autor</option>
+      </select>
+    </div>
+    <div>
+      <label for="query">Tu búsqueda</label
+      ><input
+        id="query"
+        formControlName="value"
+        placeholder="Un título, un autor, un mundo…"
+        required
+      />
+    </div>
+    <button [disabled]="loading() || !!importing()">Buscar</button>
+  </form>
+  @if (form.controls.value.touched && !form.controls.value.value.trim()) {
+    <p class="validation">Ingresá un texto para buscar.</p>
+  }
+  @if (loading()) {
+    <p class="state" role="status">Buscando libros…</p>
+  } @else if (error()) {
+    <p class="state error" role="alert">{{ error() }}</p>
+  } @else if (searched()) {
+    <div class="grid">
+      @for (book of results(); track book.id) {
+        <article class="card">
+          <app-book-cover
+            class="cover"
+            [src]="book.volumeInfo.imageLinks?.thumbnail"
+            [title]="book.volumeInfo.title"
+          />
+          <h3>{{ book.volumeInfo.title }}</h3>
+          <p>{{ book.volumeInfo.authors?.join(', ') || 'Autor desconocido' }}</p>
+          <p>{{ book.volumeInfo.publishedDate }}</p>
+          <button [disabled]="!!importing()" (click)="importBook(book.id)">
+            {{ importing() === book.id ? 'Agregando…' : 'Agregar y ver libro' }}
+          </button>
+        </article>
+      } @empty {
+        <p class="state">No encontramos libros. Probá otro título o autor.</p>
+      }
+    </div>
+  } @else {
+    <p class="state">Cada lectura empieza con una búsqueda.</p>
+  }
+  @if (importError()) {
+    <p class="state error" role="alert">{{ importError() }}</p>
+  }
+</main>
