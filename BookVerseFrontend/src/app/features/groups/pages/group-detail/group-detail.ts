@@ -1,7 +1,14 @@
 import { DatePipe } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  inject,
+  OnInit,
+} from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { GroupMember } from '../../models/group-member.model';
 import { ReadingGroup } from '../../models/reading-group.model';
+import { GroupMembersService } from '../../services/group-members.service';
 import { ReadingGroupsService } from '../../services/reading-groups.service';
 
 @Component({
@@ -12,11 +19,17 @@ import { ReadingGroupsService } from '../../services/reading-groups.service';
 })
 export class GroupDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly readingGroupsService = inject(ReadingGroupsService);
+  private readonly groupMembersService = inject(GroupMembersService);
 
   group: ReadingGroup | null = null;
+  members: GroupMember[] = [];
+
   isLoading = true;
+  isLoadingMembers = true;
   errorMessage = '';
+  membersErrorMessage = '';
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
@@ -25,10 +38,13 @@ export class GroupDetail implements OnInit {
       if (!groupId) {
         this.errorMessage = 'No se encontró el identificador del grupo.';
         this.isLoading = false;
+        this.isLoadingMembers = false;
+        this.changeDetector.markForCheck();
         return;
       }
 
       this.loadGroup(groupId);
+      this.loadMembers(groupId);
     });
   }
 
@@ -39,14 +55,33 @@ export class GroupDetail implements OnInit {
     this.readingGroupsService.getById(groupId).subscribe({
       next: (group) => {
         this.group = group;
+        this.isLoading = false;
+        this.changeDetector.markForCheck();
       },
       error: (error: unknown) => {
         console.error('Error loading reading group:', error);
         this.errorMessage = 'No se pudo cargar el círculo de lectura.';
         this.isLoading = false;
+        this.changeDetector.markForCheck();
       },
-      complete: () => {
-        this.isLoading = false;
+    });
+  }
+
+  private loadMembers(groupId: string): void {
+    this.isLoadingMembers = true;
+    this.membersErrorMessage = '';
+
+    this.groupMembersService.getActiveByGroup(groupId).subscribe({
+      next: (members) => {
+        this.members = members;
+        this.isLoadingMembers = false;
+        this.changeDetector.markForCheck();
+      },
+      error: (error: unknown) => {
+        console.error('Error loading group members:', error);
+        this.membersErrorMessage = 'No se pudieron cargar los miembros.';
+        this.isLoadingMembers = false;
+        this.changeDetector.markForCheck();
       },
     });
   }

@@ -9,17 +9,18 @@ interface AuthRequest {
 
 interface AuthResponse {
   token: string;
+  userId: string;
 }
 
 @Service()
 export class AuthService {
-  private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/api/auth';
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = 'http://localhost:8080/api/auth';
 
   login(credentials: AuthRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(
       `${this.apiUrl}/login`,
-      credentials
+      credentials,
     );
   }
 }

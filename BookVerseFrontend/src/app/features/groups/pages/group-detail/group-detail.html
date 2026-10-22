@@ -2,8 +2,14 @@
   <aside class="sidebar">
     <a class="sidebar-brand" routerLink="/dashboard" aria-label="BookVerse, inicio">
       <span class="brand-symbol" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
           <path d="M12 5C8 2 4 3 2 4v15c3-1 6-1 10 2 4-3 7-3 10-2V4c-2-1-6-1-10 1Z" />
           <path d="M12 5v16" />
         </svg>
@@ -117,7 +123,9 @@
 
             <div class="group-meta">
               <span class="meta-icon" aria-hidden="true">▤</span>
-              <span>{{ group.storyId ? 'Círculo de historia' : 'Círculo de libro' }}</span>
+              <span>
+                {{ group.storyId ? 'Círculo de historia' : 'Círculo de libro' }}
+              </span>
               <span class="status-badge">
                 <span></span>
                 {{ group.isActive ? 'Activo' : 'Inactivo' }}
@@ -140,7 +148,10 @@
           </div>
 
           <div class="heading-actions">
-            <a class="button button-outline" [routerLink]="['/groups', group.idExternal, 'edit']">
+            <a
+              class="button button-outline"
+              [routerLink]="['/groups', group.idExternal, 'edit']"
+            >
               <span aria-hidden="true">✎</span>
               Editar círculo
             </a>
@@ -190,17 +201,55 @@
           <article class="panel members-panel">
             <div class="panel-heading">
               <p class="panel-label">MIEMBROS</p>
-              <span class="member-total">6 lectores</span>
+
+              @if (isLoadingMembers) {
+                <span class="member-total">Cargando…</span>
+              } @else {
+                <span class="member-total">
+                  {{ members.length }}
+                  {{ members.length === 1 ? 'lector' : 'lectores' }}
+                </span>
+              }
             </div>
 
-            <div class="member-avatars" aria-label="Miembros del grupo">
-              <span class="member-avatar avatar-lilac">AL<small>Vos</small></span>
-              <span class="member-avatar avatar-rose">JM</span>
-              <span class="member-avatar avatar-blue">SK</span>
-              <span class="member-avatar avatar-green">EL</span>
-              <span class="member-avatar avatar-pink">MP</span>
-              <span class="member-avatar avatar-more">+1</span>
-            </div>
+            @if (isLoadingMembers) {
+              <p class="member-state" role="status">Cargando miembros…</p>
+            } @else if (membersErrorMessage) {
+              <p class="member-state state-error" role="alert">
+                {{ membersErrorMessage }}
+              </p>
+            } @else if (members.length === 0) {
+              <p class="member-state">
+                Este círculo todavía no tiene miembros.
+              </p>
+            } @else {
+              <div class="member-avatars" aria-label="Miembros del grupo">
+                @for (
+                  member of members.slice(0, 5);
+                  track member.idExternal;
+                  let i = $index
+                ) {
+                  <span
+                    class="member-avatar"
+                    [class.avatar-lilac]="i % 5 === 0"
+                    [class.avatar-rose]="i % 5 === 1"
+                    [class.avatar-blue]="i % 5 === 2"
+                    [class.avatar-green]="i % 5 === 3"
+                    [class.avatar-pink]="i % 5 === 4"
+                    [attr.aria-label]="member.userName"
+                    [title]="member.userName"
+                  >
+                    {{ member.userName.slice(0, 2).toUpperCase() }}
+                  </span>
+                }
+
+                @if (members.length > 5) {
+                  <span class="member-avatar avatar-more">
+                    +{{ members.length - 5 }}
+                  </span>
+                }
+              </div>
+            }
 
             <a class="members-link" routerLink="/groups">
               Ver todos <span aria-hidden="true">›</span>
@@ -228,7 +277,9 @@
                 </p>
               </div>
               <span class="comment-reaction" aria-label="3 reacciones">♡ 3</span>
-              <button class="more-button" type="button" aria-label="Más opciones">···</button>
+              <button class="more-button" type="button" aria-label="Más opciones">
+                ···
+              </button>
             </article>
 
             <article class="comment">
@@ -244,7 +295,9 @@
                 </p>
               </div>
               <span class="comment-reaction" aria-label="2 reacciones">♡ 2</span>
-              <button class="more-button" type="button" aria-label="Más opciones">···</button>
+              <button class="more-button" type="button" aria-label="Más opciones">
+                ···
+              </button>
             </article>
 
             <article class="comment">
@@ -260,19 +313,25 @@
                 </p>
               </div>
               <span class="comment-reaction" aria-label="4 reacciones">♡ 4</span>
-              <button class="more-button" type="button" aria-label="Más opciones">···</button>
+              <button class="more-button" type="button" aria-label="Más opciones">
+                ···
+              </button>
             </article>
           </div>
 
           <form class="comment-form">
             <span class="comment-avatar avatar-lilac">AL</span>
-            <label class="visually-hidden" for="newComment">Escribí un comentario</label>
+            <label class="visually-hidden" for="newComment">
+              Escribí un comentario
+            </label>
             <input
               id="newComment"
               type="text"
               placeholder="Escribí un comentario…"
             />
-            <button class="button button-primary" type="button">Publicar</button>
+            <button class="button button-primary" type="button">
+              Publicar
+            </button>
           </form>
         </section>
 

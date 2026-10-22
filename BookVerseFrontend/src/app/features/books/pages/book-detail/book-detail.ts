@@ -6,7 +6,7 @@ import { CatalogNav } from '../../../../shared/components/catalog-nav/catalog-na
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ReactiveFormsModule } from '@angular/forms';
-import { apiError } from '../../../../core/http/api';
+import { apiError } from '../../../../core/api/api.config';
 import { BooksService } from '../../services/books.service';
 import { Book } from '../../models/book.model';
 @Component({

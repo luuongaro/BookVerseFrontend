@@ -34,6 +34,7 @@ export class Login {
     this.authService.login(this.loginForm.getRawValue()).subscribe({
       next: (response) => {
         localStorage.setItem('token', response.token);
+        localStorage.setItem('userId', response.userId);
         void this.router.navigate(['/dashboard']);
       },
       error: () => {
