@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { API_URL, authHeaders } from '../../../core/http/api';
+import { API_URL, authHeaders } from '../../../core/api/api.config';
 import { Book, BookPage } from '../models/book.model';
 @Injectable({ providedIn: 'root' })
 export class BooksService {

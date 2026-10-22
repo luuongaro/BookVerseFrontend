@@ -1,5 +1,10 @@
 import { DatePipe } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  inject,
+  OnInit,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ReadingGroup } from '../../models/reading-group.model';
 import { ReadingGroupsService } from '../../services/reading-groups.service';
@@ -12,6 +17,7 @@ import { ReadingGroupsService } from '../../services/reading-groups.service';
 })
 export class GroupList implements OnInit {
   private readonly readingGroupsService = inject(ReadingGroupsService);
+  private readonly changeDetector = inject(ChangeDetectorRef);
 
   groups: ReadingGroup[] = [];
   searchTerm = '';
@@ -28,20 +34,21 @@ export class GroupList implements OnInit {
     if (!userId) {
       this.errorMessage = 'No se encontró el usuario de la sesión.';
       this.isLoading = false;
+      this.changeDetector.markForCheck();
       return;
     }
 
     this.readingGroupsService.getCreatedByUser(userId).subscribe({
       next: (groups) => {
         this.groups = groups;
+        this.isLoading = false;
+        this.changeDetector.markForCheck();
       },
       error: (error: unknown) => {
         console.error('Error al cargar los grupos del usuario:', error);
         this.errorMessage = 'No se pudieron cargar tus grupos de lectura.';
         this.isLoading = false;
-      },
-      complete: () => {
-        this.isLoading = false;
+        this.changeDetector.markForCheck();
       },
     });
   }
