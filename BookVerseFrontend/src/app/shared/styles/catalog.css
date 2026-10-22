@@ -189,3 +189,16 @@ form.panel {
     padding: 28px 18px;
   }
 }
+
+main {
+  margin-left: 215px;
+  margin-right: 0;
+  max-width: none;
+  padding: 45px clamp(24px, 4vw, 64px);
+}
+@media (max-width: 760px) {
+  main {
+    margin-left: 0;
+    padding: 28px 18px;
+  }
+}
