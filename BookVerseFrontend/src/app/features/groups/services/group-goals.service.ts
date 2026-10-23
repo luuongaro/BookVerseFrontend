@@ -1,6 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Service } from '@angular/core';
 import { Observable } from 'rxjs';
+
+import { API_URL, authHeaders } from '../../../core/api/api.config';
 import { GroupGoal } from '../models/group-goal.model';
 
 export interface CreateGroupGoalRequest {
@@ -17,19 +19,24 @@ export interface ChangeGroupGoalStatusRequest {
 @Service()
 export class GroupGoalsService {
   private readonly http = inject(HttpClient);
-  private readonly url = 'http://localhost:8080/api/group-goals';
+  private readonly url = `${API_URL}/group-goals`;
 
   getById(goalId: string): Observable<GroupGoal> {
-    return this.http.get<GroupGoal>(`${this.url}/${goalId}`);
+    return this.http.get<GroupGoal>(`${this.url}/${goalId}`, {
+      headers: authHeaders(),
+    });
   }
 
   getByGroup(groupId: string): Observable<GroupGoal[]> {
-    return this.http.get<GroupGoal[]>(`${this.url}/group/${groupId}`);
+    return this.http.get<GroupGoal[]>(`${this.url}/group/${groupId}`, {
+      headers: authHeaders(),
+    });
   }
 
   getActiveByGroup(groupId: string): Observable<GroupGoal> {
     return this.http.get<GroupGoal>(
       `${this.url}/group/${groupId}/active`,
+      { headers: authHeaders() },
     );
   }
 
@@ -40,6 +47,7 @@ export class GroupGoalsService {
     return this.http.post<GroupGoal>(
       `${this.url}/group/${groupId}`,
       request,
+      { headers: authHeaders() },
     );
   }
 
@@ -50,10 +58,13 @@ export class GroupGoalsService {
     return this.http.patch<GroupGoal>(
       `${this.url}/${goalId}/status`,
       request,
+      { headers: authHeaders() },
     );
   }
 
   cancel(goalId: string): Observable<void> {
-    return this.http.delete<void>(`${this.url}/${goalId}`);
+    return this.http.delete<void>(`${this.url}/${goalId}`, {
+      headers: authHeaders(),
+    });
   }
 }
