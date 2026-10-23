@@ -1,0 +1,91 @@
+<app-catalog-nav />
+<main>
+  <a routerLink="/reviews" [queryParams]="{ bookId: bookId, storyId: storyId }"
+    >← Volver a reseñas</a
+  ><span class="eyebrow">TU VOZ TAMBIÉN ES PARTE DE LA HISTORIA</span>
+  <h1>{{ id ? 'Volvé a tus palabras.' : '¿Qué te dejó esta lectura?' }}</h1>
+  @if (loading()) {
+    <p class="state" role="status">Cargando datos…</p>
+  }
+  @if (loadError()) {
+    <div class="state error" role="alert">
+      {{ loadError() }} <button (click)="load()">Reintentar</button>
+    </div>
+  }
+  @if (!allowed()) {
+    <p class="state error" role="alert">
+      No podés editar esta reseña o la obra seleccionada no es válida.
+    </p>
+  }
+  @if (!id && !session.userId()) {
+    <p class="state" role="status">
+      La sesión actual no permite identificar tu cuenta para publicar una reseña. Podés seguir
+      consultando libros y reseñas.
+    </p>
+  }
+  <form class="panel" [formGroup]="form" (ngSubmit)="submit()">
+    @if (!id && !storyId) {
+      @if (selectedBook(); as book) {
+        <h2>{{ book.title }}</h2>
+      } @else if (!bookId) {
+        <label for="book">Libro</label
+        ><select id="book" formControlName="bookId">
+          <option value="">Seleccioná un libro</option>
+          @for (book of books(); track book.idExternal) {
+            <option [value]="book.idExternal">{{ book.title }}</option>
+          }
+        </select>
+        @if (moreBooks()) {
+          <button type="button" class="secondary" [disabled]="loading()" (click)="loadBooks()">
+            Cargar más libros
+          </button>
+        }
+        @if (!loading() && !loadError() && books().length === 0) {
+          <p>
+            No hay libros disponibles. <a routerLink="/google-books">Buscá uno en Google Books</a>.
+          </p>
+        }
+        @if (form.controls.bookId.touched && form.controls.bookId.invalid) {
+          <p class="validation">Seleccioná un libro.</p>
+        }
+      }
+    }
+    @if (storyId) {
+      <p>Reseña de la historia seleccionada.</p>
+    }
+    <label for="rating">Tu puntuación</label
+    ><select id="rating" formControlName="rating">
+      <option [ngValue]="1">1 estrella</option>
+      <option [ngValue]="2">2 estrellas</option>
+      <option [ngValue]="3">3 estrellas</option>
+      <option [ngValue]="4">4 estrellas</option>
+      <option [ngValue]="5">5 estrellas</option>
+    </select>
+    <label for="content">Tu reseña</label
+    ><textarea
+      id="content"
+      formControlName="content"
+      minlength="10"
+      maxlength="5000"
+      aria-describedby="content-help"
+    ></textarea>
+    <p id="content-help">Entre 10 y 5000 caracteres. Compartí tu experiencia y evitá spoilers.</p>
+    @if (form.controls.content.touched && form.controls.content.invalid) {
+      <p class="validation" role="alert">
+        La reseña debe tener entre 10 y 5000 caracteres y no estar vacía.
+      </p>
+    }
+    @if (error()) {
+      <p class="state error" role="alert">{{ error() }}</p>
+    }
+    <div class="actions">
+      <button
+        [disabled]="
+          loading() || saving() || !allowed() || !!loadError() || (!id && !session.userId())
+        "
+      >
+        {{ saving() ? 'Guardando…' : id ? 'Guardar cambios' : 'Publicar reseña' }}</button
+      ><a routerLink="/reviews" [queryParams]="{ bookId: bookId, storyId: storyId }">Cancelar</a>
+    </div>
+  </form>
+</main>

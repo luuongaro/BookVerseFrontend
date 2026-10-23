@@ -1,0 +1,6 @@
+@import '../../../../shared/styles/catalog.css';
+
+.eyebrow {
+  display: block;
+  margin-top: 24px;
+}
