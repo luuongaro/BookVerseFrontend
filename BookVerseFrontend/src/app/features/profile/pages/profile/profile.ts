@@ -1,5 +1,6 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, ViewChild, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { UserService } from '../../services/user.service';
 
 @Component({
   imports: [RouterLink],
@@ -8,18 +9,30 @@ import { RouterLink } from '@angular/router';
   templateUrl: './profile.html',
 })
 export class Profile {
+  private readonly userService = inject(UserService);
+
   @ViewChild('coverPicker')
   coverPicker!: ElementRef<HTMLDialogElement>;
 
-  profile = {
-    name: 'Alex Lane',
-    initials: 'AL',
-    username: '@alexbetweenpages',
-    membershipType: 'Miembro gratuito',
-    biography:
-      'Colecciono frases bonitas, ideas nocturnas y libros para los que siempre tengo lugar.',
-    interests: ['Fantasía', 'Ficción literaria', 'Un poco de magia'],
-  };
+  get profile() {
+    const user = this.userService.currentUser();
+    const username = user?.username?.trim() || 'Usuario';
+
+    return {
+      name: username,
+      initials: username.slice(0, 2).toUpperCase(),
+      username: `@${username}`,
+      email: user?.email ?? '',
+      membershipType: 'Cuenta BookVerse',
+      biography:
+        'Colecciono frases bonitas, ideas nocturnas y libros para los que siempre tengo lugar.',
+      interests: ['Fantasía', 'Ficción literaria', 'Un poco de magia'],
+    };
+  }
+
+  logout(): void {
+    this.userService.logout();
+  }
 
   covers = [
     {

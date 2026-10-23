@@ -68,7 +68,7 @@
         <span>Mi perfil</span>
       </a>
 
-      <a class="sidebar-link" routerLink="/login">
+      <a class="sidebar-link" routerLink="/login" (click)="logout()">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M10 17l5-5-5-5M15 12H3" />
           <path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7" />
@@ -77,9 +77,9 @@
       </a>
 
       <a class="account-link" routerLink="/profile">
-        <span class="avatar">AL</span>
+        <span class="avatar">{{ currentUserInitials }}</span>
         <span class="account-info">
-          <strong>Alex Lane</strong>
+          <strong>{{ currentUsername }}</strong>
           <small>Lector y soñador</small>
         </span>
         <span class="account-arrow" aria-hidden="true">›</span>
@@ -101,7 +101,7 @@
 
       <div class="topbar-right">
         <span class="topbar-message">☾ &nbsp; Un buen día para un nuevo capítulo</span>
-        <span class="avatar topbar-avatar">AL</span>
+        <span class="avatar topbar-avatar">{{ currentUserInitials }}</span>
       </div>
     </header>
 
@@ -465,7 +465,7 @@
 
           @if (!isStoryGroup) {
             <form class="comment-form" (ngSubmit)="publishComment()">
-              <span class="comment-avatar avatar-lilac">AL</span>
+              <span class="comment-avatar avatar-lilac">{{ currentUserInitials }}</span>
 
               <label class="visually-hidden" for="newComment">
                 Escribí un comentario

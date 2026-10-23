@@ -129,7 +129,7 @@
         <span class="active-dot"></span>
       </a>
 
-      <a class="sidebar-link" routerLink="/login">
+      <a class="sidebar-link" routerLink="/login" (click)="logout()">
         <svg
           class="nav-icon"
           viewBox="0 0 24 24"
@@ -280,6 +280,9 @@
             <span aria-hidden="true">✧</span>
           </h1>
           <p>{{ profile.username }}</p>
+          @if (profile.email) {
+            <p>{{ profile.email }}</p>
+          }
         </div>
 
         <span class="membership">{{ profile.membershipType }}</span>
