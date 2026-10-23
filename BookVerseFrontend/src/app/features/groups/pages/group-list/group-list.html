@@ -227,11 +227,22 @@
 
       <section class="circles">
         <div class="circles-heading">
-          <h2>
-            Tus círculos de lectura
-            <small>{{ filteredGroups.length }}</small>
-          </h2>
-          <p>Siempre hay un lugar para vos.</p>
+          <div>
+            <h2>
+              Mis círculos de lectura
+              <small>{{ filteredGroups.length }}</small>
+            </h2>
+            <p>Grupos a los que pertenecés.</p>
+          </div>
+
+          <label class="group-search">
+            <span class="visually-hidden">Buscar grupo</span>
+            <input
+              type="search"
+              [(ngModel)]="searchTerm"
+              placeholder="Buscar por nombre…"
+            />
+          </label>
         </div>
 
         @if (isLoading) {
@@ -259,7 +270,11 @@
           </div>
         } @else {
           <div class="cards">
-            @for (group of filteredGroups; track group.idExternal; let i = $index) {
+            @for (
+              group of filteredGroups;
+              track group.idExternal;
+              let i = $index
+            ) {
               <a
                 class="group-card"
                 [routerLink]="['/groups', group.idExternal]"
@@ -296,13 +311,21 @@
                   </svg>
 
                   <span>
-                    {{ group.storyId ? 'CÍRCULO DE HISTORIA' : 'CÍRCULO DE LIBRO' }}
+                    {{
+                      group.storyId
+                        ? 'CÍRCULO DE HISTORIA'
+                        : 'CÍRCULO DE LIBRO'
+                    }}
                   </span>
                 </div>
 
                 <div class="card-content">
                   <p class="card-type">
-                    {{ group.storyId ? 'HISTORIA DE LA COMUNIDAD' : 'LIBRO PUBLICADO' }}
+                    {{
+                      group.storyId
+                        ? 'HISTORIA DE LA COMUNIDAD'
+                        : 'LIBRO PUBLICADO'
+                    }}
                   </p>
 
                   <h3>{{ group.name }}</h3>
@@ -314,12 +337,14 @@
                   <div class="card-divider"></div>
 
                   <p class="card-meta-label">CÍRCULO CREADO</p>
-                  <p class="card-date">{{ group.createdAt | date: 'd MMM yyyy' }}</p>
+                  <p class="card-date">
+                    {{ group.createdAt | date: 'd MMM yyyy' }}
+                  </p>
 
                   <div class="card-bottom">
                     <span class="group-status">
                       <span aria-hidden="true"></span>
-                      Grupo activo
+                      {{ group.isActive ? 'Grupo activo' : 'Grupo inactivo' }}
                     </span>
                     <span class="card-arrow" aria-hidden="true">→</span>
                   </div>
