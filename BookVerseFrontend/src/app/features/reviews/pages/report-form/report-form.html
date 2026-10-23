@@ -1,0 +1,21 @@
+<app-catalog-nav />
+<main>
+  <a [routerLink]="['/reviews', reviewId]">← Volver a la reseña</a>
+  <span class="eyebrow">AYUDANOS A CUIDAR LA COMUNIDAD</span>
+  <h1>Reportar una reseña</h1>
+  <p>Contanos qué sucede. El equipo de moderación revisará el reporte.</p>
+  <form class="panel" [formGroup]="form" (ngSubmit)="submit()">
+    <label for="reason">Motivo</label>
+    <input id="reason" type="text" formControlName="reason" maxlength="1000" />
+    <p class="hint">Entre 5 y 1000 caracteres.</p>
+    @if (form.controls.reason.touched && form.controls.reason.invalid) { <p class="validation" role="alert">Ingresá un motivo de al menos 5 caracteres.</p> }
+    <label for="details">Detalles (opcional)</label>
+    <textarea id="details" formControlName="details" maxlength="3000"></textarea>
+    @if (form.controls.details.touched && form.controls.details.invalid) { <p class="validation" role="alert">Máximo 3000 caracteres.</p> }
+    @if (error()) { <p class="state error" role="alert">{{ error() }}</p> }
+    <div class="actions">
+      <button [disabled]="saving() || !session.userId() || !!error()">{{ saving() ? 'Enviando…' : 'Enviar reporte' }}</button>
+      <a routerLink="/reviews">Cancelar</a>
+    </div>
+  </form>
+</main>

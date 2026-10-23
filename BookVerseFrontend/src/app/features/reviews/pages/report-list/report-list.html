@@ -1,0 +1,43 @@
+<app-catalog-nav />
+<main>
+  <span class="eyebrow">CUIDADO DE LA COMUNIDAD</span>
+  <h1>Reportes de reseñas</h1>
+  <p>Revisá los reportes recibidos y registrá la decisión de moderación.</p>
+
+  <div class="toolbar">
+    <button type="button" class="secondary" (click)="toggleScope()">
+      {{ showingAll() ? 'Ver pendientes' : 'Ver todos' }}
+    </button>
+    @if (showingAll()) {
+      <label for="status-filter">Estado</label>
+      <select id="status-filter" [value]="statusFilter()" (change)="setFilter($any($event.target).value)">
+        <option value="ALL">Todos</option>
+        <option value="PENDING">Pendientes</option>
+        <option value="APPROVED">Aprobados</option>
+        <option value="REJECTED">Rechazados</option>
+      </select>
+    }
+  </div>
+
+  @if (loading()) {
+    <p class="state" role="status">Cargando reportes…</p>
+  } @else if (error()) {
+    <div class="state error" role="alert">{{ error() }} <button (click)="load()">Reintentar</button></div>
+  } @else {
+    <section class="report-list" aria-label="Reportes">
+      @for (report of filteredReports(); track report.reportId) {
+        <article class="report-card">
+          <div>
+            <span class="status" [class.pending]="report.status === 'PENDING'">{{ report.status }}</span>
+            <h2>Reseña reportada</h2>
+            <p><strong>Motivo:</strong> {{ report.reason }}</p>
+            <p class="meta">Creado {{ report.createdAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+          </div>
+          <a class="button" [routerLink]="['/review-reports', report.reportId]">Ver reporte</a>
+        </article>
+      } @empty {
+        <p class="state">{{ showingAll() ? 'No hay reportes para mostrar.' : 'No hay reportes pendientes.' }}</p>
+      }
+    </section>
+  }
+</main>

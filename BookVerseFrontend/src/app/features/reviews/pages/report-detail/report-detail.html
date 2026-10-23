@@ -1,0 +1,40 @@
+<app-catalog-nav />
+<main>
+  <a routerLink="/review-reports">← Volver a reportes</a>
+  @if (loading()) {
+    <p class="state" role="status">Cargando reporte…</p>
+  } @else if (error()) {
+    <div class="state error" role="alert">{{ error() }} <button (click)="load()">Reintentar</button></div>
+  } @else if (report(); as report) {
+    <span class="eyebrow">DETALLE DE MODERACIÓN</span>
+    <h1>Reporte de reseña</h1>
+    <article class="panel">
+      <div class="summary">
+        <p><strong>Estado:</strong> {{ report.status }}</p>
+        <p><strong>ID de reseña:</strong> {{ report.reviewId }}</p>
+        <p><strong>Reportado por:</strong> {{ report.reporterUserId }}</p>
+        <p><strong>Fecha:</strong> {{ report.createdAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+        @if (report.moderatorUserId) { <p><strong>Moderador:</strong> {{ report.moderatorUserId }}</p> }
+      </div>
+      <h2>Motivo</h2>
+      <p>{{ report.reason }}</p>
+      @if (report.details) { <h2>Detalle aportado</h2><p class="prose">{{ report.details }}</p> }
+      @if (report.resolutionComment) { <h2>Resolución</h2><p class="prose">{{ report.resolutionComment }}</p> }
+
+      @if (report.status === 'PENDING') {
+        <form [formGroup]="form" (ngSubmit)="$event.preventDefault()">
+          <label for="resolution">Comentario de resolución (opcional)</label>
+          <textarea id="resolution" formControlName="resolutionComment" maxlength="3000"></textarea>
+          @if (form.controls.resolutionComment.invalid) { <p class="validation" role="alert">Máximo 3000 caracteres.</p> }
+          @if (actionError()) { <p class="state error" role="alert">{{ actionError() }}</p> }
+          <div class="actions">
+            <button type="button" [disabled]="saving()" (click)="moderate('approve')">{{ saving() ? 'Guardando…' : 'Aprobar y retirar reseña' }}</button>
+            <button type="button" class="secondary" [disabled]="saving()" (click)="moderate('reject')">Rechazar reporte</button>
+          </div>
+        </form>
+      } @else {
+        <p class="state">Este reporte ya fue moderado{{ report.resolvedAt ? ' el ' + (report.resolvedAt | date: 'dd/MM/yyyy HH:mm') : '' }}.</p>
+      }
+    </article>
+  }
+</main>
