@@ -1,4 +1,5 @@
 import { booksRoutes } from './features/books/books.routes';
+import { reviewsRoutes } from './features/reviews/reviews.routes';
 import { GoogleBookSearch } from './features/google-books/pages/google-book-search/google-book-search';
 import { Routes } from '@angular/router';
 import { Home } from './features/home/pages/home/home';
@@ -19,5 +20,6 @@ export const routes: Routes = [
   { path: 'profile', component: Profile },
   { path: 'books', children: booksRoutes },
   { path: 'google-books', component: GoogleBookSearch },
+  { path: 'reviews', children: reviewsRoutes },
   { path: '**', redirectTo: '' },
 ];

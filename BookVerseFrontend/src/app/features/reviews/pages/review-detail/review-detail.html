@@ -1,0 +1,34 @@
+<app-catalog-nav />
+<main>
+  <a routerLink="/reviews">← Todas las reseñas</a>
+  @if (loading()) {
+    <p class="state" role="status">Cargando reseña…</p>
+  } @else if (error()) {
+    <div class="state error" role="alert">
+      {{ error() }} <button (click)="load()">Reintentar</button>
+    </div>
+  } @else if (review(); as review) {
+    <h1>Una lectura, una mirada.</h1>
+    <article class="panel">
+      <h2 class="rating">★ {{ review.rating }} / 5</h2>
+      <p class="prose">{{ review.content }}</p>
+      <p>Publicada: {{ review.createdAt.slice(0, 10) }}</p>
+      <div class="actions">
+        @if (review.bookId) {
+          <a [routerLink]="['/books', review.bookId]">Ver libro</a>
+        }
+        @if (review.storyId) {
+          <a [routerLink]="['/stories', review.storyId]">Ver historia</a>
+        }
+        <a routerLink="/reviews" [queryParams]="{ bookId: review.bookId, storyId: review.storyId }"
+          >Reseñas de esta obra</a
+        >
+        @if (session.canEdit(review)) {
+          <a class="button" [routerLink]="['/reviews', review.reviewId, 'edit']"
+            >Editar mi reseña</a
+          >
+        }
+      </div>
+    </article>
+  }
+</main>
