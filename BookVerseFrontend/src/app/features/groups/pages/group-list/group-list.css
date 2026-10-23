@@ -586,6 +586,26 @@
   font-size: 14px;
 }
 
+.group-search input {
+  width: min(290px, 100%);
+  min-height: 42px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .cards {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1027,6 +1047,11 @@
     align-items: flex-start;
     flex-direction: column;
     gap: 7px;
+  }
+
+  .group-search,
+  .group-search input {
+    width: 100%;
   }
 
   .circles-heading h2 {

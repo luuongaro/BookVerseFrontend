@@ -69,7 +69,7 @@
         <span aria-hidden="true">/</span>
         <a routerLink="/groups">Grupos de lectura</a>
         <span aria-hidden="true">/</span>
-        <strong>Crear círculo</strong>
+        <strong>{{ isEditing ? 'Editar círculo' : 'Crear círculo' }}</strong>
       </div>
 
       <div class="topbar-note">
@@ -85,94 +85,126 @@
       <section class="form-card">
         <div class="form-heading">
           <p class="eyebrow">UNA HISTORIA SE DISFRUTA MÁS EN COMPAÑÍA</p>
-          <h1>Empezá un círculo<br /><em>de lectura.</em></h1>
+
+          <h1>
+            {{ isEditing ? 'Dale forma a tu' : 'Empezá un círculo' }}<br />
+            <em>{{ isEditing ? 'círculo de lectura.' : 'de lectura.' }}</em>
+          </h1>
+
           <p>
-            Reuní lectores alrededor de un libro o una historia que quieras
-            compartir.
+            {{
+              isEditing
+                ? 'Actualizá el nombre del círculo. La obra vinculada no se puede cambiar.'
+                : 'Reuní lectores alrededor de un libro o una historia que quieras compartir.'
+            }}
           </p>
         </div>
 
-        <form [formGroup]="groupForm" (ngSubmit)="onSubmit()">
-          <div class="field">
-            <label for="name">Nombre del círculo</label>
-            <input
-              id="name"
-              type="text"
-              formControlName="name"
-              placeholder="Por ejemplo: Los búhos nocturnos"
-              maxlength="60"
-            />
+        @if (isLoading) {
+          <p class="field-hint" role="status">Cargando círculo…</p>
+        } @else {
+          <form [formGroup]="groupForm" (ngSubmit)="onSubmit()">
+            <div class="field">
+              <label for="name">Nombre del círculo</label>
+              <input
+                id="name"
+                type="text"
+                formControlName="name"
+                placeholder="Por ejemplo: Los búhos nocturnos"
+                maxlength="60"
+              />
 
-            @if (
-              groupForm.controls.name.touched &&
-              groupForm.controls.name.hasError('required')
-            ) {
-              <small class="field-error">Ingresá un nombre para el círculo.</small>
+              @if (
+                groupForm.controls.name.touched &&
+                groupForm.controls.name.hasError('required')
+              ) {
+                <small class="field-error">
+                  Ingresá un nombre para el círculo.
+                </small>
+              }
+
+              @if (
+                groupForm.controls.name.touched &&
+                groupForm.controls.name.hasError('pattern')
+              ) {
+                <small class="field-error">
+                  El nombre no puede contener solo espacios.
+                </small>
+              }
+
+              @if (
+                groupForm.controls.name.touched &&
+                groupForm.controls.name.hasError('maxlength')
+              ) {
+                <small class="field-error">
+                  El nombre no puede superar los 60 caracteres.
+                </small>
+              }
+            </div>
+
+            @if (!isEditing) {
+              <div class="field">
+                <label for="workType">¿Qué van a leer?</label>
+                <select id="workType" formControlName="workType">
+                  <option value="book">Un libro publicado</option>
+                  <option value="story">Una historia de la comunidad</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="referenceId">{{ referenceLabel }}</label>
+                <input
+                  id="referenceId"
+                  type="text"
+                  formControlName="referenceId"
+                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                  autocomplete="off"
+                />
+
+                <small class="field-hint">
+                  Ingresá el UUID de la obra que compartirán.
+                </small>
+
+                @if (
+                  groupForm.controls.referenceId.touched &&
+                  groupForm.controls.referenceId.hasError('required')
+                ) {
+                  <small class="field-error">
+                    Ingresá el UUID de la obra.
+                  </small>
+                }
+
+                @if (
+                  groupForm.controls.referenceId.touched &&
+                  groupForm.controls.referenceId.hasError('pattern')
+                ) {
+                  <small class="field-error">Ingresá un UUID válido.</small>
+                }
+              </div>
             }
 
-            @if (
-              groupForm.controls.name.touched &&
-              groupForm.controls.name.hasError('maxlength')
-            ) {
-              <small class="field-error">
-                El nombre no puede superar los 60 caracteres.
-              </small>
-            }
-          </div>
-
-          <div class="field">
-            <label for="workType">¿Qué van a leer?</label>
-            <select id="workType" formControlName="workType">
-              <option value="book">Un libro publicado</option>
-              <option value="story">Una historia de la comunidad</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="referenceId">{{ referenceLabel }}</label>
-            <input
-              id="referenceId"
-              type="text"
-              formControlName="referenceId"
-              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-              autocomplete="off"
-            />
-            <small class="field-hint">
-              Ingresá el UUID de la obra que compartirán.
-            </small>
-
-            @if (
-              groupForm.controls.referenceId.touched &&
-              groupForm.controls.referenceId.hasError('required')
-            ) {
-              <small class="field-error">Ingresá el UUID de la obra.</small>
+            @if (errorMessage) {
+              <p class="form-error" role="alert">{{ errorMessage }}</p>
             }
 
-            @if (
-              groupForm.controls.referenceId.touched &&
-              groupForm.controls.referenceId.hasError('pattern')
-            ) {
-              <small class="field-error">Ingresá un UUID válido.</small>
-            }
-          </div>
+            <div class="form-actions">
+              <a class="secondary-button" routerLink="/groups">Cancelar</a>
 
-          @if (errorMessage) {
-            <p class="form-error" role="alert">{{ errorMessage }}</p>
-          }
-
-          <div class="form-actions">
-            <a class="secondary-button" routerLink="/groups">Cancelar</a>
-
-            <button
-              class="primary-button"
-              type="submit"
-              [disabled]="isSaving"
-            >
-              {{ isSaving ? 'Creando círculo…' : 'Crear mi círculo' }}
-              <span aria-hidden="true">→</span>
-            </button>
-          </div>
-        </form>
+              <button
+                class="primary-button"
+                type="submit"
+                [disabled]="isSaving"
+              >
+                {{
+                  isSaving
+                    ? (isEditing ? 'Guardando…' : 'Creando círculo…')
+                    : (isEditing ? 'Guardar cambios' : 'Crear mi círculo')
+                }}
+                <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </form>
+        }
       </section>
 
       <footer class="app-footer">
