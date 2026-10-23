@@ -1,0 +1,39 @@
+<app-catalog-nav />
+<main>
+  <span class="eyebrow">LECTURAS QUE DEJAN HUELLA</span>
+  <h1>Entre lectores.</h1>
+  <p>Opiniones, descubrimientos y otras formas de vivir una historia.</p>
+  <div class="actions">
+    @if (bookId) {
+      <a [routerLink]="['/books', bookId]">← Volver al libro</a>
+    }
+    <a class="button" routerLink="/reviews/new" [queryParams]="{ bookId: bookId, storyId: storyId }"
+      >Escribir una reseña</a
+    >
+  </div>
+  @if (loading()) {
+    <p class="state" role="status">Cargando reseñas…</p>
+  } @else if (error()) {
+    <div class="state error" role="alert">
+      {{ error() }} <button (click)="load()">Reintentar</button>
+    </div>
+  } @else {
+    @if (average(); as average) {
+      <p>{{ reviews().length }} reseñas · Promedio {{ average }} / 5</p>
+    }
+    <div class="grid">
+      @for (review of reviews(); track review.reviewId) {
+        <article class="card">
+          <span class="eyebrow">{{ review.bookId ? 'LIBRO' : 'HISTORIA' }}</span>
+          <h3 class="rating">★ {{ review.rating }} / 5</h3>
+          <p class="prose">
+            {{ review.content.length > 180 ? review.content.slice(0, 180) + '…' : review.content }}
+          </p>
+          <a [routerLink]="['/reviews', review.reviewId]">Leer reseña →</a>
+        </article>
+      } @empty {
+        <p class="state">Todavía no hay reseñas. Compartí tu primera impresión.</p>
+      }
+    </div>
+  }
+</main>
