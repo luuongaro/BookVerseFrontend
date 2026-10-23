@@ -9,6 +9,9 @@ import { Register } from './features/auth/pages/register/register';
 import { Dashboard } from './features/dashboard/pages/dashboard/dashboard';
 import { Profile } from './features/profile/pages/profile/profile';
 import { groupsRoutes } from './features/groups/groups.routes';
+import { reviewReportsRoutes } from './features/reviews/review-reports.routes';
+import { RoleManagement } from './features/roles/pages/role-management/role-management';
+import { adminGuard } from './core/guards/admin.guard';
 
 export const routes: Routes = [
   { path: '', component: Home },
@@ -21,5 +24,7 @@ export const routes: Routes = [
   { path: 'books', children: booksRoutes },
   { path: 'google-books', component: GoogleBookSearch },
   { path: 'reviews', children: reviewsRoutes },
+  { path: 'review-reports', children: reviewReportsRoutes },
+  { path: 'role-management', component: RoleManagement, canActivate: [adminGuard] },
   { path: '**', redirectTo: '' },
 ];
