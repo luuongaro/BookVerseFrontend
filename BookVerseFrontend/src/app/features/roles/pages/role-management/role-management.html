@@ -1,0 +1,45 @@
+<app-catalog-nav />
+<main>
+  <span class="eyebrow">ADMINISTRACIÓN</span>
+  <h1>Gestión de roles</h1>
+  <p>Asigná los permisos adecuados a cada cuenta.</p>
+
+  @if (notice()) { <p class="notice" role="status">{{ notice() }}</p> }
+  @if (error()) { <div class="state error" role="alert">{{ error() }} <button (click)="load()">Reintentar</button></div> }
+  @if (loading()) {
+    <p class="state" role="status">Cargando usuarios y roles…</p>
+  } @else if (!error()) {
+    <label class="search-label" for="user-search">Buscar usuario</label>
+    <input id="user-search" class="search" type="search" placeholder="Nombre o email" [ngModel]="query()" (ngModelChange)="query.set($event)" />
+    <section class="users" aria-label="Usuarios y roles">
+      @for (user of visibleUsers(); track user.idExternal) {
+        <article class="user-card">
+          <header>
+            <div><h2>{{ user.username }}</h2><p>{{ user.email }}</p></div>
+            <span class="user-status">{{ user.status }}</span>
+          </header>
+          <fieldset>
+            <legend>Roles</legend>
+            <div class="role-options">
+              @for (role of roles(); track role.idExternal) {
+                <label class="role-option">
+                  <input type="checkbox" [checked]="isSelected(user.idExternal, role.name)" [disabled]="savingUserId() === user.idExternal" (change)="toggleRole(user, role.name, $any($event.target).checked)" />
+                  <span>{{ role.name }}</span>
+                  <small>{{ role.usersCount }} usuarios</small>
+                </label>
+              }
+            </div>
+          </fieldset>
+          <div class="card-actions">
+            @if ((drafts()[user.idExternal] ?? []).length === 0) { <p class="validation" role="alert">Debe conservar al menos un rol.</p> }
+            <button [disabled]="!hasChanges(user) || (drafts()[user.idExternal] ?? []).length === 0 || !!savingUserId()" (click)="save(user)">
+              {{ savingUserId() === user.idExternal ? 'Guardando…' : 'Guardar roles' }}
+            </button>
+          </div>
+        </article>
+      } @empty {
+        <p class="state">No hay usuarios que coincidan con la búsqueda.</p>
+      }
+    </section>
+  }
+</main>

@@ -119,6 +119,16 @@
       ariaCurrentWhenActive="page"
       ><span aria-hidden="true">☆</span><span>Reseñas</span></a
     >
+    @if (canModerate()) {
+      <a class="sidebar-link" routerLink="/review-reports" routerLinkActive="active" ariaCurrentWhenActive="page">
+        <span aria-hidden="true">⚑</span><span>Reportes</span>
+      </a>
+    }
+    @if (isAdmin()) {
+      <a class="sidebar-link" routerLink="/role-management" routerLinkActive="active" ariaCurrentWhenActive="page">
+        <span aria-hidden="true">⚙</span><span>Gestión de roles</span>
+      </a>
+    }
   </nav>
 
   <div class="sidebar-quote">
