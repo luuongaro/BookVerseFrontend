@@ -1,3 +1,4 @@
+import { LibraryService, LibrarySessionError } from '../../../library/services/library.service';
 import { BookCover } from '../../../../shared/components/book-cover/book-cover';
 import { Subscription } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -17,6 +18,10 @@ import { Book } from '../../models/book.model';
 })
 export class BookDetail implements OnInit {
   private readonly service = inject(BooksService);
+  private readonly library = inject(LibraryService);
+  saving = signal(false);
+  saved = signal(false);
+  saveError = signal('');
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   book = signal<Book | null>(null);
@@ -27,6 +32,8 @@ export class BookDetail implements OnInit {
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.load());
   }
   load(): void {
+    this.saved.set(false);
+    this.saveError.set('');
     this.request?.unsubscribe();
     this.loading.set(true);
     this.error.set('');
@@ -41,6 +48,27 @@ export class BookDetail implements OnInit {
         error: (error) => {
           this.error.set(apiError(error));
           this.loading.set(false);
+        },
+      });
+  }
+  saveToLibrary(): void {
+    const book = this.book();
+    if (!book || this.saving() || this.saved()) return;
+    this.saving.set(true);
+    this.saveError.set('');
+    this.library
+      .saveBook(book.idExternal)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.saved.set(true);
+          this.saving.set(false);
+        },
+        error: (error) => {
+          this.saveError.set(
+            error instanceof LibrarySessionError ? error.message : apiError(error),
+          );
+          this.saving.set(false);
         },
       });
   }

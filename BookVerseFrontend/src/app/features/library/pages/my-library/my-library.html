@@ -1,0 +1,106 @@
+<app-catalog-nav />
+<main>
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">UNA VIDA CONTADA EN LIBROS</span>
+      <h1>Tu propia <em>biblioteca.</em></h1>
+      <p>Los libros que elegiste guardar. Cada lomo, un mundo por abrir.</p>
+    </div>
+    <a class="button" routerLink="/books"
+      >Encontrá tu próxima lectura <span aria-hidden="true">＋</span></a
+    >
+  </div>
+  @if (loading()) {
+    <p class="state" role="status">Preparando tu estantería…</p>
+  } @else if (error()) {
+    <div class="state error" role="alert">
+      {{ error() }}
+      <div class="actions">
+        <button (click)="load()">Reintentar</button><a routerLink="/login">Iniciar sesión</a>
+      </div>
+    </div>
+  } @else {
+    <div class="library-toolbar">
+      <p>
+        {{ entries().length }} {{ entries().length === 1 ? 'libro guardado' : 'libros guardados' }}
+      </p>
+      <div>
+        <label for="reading-filter">Mostrar</label
+        ><select
+          id="reading-filter"
+          #readingFilter
+          [value]="filter()"
+          (change)="filter.set(readingFilter.value)"
+        >
+          <option value="all">Todos mis libros</option>
+          <option value="WANT_TO_READ">Quiero leer</option>
+          <option value="IN_PROGRESS">Leyendo</option>
+          <option value="FINISHED">Leídos</option>
+          <option value="RE_READING">Releyendo</option>
+          <option value="ABANDONED">Abandonados</option>
+        </select>
+      </div>
+    </div>
+    @if (unavailableCount()) {
+      <p class="state" role="status">
+        {{ unavailableCount() }} libros guardados ya no están disponibles en el catálogo.
+      </p>
+    }
+    <section class="shelf-room" aria-label="Mi estantería de libros guardados">
+      <div class="shelf-crown" aria-hidden="true"></div>
+      @for (shelf of shelves(); track $index) {
+        <section class="shelf-section">
+          <div class="shelf-label">
+            <span>LIBROS QUE SON PARTE DE TU MUNDO</span><span>ESTANTE {{ $index + 1 }}</span>
+          </div>
+          <div class="books-row">
+            @for (entry of shelf; track entry.reading.idExternal; let i = $index) {
+              <a
+                class="book-spine"
+                [routerLink]="['/books', entry.book.idExternal]"
+                [style.background-color]="colors[i % colors.length]"
+              [style.color]="inkColors[i % inkColors.length]"
+                [style.height.px]="210 + (i % 3) * 12"
+                [attr.aria-label]="
+                  entry.book.title +
+                  ', ' +
+                  (entry.book.authors?.join(', ') || 'Autor desconocido') +
+                  '. ' +
+                  statusLabel(entry.reading.status)
+                "
+                [title]="entry.book.title + ' · ' + statusLabel(entry.reading.status)"
+                ><span class="spine-mark" aria-hidden="true">✦</span
+                ><strong>{{ entry.book.title }}</strong
+                ><span class="spine-status">{{ statusLabel(entry.reading.status) }}</span></a
+              >
+            }
+          </div>
+          <div class="wood-shelf" aria-hidden="true"></div>
+        </section>
+      } @empty {
+        <section class="shelf-section">
+          <div class="empty-shelf">
+            <span aria-hidden="true">✧</span>
+            <h2>
+              {{
+                entries().length
+                  ? 'Cada libro tiene su momento.'
+                  : 'Tu estantería empieza con un libro.'
+              }}
+            </h2>
+            <p>
+              {{
+                entries().length
+                  ? 'Todavía no tenés libros en este estado.'
+                  : 'Buscá en el catálogo y elegí «Guardar en mi biblioteca» para verlo acá.'
+              }}
+            </p>
+            <a routerLink="/books">Explorar el catálogo →</a>
+          </div>
+          <div class="wood-shelf" aria-hidden="true"></div>
+        </section>
+      }
+    </section>
+    <p class="library-legend">Elegí un lomo. Abrí un mundo.</p>
+  }
+</main>
