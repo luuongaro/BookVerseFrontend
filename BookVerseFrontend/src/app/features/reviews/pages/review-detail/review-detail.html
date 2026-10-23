@@ -28,6 +28,11 @@
             >Editar mi reseña</a
           >
         }
+        @if (session.userId() && session.userId() !== review.reviewerId && review.takedownStatus !== 'TAKEN_DOWN') {
+          <a [routerLink]="['/review-reports', 'new']" [queryParams]="{ reviewId: review.reviewId }">
+            Reportar reseña
+          </a>
+        }
       </div>
     </article>
   }

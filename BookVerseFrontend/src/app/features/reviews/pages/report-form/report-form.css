@@ -1,0 +1,7 @@
+@import '../../../../shared/styles/catalog.css';
+
+form { margin-top: 24px; }
+input, textarea { display: block; width: 100%; margin: 8px 0; padding: 12px; border: 1px solid #d8d1e5; border-radius: 10px; font: inherit; }
+textarea { min-height: 130px; }
+.hint { color: #6d6878; font-size: .9rem; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 18px; }

@@ -1,0 +1,11 @@
+@import '../../../../shared/styles/catalog.css';
+
+.toolbar { display: flex; align-items: center; gap: 12px; margin: 24px 0; }
+.report-list { display: grid; gap: 14px; }
+.report-card { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 22px; border: 1px solid #e6e1ef; border-radius: 16px; background: #fff; }
+.report-card h2 { margin: 8px 0; font-size: 1.15rem; }
+.report-card p { margin: 6px 0; }
+.meta { color: #6d6878; font-size: .9rem; }
+.status { display: inline-block; padding: 4px 10px; border-radius: 999px; background: #eeeaf4; color: #51456f; font-size: .78rem; font-weight: 700; }
+.status.pending { background: #fff1d6; color: #815300; }
+@media (max-width: 620px) { .report-card { align-items: flex-start; flex-direction: column; } }
