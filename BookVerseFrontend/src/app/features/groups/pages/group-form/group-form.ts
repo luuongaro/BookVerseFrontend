@@ -9,6 +9,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import { ReadingGroupsService } from '../../services/reading-groups.service';
+import { UserService } from '../../../profile/services/user.service';
 
 type GroupWorkType = 'book' | 'story';
 
@@ -27,11 +28,25 @@ export class GroupForm implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly userService = inject(UserService);
 
   groupId: string | null = null;
   isLoading = false;
   isSaving = false;
   errorMessage = '';
+
+  get currentUsername(): string {
+    return this.userService.currentUser()?.username ?? 'Usuario';
+  }
+
+  get currentUserInitials(): string {
+    const username = this.userService.currentUser()?.username?.trim();
+    return username ? username.slice(0, 2).toUpperCase() : 'BV';
+  }
+
+  logout(): void {
+    this.userService.logout();
+  }
 
   groupForm = this.formBuilder.nonNullable.group({
     name: [

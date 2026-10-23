@@ -14,6 +14,7 @@ import { GroupGoalsService } from '../../services/group-goals.service';
 import { GroupMembersService } from '../../services/group-members.service';
 import { GroupProgressService } from '../../services/group-progress.service';
 import { ReadingGroupsService } from '../../services/reading-groups.service';
+import { UserService } from '../../../profile/services/user.service';
 
 @Component({
   selector: 'app-group-detail',
@@ -30,6 +31,7 @@ export class GroupDetail implements OnInit {
   private readonly groupGoalsService = inject(GroupGoalsService);
   private readonly groupCommentsService = inject(GroupCommentsService);
   private readonly groupProgressService = inject(GroupProgressService);
+  private readonly userService = inject(UserService);
 
   group: ReadingGroup | null = null;
   members: GroupMember[] = [];
@@ -63,6 +65,19 @@ export class GroupDetail implements OnInit {
   goalActionMessage = '';
   commentActionMessage = '';
   memberActionMessage = '';
+
+  get currentUsername(): string {
+    return this.userService.currentUser()?.username ?? 'Usuario';
+  }
+
+  get currentUserInitials(): string {
+    const username = this.userService.currentUser()?.username?.trim();
+    return username ? username.slice(0, 2).toUpperCase() : 'BV';
+  }
+
+  logout(): void {
+    this.userService.logout();
+  }
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {

@@ -12,6 +12,7 @@ import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { ReadingGroup } from '../../models/reading-group.model';
 import { GroupMembersService } from '../../services/group-members.service';
 import { ReadingGroupsService } from '../../services/reading-groups.service';
+import { UserService } from '../../../profile/services/user.service';
 
 @Component({
   selector: 'app-group-list',
@@ -23,11 +24,25 @@ export class GroupList implements OnInit {
   private readonly readingGroupsService = inject(ReadingGroupsService);
   private readonly groupMembersService = inject(GroupMembersService);
   private readonly changeDetector = inject(ChangeDetectorRef);
+  private readonly userService = inject(UserService);
 
   groups: ReadingGroup[] = [];
   searchTerm = '';
   isLoading = true;
   errorMessage = '';
+
+  get currentUsername(): string {
+    return this.userService.currentUser()?.username ?? 'Usuario';
+  }
+
+  get currentUserInitials(): string {
+    const username = this.userService.currentUser()?.username?.trim();
+    return username ? username.slice(0, 2).toUpperCase() : 'BV';
+  }
+
+  logout(): void {
+    this.userService.logout();
+  }
 
   ngOnInit(): void {
     this.loadGroups();

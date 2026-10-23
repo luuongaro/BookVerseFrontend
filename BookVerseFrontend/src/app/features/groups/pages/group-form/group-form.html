@@ -46,15 +46,15 @@
         <span>Mi perfil</span>
       </a>
 
-      <a class="sidebar-link" routerLink="/login">
+      <a class="sidebar-link" routerLink="/login" (click)="logout()">
         <span aria-hidden="true">↪</span>
         <span>Cerrar sesión</span>
       </a>
 
       <a class="account-link" routerLink="/profile">
-        <span class="avatar">AL</span>
+        <span class="avatar">{{ currentUserInitials }}</span>
         <span>
-          <strong>Alex Lane</strong>
+          <strong>{{ currentUsername }}</strong>
           <small>Lector y soñador</small>
         </span>
         <span class="account-arrow" aria-hidden="true">›</span>
@@ -75,7 +75,7 @@
       <div class="topbar-note">
         <span aria-hidden="true">☾</span>
         <span>Un buen día para un nuevo capítulo</span>
-        <span class="avatar">AL</span>
+        <span class="avatar">{{ currentUserInitials }}</span>
       </div>
     </header>
 
