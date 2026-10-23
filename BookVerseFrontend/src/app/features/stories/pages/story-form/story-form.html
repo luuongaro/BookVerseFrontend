@@ -1,1 +1,56 @@
-<p>story-form works!</p>
+<section class="story-form">
+
+  <h1>
+    Crear historia
+  </h1>
+
+  <form [formGroup]="form">
+
+    <label>
+
+      Título
+
+      <input
+        type="text"
+        formControlName="title"
+      />
+
+    </label>
+
+    <label>
+
+      Descripción
+
+      <textarea
+        formControlName="description">
+      </textarea>
+
+    </label>
+
+    <label>
+
+      Tipo de acceso
+
+      <select formControlName="accessType">
+
+        <option value="FREE">
+          Gratuita
+        </option>
+
+        <option value="PREMIUM">
+          Premium
+        </option>
+
+      </select>
+
+    </label>
+
+    <button type="submit">
+
+      Guardar
+
+    </button>
+
+  </form>
+
+</section>

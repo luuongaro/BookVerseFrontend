@@ -1,1 +1,145 @@
-<p>story-list works!</p>
+<div class="stories-page">
+<section class="page-heading">
+
+  <div>
+
+   <h1>
+  Tu santuario de <em>escritura.</em>
+</h1>
+
+<p>
+  Tomate un momento. El mundo puede esperar unas palabras más.
+</p>
+
+  </div>
+
+<a
+  routerLink="/stories/new"
+  class="new-story-btn">
+
+  Comenzá una nueva historia
+
+  <span>＋</span>
+
+</a>
+
+</section>
+
+<section class="writer-banner">
+
+  <img
+    src="assets/writers-desk-v2.png"
+    alt="Escritorio de escritor"
+  >
+
+  <div class="writer-banner-overlay"></div>
+
+  <div class="writer-banner-content">
+
+    <p class="eyebrow">
+      LA PÁGINA ES TUYA
+    </p>
+
+    <h2>
+      Hay un universo
+      que sólo vos podés escribir.
+    </h2>
+
+    <p>
+      Veamos hacia dónde te lleva el próximo capítulo.
+    </p>
+
+    <a
+      routerLink="/stories/new"
+      class="banner-button">
+      Empezar a escribir
+      <span>✎</span>
+    </a>
+
+  </div>
+
+</section>
+
+<div class="stories-section-header">
+
+  <div class="stories-title-group">
+
+    <h2>Historias en tu escritorio</h2>
+
+    <span class="stories-count">
+      {{ stories().length < 10 ? '0' + stories().length : stories().length }}
+    </span>
+
+  </div>
+
+  <p class="stories-caption">
+    Cada borrador es un comienzo.
+  </p>
+
+</div>
+
+<section class="stories-grid">
+
+  @for(story of stories(); track story.idExternal){
+
+    <article class="story-card">
+
+<div class="story-cover">
+
+  <span class="cover-symbol">✧</span>
+
+  <h3>
+    {{ story.title }}
+  </h3>
+
+ <small>Historia original</small>
+
+</div>
+
+  <div class="story-content">
+
+    <span
+      class="story-badge"
+      [class.premium]="story.accessType === 'PREMIUM'">
+
+      @if(story.accessType === 'FREE'){
+        Gratuita
+      } @else {
+        Premium
+      }
+
+    </span>
+
+    <h2>
+      {{ story.title }}
+    </h2>
+
+    <p class="story-description">
+      {{ story.description }}
+    </p>
+
+    <div class="story-footer">
+      <span>
+        {{ story.chaptersCount }} capítulos
+      </span>
+    </div>
+
+    <div class="story-actions">
+
+      <a
+        [routerLink]="['/stories', story.idExternal]"
+        class="story-link">
+          Continuar escribiendo →
+      </a>
+
+
+    </div>
+
+  </div>
+
+    </article>
+
+}
+
+</section>
+</div>
