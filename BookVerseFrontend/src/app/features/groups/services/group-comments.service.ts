@@ -1,6 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Service } from '@angular/core';
 import { Observable } from 'rxjs';
+
+import { API_URL, authHeaders } from '../../../core/api/api.config';
 import {
   CreateGroupCommentRequest,
   GroupComment,
@@ -9,10 +11,12 @@ import {
 @Service()
 export class GroupCommentsService {
   private readonly http = inject(HttpClient);
-  private readonly url = 'http://localhost:8080/api/group-comments';
+  private readonly url = `${API_URL}/group-comments`;
 
   getVisibleByGroup(groupId: string): Observable<GroupComment[]> {
-    return this.http.get<GroupComment[]>(`${this.url}/group/${groupId}`);
+    return this.http.get<GroupComment[]>(`${this.url}/group/${groupId}`, {
+      headers: authHeaders(),
+    });
   }
 
   create(
@@ -22,6 +26,7 @@ export class GroupCommentsService {
     return this.http.post<GroupComment>(
       `${this.url}/group/${groupId}`,
       request,
+      { headers: authHeaders() },
     );
   }
 }

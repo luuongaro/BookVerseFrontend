@@ -133,9 +133,7 @@
             </div>
 
             <p class="group-description">
-              Un espacio para conversar sobre historias que nos hacen preguntar
-              qué pasaría si… Exploramos libros sobre segundas oportunidades,
-              vidas paralelas y la magia de lo cotidiano.
+              Un espacio para compartir esta lectura, intercambiar ideas y avanzar juntos.
             </p>
 
             <div class="reading-now">
@@ -155,10 +153,6 @@
               <span aria-hidden="true">✎</span>
               Editar círculo
             </a>
-            <button class="button button-primary" type="button">
-              <span aria-hidden="true">♧</span>
-              Invitar lectores
-            </button>
           </div>
         </section>
 
@@ -167,35 +161,143 @@
             <div class="panel-heading">
               <div>
                 <p class="panel-label">META DE LECTURA</p>
-                <h2>Leer 12 capítulos</h2>
+                @if (activeGoal) {
+                  <h2>{{ activeGoalLabel }}</h2>
+                } @else {
+                  <h2>Meta del grupo</h2>
+                }
               </div>
-              <div class="due-date">
-                <span aria-hidden="true">▢</span>
-                <span>Fecha límite<br /><strong>30 abr. 2025</strong></span>
+
+              @if (activeGoal) {
+                <div class="due-date">
+                  <span aria-hidden="true">▢</span>
+                  <span>
+                    Fecha límite<br />
+                    <strong>{{ activeGoal.targetDate | date: 'd MMM y' }}</strong>
+                  </span>
+                </div>
+              }
+            </div>
+
+            @if (isLoadingGoals) {
+              <p class="member-state" role="status">Cargando metas…</p>
+            } @else if (goalsErrorMessage) {
+              <p class="member-state state-error" role="alert">
+                {{ goalsErrorMessage }}
+              </p>
+            } @else if (activeGoal) {
+              @if (progress) {
+                <div
+                  class="progress-track"
+                  role="progressbar"
+                  aria-label="Progreso grupal de la meta"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  [attr.aria-valuenow]="goalCompletionPercent"
+                >
+                  <span [style.width.%]="goalCompletionPercent"></span>
+                </div>
+
+                <div class="progress-caption">
+                  <span>
+                    Promedio del grupo:
+                    {{ progress.currentProgress | number: '1.0-1' }}
+                    {{ activeGoal.goalType === 'PERCENTAGE' ? '%' : ' capítulos' }}
+                    de
+                    {{ activeGoal.targetProgress }}
+                    {{ activeGoal.goalType === 'PERCENTAGE' ? '%' : ' capítulos' }}
+                  </span>
+                  <strong>{{ goalCompletionPercent | number: '1.0-0' }}%</strong>
+                </div>
+
+                @if (progress.achieved) {
+                  <p class="member-state">¡Meta grupal alcanzada!</p>
+                }
+              } @else if (progressErrorMessage) {
+                <p class="member-state state-error" role="alert">
+                  {{ progressErrorMessage }}
+                </p>
+              } @else {
+                <p class="member-state" role="status">
+                  Calculando progreso del grupo…
+                </p>
+              }
+
+              <div class="goal-actions">
+                <button
+                  class="button button-outline"
+                  type="button"
+                  (click)="finishGoal()"
+                  [disabled]="isChangingGoal"
+                >
+                  Marcar completada
+                </button>
+                <button
+                  class="button button-outline"
+                  type="button"
+                  (click)="cancelGoal()"
+                  [disabled]="isChangingGoal"
+                >
+                  Cancelar meta
+                </button>
               </div>
-            </div>
+            } @else {
+              <p class="goal-book">
+                Todavía no hay una meta activa para este grupo.
+              </p>
 
-            <p class="goal-book">La lectura compartida del círculo</p>
+              <div class="goal-create-form">
+                <label>
+                  Tipo de meta
+                  <select [(ngModel)]="goalType" name="goalType">
+                    <option value="PERCENTAGE">Porcentaje</option>
+                    @if (isStoryGroup) {
+                      <option value="CHAPTER">Capítulos</option>
+                    }
+                  </select>
+                </label>
 
-            <div
-              class="progress-track"
-              role="progressbar"
-              aria-label="Progreso de la meta de lectura"
-              aria-valuemin="0"
-              aria-valuemax="100"
-              aria-valuenow="64"
-            >
-              <span></span>
-            </div>
+                <label>
+                  Objetivo ({{ goalUnit }})
+                  <input
+                    type="number"
+                    min="1"
+                    [max]="goalType === 'PERCENTAGE' ? 100 : null"
+                    [(ngModel)]="targetProgress"
+                    name="targetProgress"
+                  />
+                </label>
 
-            <div class="progress-caption">
-              <span>8 de 12 capítulos leídos</span>
-              <strong>64%</strong>
-            </div>
+                <label>
+                  Fecha límite
+                  <input
+                    type="datetime-local"
+                    [(ngModel)]="targetDate"
+                    name="targetDate"
+                  />
+                </label>
 
-            <button class="button button-primary progress-button" type="button">
-              Actualizar progreso
-            </button>
+                <button
+                  class="button button-primary progress-button"
+                  type="button"
+                  (click)="createGoal()"
+                  [disabled]="
+                    isSavingGoal ||
+                    !targetDate ||
+                    targetProgress < 1 ||
+                    (goalType === 'PERCENTAGE' && targetProgress > 100)
+                  "
+                >
+                  {{ isSavingGoal ? 'Guardando…' : 'Crear meta' }}
+                </button>
+              </div>
+            }
+
+            @if (goalActionMessage) {
+              <p class="member-state state-error" role="alert">
+                {{ goalActionMessage }}
+              </p>
+            }
           </article>
 
           <article class="panel members-panel">
@@ -249,90 +351,169 @@
                   </span>
                 }
               </div>
+
+              <ul class="member-name-list" aria-label="Integrantes del grupo">
+                @for (member of members; track member.idExternal) {
+                  <li>
+                    {{ member.userName }}
+                    <small>
+                      {{ member.memberType === 'CREATOR' ? 'Creador' : '' }}
+                    </small>
+                  </li>
+                }
+              </ul>
             }
 
-            <a class="members-link" routerLink="/groups">
-              Ver todos <span aria-hidden="true">›</span>
-            </a>
+            @if (members.length > 0) {
+              <div class="member-management">
+                <button
+                  class="button button-outline"
+                  type="button"
+                  (click)="showInviteForm = !showInviteForm"
+                >
+                  {{ showInviteForm ? 'Cerrar invitación' : 'Agregar lector' }}
+                </button>
+
+                @if (canLeaveGroup) {
+                  <button
+                    class="button button-outline"
+                    type="button"
+                    (click)="leaveGroup()"
+                    [disabled]="isUpdatingMembers"
+                  >
+                    Salir del grupo
+                  </button>
+                }
+              </div>
+
+              @if (showInviteForm) {
+                <form class="invite-form" (ngSubmit)="inviteMember()">
+                  <label class="visually-hidden" for="inviteUserId">
+                    UUID del usuario a agregar
+                  </label>
+                  <input
+                    id="inviteUserId"
+                    name="inviteUserId"
+                    [(ngModel)]="inviteUserId"
+                    placeholder="UUID del lector"
+                    required
+                  />
+                  <button
+                    class="button button-primary"
+                    type="submit"
+                    [disabled]="isUpdatingMembers || !inviteUserId.trim()"
+                  >
+                    {{ isUpdatingMembers ? 'Agregando…' : 'Agregar' }}
+                  </button>
+                </form>
+              }
+
+              @if (memberActionMessage) {
+                <p class="member-state state-error" role="alert">
+                  {{ memberActionMessage }}
+                </p>
+              }
+            }
           </article>
         </section>
 
         <section class="panel conversation-panel">
           <div class="conversation-heading">
             <h2><span aria-hidden="true">◯</span> Conversación</h2>
-            <span class="conversation-count">Conversación del círculo</span>
+            <span class="conversation-count">
+              {{ comments.length }} comentarios visibles
+            </span>
           </div>
 
           <div class="comment-list">
-            <article class="comment">
-              <span class="comment-avatar avatar-rose">JM</span>
-              <div class="comment-content">
-                <div class="comment-author">
-                  <strong>Javier Mora</strong>
-                  <span>hace 2 días</span>
-                </div>
-                <p>
-                  ¡Qué capítulo tan potente! Me encantó cómo empieza a abrirse
-                  este mundo de posibilidades.
-                </p>
-              </div>
-              <span class="comment-reaction" aria-label="3 reacciones">♡ 3</span>
-              <button class="more-button" type="button" aria-label="Más opciones">
-                ···
-              </button>
-            </article>
+            @if (isLoadingComments) {
+              <p class="member-state" role="status">Cargando comentarios…</p>
+            } @else if (commentsErrorMessage) {
+              <p class="member-state state-error" role="alert">
+                {{ commentsErrorMessage }}
+              </p>
+            } @else if (comments.length === 0) {
+              <p class="member-state">
+                Todavía no hay comentarios visibles para tu progreso.
+              </p>
+            } @else {
+              @for (comment of comments; track comment.idExternal; let i = $index) {
+                <article class="comment">
+                  <span
+                    class="comment-avatar"
+                    [class.avatar-rose]="i % 3 === 0"
+                    [class.avatar-blue]="i % 3 === 1"
+                    [class.avatar-green]="i % 3 === 2"
+                  >
+                    {{ (comment.userName || 'Lector').slice(0, 2).toUpperCase() }}
+                  </span>
 
-            <article class="comment">
-              <span class="comment-avatar avatar-blue">SK</span>
-              <div class="comment-content">
-                <div class="comment-author">
-                  <strong>Sofía Kim</strong>
-                  <span>hace 1 día</span>
-                </div>
-                <p>
-                  Totalmente de acuerdo. ¿Ustedes también sintieron que este
-                  capítulo fue un punto de inflexión?
-                </p>
-              </div>
-              <span class="comment-reaction" aria-label="2 reacciones">♡ 2</span>
-              <button class="more-button" type="button" aria-label="Más opciones">
-                ···
-              </button>
-            </article>
-
-            <article class="comment">
-              <span class="comment-avatar avatar-green">EL</span>
-              <div class="comment-content">
-                <div class="comment-author">
-                  <strong>Elena López</strong>
-                  <span>hace 6 horas</span>
-                </div>
-                <p>
-                  Me encanta cómo esta historia nos recuerda que siempre hay
-                  otro camino esperándonos. ✨
-                </p>
-              </div>
-              <span class="comment-reaction" aria-label="4 reacciones">♡ 4</span>
-              <button class="more-button" type="button" aria-label="Más opciones">
-                ···
-              </button>
-            </article>
+                  <div class="comment-content">
+                    <div class="comment-author">
+                      <strong>{{ comment.userName || 'Lector' }}</strong>
+                      <span>{{ comment.createdAt | date: 'd MMM, HH:mm' }}</span>
+                    </div>
+                    <p>{{ comment.content }}</p>
+                    <small>
+                      Progreso al comentar: {{ comment.progressPercent }}%
+                    </small>
+                  </div>
+                </article>
+              }
+            }
           </div>
 
-          <form class="comment-form">
-            <span class="comment-avatar avatar-lilac">AL</span>
-            <label class="visually-hidden" for="newComment">
-              Escribí un comentario
-            </label>
-            <input
-              id="newComment"
-              type="text"
-              placeholder="Escribí un comentario…"
-            />
-            <button class="button button-primary" type="button">
-              Publicar
-            </button>
-          </form>
+          @if (!isStoryGroup) {
+            <form class="comment-form" (ngSubmit)="publishComment()">
+              <span class="comment-avatar avatar-lilac">AL</span>
+
+              <label class="visually-hidden" for="newComment">
+                Escribí un comentario
+              </label>
+              <input
+                id="newComment"
+                type="text"
+                placeholder="Escribí un comentario…"
+                name="commentContent"
+                [(ngModel)]="commentContent"
+                maxlength="1000"
+                required
+              />
+
+              <label class="visually-hidden" for="commentProgress">
+                Tu progreso de lectura
+              </label>
+              <input
+                id="commentProgress"
+                class="comment-progress-input"
+                type="number"
+                min="0"
+                max="100"
+                name="commentProgress"
+                [(ngModel)]="commentProgress"
+                aria-label="Porcentaje de lectura"
+              />
+              <span class="comment-progress-suffix">%</span>
+
+              <button
+                class="button button-primary"
+                type="submit"
+                [disabled]="isSavingComment || !commentContent.trim()"
+              >
+                {{ isSavingComment ? 'Publicando…' : 'Publicar' }}
+              </button>
+            </form>
+          } @else {
+            <p class="member-state">
+              El backend habilita comentarios para grupos vinculados a libros.
+            </p>
+          }
+
+          @if (commentActionMessage) {
+            <p class="member-state state-error" role="alert">
+              {{ commentActionMessage }}
+            </p>
+          }
         </section>
 
         <footer class="page-footer">
