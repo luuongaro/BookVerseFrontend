@@ -1,1 +1,57 @@
-<p>story-detail works!</p>
+<section class="story-detail">
+
+  <h1>
+    {{story().title}}
+  </h1>
+
+  <p>
+    {{story().description}}
+  </p>
+
+  <div class="story-metadata">
+
+    <span>
+      {{story().chaptersCount}} capítulos
+    </span>
+
+    <span>
+      {{story().accessType}}
+    </span>
+
+  </div>
+
+  <h2>
+    Capítulos
+  </h2>
+
+  <div class="chapters-list">
+
+    @for(chapter of story().chapters; track chapter.chapterNumber){
+
+      <article class="chapter-card">
+
+        <strong>
+          Capítulo {{chapter.chapterNumber}}
+        </strong>
+
+        <p>
+          {{chapter.title}}
+        </p>
+
+        @if(chapter.published){
+
+          <span>Publicado</span>
+
+        } @else {
+
+          <span>Borrador</span>
+
+        }
+
+      </article>
+
+    }
+
+  </div>
+
+</section>
