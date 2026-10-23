@@ -1,8 +1,9 @@
 <app-catalog-nav />
 <main>
   <span class="eyebrow">UN MUNDO ENTRE PÁGINAS</span>
-  <h1>Tu próxima gran lectura.</h1>
-  <p>Explorá los libros de BookVerse y compartí lo que te hicieron sentir.</p>
+  <h1>El catálogo de BookVerse.</h1>
+  <p>Explorá el catálogo y guardá tus próximas lecturas en tu biblioteca personal.</p>
+  <a class="button secondary" routerLink="/library">Mi biblioteca</a>
   <a class="button" routerLink="/google-books">Buscar en Google Books</a>
   @if (loading()) {
     <p class="state" role="status">Cargando libros…</p>

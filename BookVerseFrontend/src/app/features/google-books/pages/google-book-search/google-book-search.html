@@ -2,7 +2,7 @@
 <main>
   <span class="eyebrow">MÁS ALLÁ DE TU ESTANTERÍA</span>
   <h1>Encontrá tu próxima historia.</h1>
-  <p>Buscá en Google Books y agregá un libro al catálogo de BookVerse.</p>
+  <p>Buscá en Google Books y guardá tu próxima lectura en tu biblioteca.</p>
   <form class="search panel" [formGroup]="form" (ngSubmit)="search()">
     <div>
       <label for="type">Buscar por</label
@@ -43,7 +43,7 @@
           <p>{{ book.volumeInfo.authors?.join(', ') || 'Autor desconocido' }}</p>
           <p>{{ book.volumeInfo.publishedDate }}</p>
           <button [disabled]="!!importing()" (click)="importBook(book.id)">
-            {{ importing() === book.id ? 'Agregando…' : 'Agregar y ver libro' }}
+            {{ importing() === book.id ? 'Agregando…' : 'Guardar en mi biblioteca' }}
           </button>
         </article>
       } @empty {

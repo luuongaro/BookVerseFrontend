@@ -1,3 +1,4 @@
+import { MyLibrary } from './features/library/pages/my-library/my-library';
 import { booksRoutes } from './features/books/books.routes';
 import { reviewsRoutes } from './features/reviews/reviews.routes';
 import { GoogleBookSearch } from './features/google-books/pages/google-book-search/google-book-search';
@@ -21,6 +22,7 @@ export const routes: Routes = [
   { path: 'register', component: Register },
   { path: 'dashboard', component: Dashboard },
   { path: 'profile', component: Profile },
+  { path: 'library', component: MyLibrary },
   { path: 'books', children: booksRoutes },
   { path: 'google-books', component: GoogleBookSearch },
   { path: 'reviews', children: reviewsRoutes },

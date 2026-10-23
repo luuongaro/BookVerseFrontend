@@ -1,3 +1,5 @@
+import { switchMap } from 'rxjs';
+import { LibraryService, LibrarySessionError } from '../../../library/services/library.service';
 import { BookCover } from '../../../../shared/components/book-cover/book-cover';
 import { CatalogNav } from '../../../../shared/components/catalog-nav/catalog-nav';
 import { Component, inject, signal } from '@angular/core';
@@ -17,6 +19,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 export class GoogleBookSearch {
   private readonly service = inject(GoogleBooksService);
   private readonly books = inject(BooksService);
+  private readonly library = inject(LibraryService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   form = this.fb.nonNullable.group({
@@ -57,15 +60,20 @@ export class GoogleBookSearch {
     if (this.importing()) return;
     this.importing.set(id);
     this.importError.set('');
-    this.books.importGoogleBook(id).subscribe({
-      next: (book) => {
-        this.importing.set('');
-        void this.router.navigate(['/books', book.idExternal]);
-      },
-      error: (error) => {
-        this.importError.set(apiError(error));
-        this.importing.set('');
-      },
-    });
+    this.books
+      .importGoogleBook(id)
+      .pipe(switchMap((book) => this.library.saveBook(book.idExternal)))
+      .subscribe({
+        next: () => {
+          this.importing.set('');
+          void this.router.navigate(['/library']);
+        },
+        error: (error) => {
+          this.importError.set(
+            error instanceof LibrarySessionError ? error.message : apiError(error),
+          );
+          this.importing.set('');
+        },
+      });
   }
 }
