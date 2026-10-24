@@ -1,4 +1,5 @@
-import { Subscription } from 'rxjs';
+import { Subscription, switchMap, map } from 'rxjs';
+import { ReviewWork, ReviewWorkService } from '../../services/review-work.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DestroyRef } from '@angular/core';
 import { CatalogNav } from '../../../../shared/components/catalog-nav/catalog-nav';
@@ -20,6 +21,8 @@ export class ReviewDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   readonly session = inject(ReviewSessionService);
+  private readonly works = inject(ReviewWorkService);
+  work = signal<ReviewWork | null>(null);
   review = signal<Review | null>(null);
   loading = signal(true);
   error = signal('');
@@ -33,9 +36,13 @@ export class ReviewDetail implements OnInit {
     this.error.set('');
     this.request = this.service
       .getById(this.route.snapshot.paramMap.get('id')!)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        switchMap((review) => this.works.resolve(review).pipe(map((work) => ({ review, work })))),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe({
-        next: (review) => {
+        next: ({ review, work }) => {
+          this.work.set(work);
           this.review.set(review);
           this.loading.set(false);
         },

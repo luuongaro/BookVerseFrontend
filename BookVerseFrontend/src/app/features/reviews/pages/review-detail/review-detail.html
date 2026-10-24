@@ -8,7 +8,11 @@
       {{ error() }} <button (click)="load()">Reintentar</button>
     </div>
   } @else if (review(); as review) {
-    <h1>Una lectura, una mirada.</h1>
+    @if (work(); as work) {
+      <span class="eyebrow">{{ work.kind === 'book' ? 'LIBRO' : 'HISTORIA' }}</span>
+      <h1>{{ work.title }}</h1>
+      <p>De {{ work.author }}</p>
+    }
     <article class="panel">
       <h2 class="rating">★ {{ review.rating }} / 5</h2>
       <p class="prose">{{ review.content }}</p>
@@ -28,8 +32,15 @@
             >Editar mi reseña</a
           >
         }
-        @if (session.userId() && session.userId() !== review.reviewerId && review.takedownStatus !== 'TAKEN_DOWN') {
-          <a [routerLink]="['/review-reports', 'new']" [queryParams]="{ reviewId: review.reviewId }">
+        @if (
+          session.userId() &&
+          session.userId() !== review.reviewerId &&
+          review.takedownStatus !== 'TAKEN_DOWN'
+        ) {
+          <a
+            [routerLink]="['/review-reports', 'new']"
+            [queryParams]="{ reviewId: review.reviewId }"
+          >
             Reportar reseña
           </a>
         }
