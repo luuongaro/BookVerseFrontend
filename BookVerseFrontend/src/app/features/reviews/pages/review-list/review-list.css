@@ -1,1 +1,34 @@
 @import '../../../../shared/styles/catalog.css';
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 16px;
+  margin-top: 32px;
+  padding: 20px;
+  background: #f0ecf6;
+  border-radius: 14px;
+}
+.filters label {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+.filters input,
+.filters select {
+  width: 100%;
+}
+.filter-help {
+  font-size: 14px;
+}
+.work-group {
+  margin-top: 36px;
+  border-top: 1px solid #e8e2ef;
+  padding-top: 24px;
+}
+.work-heading h2 {
+  margin: 10px 0;
+  overflow-wrap: anywhere;
+}
+.work-heading p {
+  margin: 4px 0;
+}

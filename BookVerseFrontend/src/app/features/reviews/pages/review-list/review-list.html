@@ -18,22 +18,105 @@
       {{ error() }} <button (click)="load()">Reintentar</button>
     </div>
   } @else {
-    @if (average(); as average) {
-      <p>{{ reviews().length }} reseñas · Promedio {{ average }} / 5</p>
-    }
-    <div class="grid">
-      @for (review of reviews(); track review.reviewId) {
-        <article class="card">
-          <span class="eyebrow">{{ review.bookId ? 'LIBRO' : 'HISTORIA' }}</span>
-          <h3 class="rating">★ {{ review.rating }} / 5</h3>
-          <p class="prose">
-            {{ review.content.length > 180 ? review.content.slice(0, 180) + '…' : review.content }}
-          </p>
-          <a [routerLink]="['/reviews', review.reviewId]">Leer reseña →</a>
-        </article>
-      } @empty {
-        <p class="state">Todavía no hay reseñas. Compartí tu primera impresión.</p>
-      }
+    <div class="filters" aria-label="Filtros de reseñas">
+      <label
+        >Buscar título o autor<input
+          #query
+          type="search"
+          [value]="search()"
+          (input)="search.set(query.value)"
+          placeholder="Título o autor"
+      /></label>
+      <label
+        >Reseñas<select
+          #scope
+          [value]="mine() ? 'mine' : 'all'"
+          (change)="mine.set(scope.value === 'mine')"
+        >
+          <option value="all">Todas las reseñas</option>
+          <option value="mine" [disabled]="!session.userId()">Mis reseñas</option>
+        </select></label
+      >
+      <label
+        >Tipo de obra<select #type [value]="kind()" (change)="kind.set(type.value)">
+          <option value="all">Libros e historias</option>
+          <option value="book">Libros</option>
+          <option value="story">Historias</option>
+        </select></label
+      >
+      <label
+        >Género / categoría<select #category [value]="genre()" (change)="genre.set(category.value)">
+          <option value="">Todos los géneros</option>
+          @for (genre of genres(); track genre) {
+            <option [value]="genre">{{ genre }}</option>
+          }
+        </select></label
+      >
+      <label
+        >Ordenar por<select #order [value]="sort()" (change)="sort.set(order.value)">
+          <option value="newest">Más recientes</option>
+          <option value="rating">Mayor valoración</option>
+        </select></label
+      >
+      <button class="secondary" (click)="resetFilters()">Limpiar filtros</button>
     </div>
+    <p class="filter-help">
+      El género usa las categorías disponibles de los libros. Las historias aún no tienen género.
+    </p>
+    @if (!session.userId()) {
+      <p><a routerLink="/login">Iniciá sesión</a> para filtrar tus reseñas.</p>
+    }
+    <p role="status">
+      {{ visibleReviews().length }} reseñas en {{ groups().length }} obras
+      @if (average(); as average) {
+        · Promedio {{ average }} / 5
+      }
+    </p>
+    @for (group of groups(); track group.work.key) {
+      <section class="work-group" [attr.aria-label]="group.work.title">
+        <header class="work-heading">
+          <span class="eyebrow">{{ group.work.kind === 'book' ? 'LIBRO' : 'HISTORIA' }}</span>
+          <h2>
+            @if (!group.work.unavailable) {
+              <a
+                [routerLink]="[group.work.kind === 'book' ? '/books' : '/stories', group.work.id]"
+                >{{ group.work.title }}</a
+              >
+            } @else {
+              {{ group.work.title }}
+            }
+          </h2>
+          <p>De {{ group.work.author }}</p>
+          @if (group.work.genres.length) {
+            <p>{{ group.work.genres.join(' · ') }}</p>
+          }
+        </header>
+        <div class="grid">
+          @for (review of group.reviews; track review.reviewId) {
+            <article class="card">
+              <h3 class="rating">★ {{ review.rating }} / 5</h3>
+              @if (session.userId() === review.reviewerId) {
+                <span class="eyebrow">TU RESEÑA</span>
+              }
+              <p class="prose">
+                {{
+                  review.content.length > 180 ? review.content.slice(0, 180) + '…' : review.content
+                }}
+              </p>
+              <p>{{ review.createdAt.slice(0, 10) }}</p>
+              <a [routerLink]="['/reviews', review.reviewId]">Leer reseña →</a>
+            </article>
+          }
+        </div>
+      </section>
+    } @empty {
+      <p class="state">
+        {{
+          reviews().length
+            ? 'No hay reseñas que coincidan con estos filtros.'
+            : 'Todavía no hay reseñas. Compartí tu primera impresión.'
+        }}
+      </p>
+    }
   }
 </main>
