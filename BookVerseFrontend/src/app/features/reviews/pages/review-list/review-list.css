@@ -402,12 +402,6 @@ a {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.featured-copy small {
-  display: block;
-  font-size: 10px;
-  color: var(--muted);
-  margin-top: 10px;
-}
 .featured-rating {
   top: 12px;
   font-size: 11px;

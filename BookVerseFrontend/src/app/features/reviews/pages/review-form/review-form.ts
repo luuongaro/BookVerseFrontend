@@ -114,7 +114,7 @@ export class ReviewForm implements OnInit {
     }
     const reviewerId = this.session.userId();
     if (!this.id && !reviewerId) {
-      this.error.set('No pudimos identificar tu sesión para publicar la reseña.');
+      this.error.set('Volvé a iniciar sesión para publicar tu reseña.');
       return;
     }
     this.saving.set(true);

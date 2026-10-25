@@ -31,7 +31,7 @@
         {{ error() }} <button (click)="load()">Reintentar</button>
       </div>
     } @else {
-      <section class="overview" aria-label="Resumen de las reseñas filtradas">
+      <section class="overview" aria-label="Resumen de valoraciones">
         <div class="rating-panel">
           <div>
             <div class="score">{{ average() || '—' }}</div>
@@ -41,7 +41,7 @@
             >
               {{ stars(+(average() || 0)) }}
             </div>
-            <div class="total">Promedio de las reseñas mostradas</div>
+            <div class="total">Valoración promedio</div>
           </div>
           <div class="rating-breakdown">
             @for (rating of ratingLevels; track rating) {
@@ -67,7 +67,6 @@
               <span class="featured-label">RESEÑA DESTACADA</span>
               <h2>{{ featured.work.title }}</h2>
               <p class="featured-excerpt">{{ featured.review.content }}</p>
-              <small>Mayor valoración · Más reciente en caso de empate</small>
             </div>
             <span
               class="featured-rating"
@@ -128,7 +127,7 @@
       </section>
       <div class="secondary-filters">
         <label
-          >Género / categoría
+          >Género
           <select #category [value]="genre()" (change)="genre.set(category.value)">
             <option value="">Todos los géneros</option>
             @for (genre of genres(); track genre) {

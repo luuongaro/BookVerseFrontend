@@ -19,8 +19,7 @@
   }
   @if (!id && !session.userId()) {
     <p class="state" role="status">
-      La sesión actual no permite identificar tu cuenta para publicar una reseña. Podés seguir
-      consultando libros y reseñas.
+      Iniciá sesión para publicar tu reseña.
     </p>
   }
   <form class="panel" [formGroup]="form" (ngSubmit)="submit()">
