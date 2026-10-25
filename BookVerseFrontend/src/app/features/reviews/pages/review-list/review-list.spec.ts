@@ -1,4 +1,3 @@
-import { ReviewReadersService } from '../../services/review-readers.service';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
@@ -13,6 +12,7 @@ const reviews = [
     bookId: 'book',
     storyId: null,
     reviewerId: user,
+    reviewerName: 'Alex Lane',
     rating: 3,
     content: 'Una lectura',
     createdAt: '2026-01-01',
@@ -22,6 +22,7 @@ const reviews = [
     bookId: 'book',
     storyId: null,
     reviewerId: 'other',
+    reviewerName: 'Marina',
     rating: 5,
     content: 'Otra mirada',
     createdAt: '2026-02-01',
@@ -31,6 +32,7 @@ const reviews = [
     bookId: null,
     storyId: 'story',
     reviewerId: 'other',
+    reviewerName: 'Marina',
     rating: 4,
     content: 'Una historia',
     createdAt: '2026-03-01',
@@ -43,10 +45,7 @@ describe('Review discovery', () => {
       imports: [ReviewList],
       providers: [
         provideRouter([]),
-        {
-          provide: ReviewReadersService,
-          useValue: { resolve: () => of({ [user]: 'Alex Lane', other: 'Marina' }) },
-        },
+
         { provide: ReviewsService, useValue: { getAll: () => of(reviews) } },
         {
           provide: ReviewWorkService,
@@ -132,5 +131,40 @@ describe('Review discovery', () => {
     component.mine.set(false);
     component.sort.set('rating');
     expect(component.groups()[0].reviews.map((review) => review.rating)).toEqual([5, 3]);
+  });
+  it('paginates filtered reviews and resets after filtering without changing the summary', () => {
+    const fixture = TestBed.createComponent(ReviewList);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.reviews.set(
+      Array.from({ length: 19 }, (_, i) => ({ ...reviews[0], reviewId: String(i) })),
+    );
+    fixture.detectChanges();
+    expect(component.pageCount()).toBe(3);
+    expect(fixture.nativeElement.querySelectorAll('.review-card')).toHaveLength(8);
+    component.goToPage(3);
+    fixture.detectChanges();
+    expect(component.paginatedCards()).toHaveLength(3);
+    expect(component.pageStart()).toBe(17);
+    expect(component.pageEnd()).toBe(19);
+    expect(component.average()).toBe('3.0');
+    component.goToPage(4);
+    expect(component.page()).toBe(3);
+    component.search.set('El libro');
+    expect(component.page()).toBe(1);
+    component.goToPage(2);
+    component.sort.set('rating');
+    expect(component.page()).toBe(1);
+    component.view.set('groups');
+    component.goToPage(3);
+    fixture.detectChanges();
+    expect(component.paginatedGroups()[0].reviews).toHaveLength(3);
+    expect(fixture.nativeElement.querySelectorAll('.review-card')).toHaveLength(3);
+    component.selectTab('story');
+    fixture.detectChanges();
+    expect(component.page()).toBe(1);
+    expect(component.pageCount()).toBe(0);
+    expect(component.pageStart()).toBe(0);
+    expect(fixture.nativeElement.querySelector('.pagination')).toBeNull();
   });
 });
