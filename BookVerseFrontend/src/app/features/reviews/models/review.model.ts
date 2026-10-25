@@ -1,6 +1,7 @@
 export interface Review {
   reviewId: string;
   reviewerId: string;
+  reviewerName?: string | null;
   bookId: string | null;
   storyId: string | null;
   rating: number;

@@ -1,7 +1,6 @@
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { BookCover } from '../../../../shared/components/book-cover/book-cover';
-import { ReviewReadersService } from '../../services/review-readers.service';
-import { Subscription, switchMap, map, forkJoin } from 'rxjs';
+import { Subscription, switchMap, map } from 'rxjs';
 import { ReviewWork, ReviewWorkService } from '../../services/review-work.service';
 import { ReviewSessionService } from '../../services/review-session.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -23,8 +22,6 @@ export class ReviewList implements OnInit {
   private readonly service = inject(ReviewsService);
   private readonly worksService = inject(ReviewWorkService);
   readonly session = inject(ReviewSessionService);
-  private readonly readersService = inject(ReviewReadersService);
-  readers = signal<Record<string, string>>({});
   view = signal('cards');
   readonly ratingLevels = [5, 4, 3, 2, 1];
   activeTab = computed(() => (this.mine() ? 'mine' : this.kind()));
@@ -39,7 +36,7 @@ export class ReviewList implements OnInit {
     );
   }
   readerName(review: Review): string {
-    return this.readers()[review.reviewerId] || 'Lector de BookVerse';
+    return review.reviewerName?.trim() || 'Lector de BookVerse';
   }
   initials(review: Review): string {
     return this.readerName(review)
@@ -163,16 +160,12 @@ export class ReviewList implements OnInit {
     this.request = request
       .pipe(
         switchMap((reviews) =>
-          forkJoin({
-            works: this.worksService.resolveAll(reviews),
-            readers: this.readersService.resolve(reviews.map((review) => review.reviewerId)),
-          }).pipe(map(({ works, readers }) => ({ reviews, works, readers }))),
+          this.worksService.resolveAll(reviews).pipe(map((works) => ({ reviews, works }))),
         ),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: ({ reviews, works, readers }) => {
-          this.readers.set(readers);
+        next: ({ reviews, works }) => {
           this.reviews.set(reviews);
           this.works.set(works);
           this.loading.set(false);

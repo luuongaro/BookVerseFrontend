@@ -1,4 +1,3 @@
-import { ReviewReadersService } from '../../services/review-readers.service';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
@@ -13,6 +12,7 @@ const reviews = [
     bookId: 'book',
     storyId: null,
     reviewerId: user,
+    reviewerName: 'Alex Lane',
     rating: 3,
     content: 'Una lectura',
     createdAt: '2026-01-01',
@@ -22,6 +22,7 @@ const reviews = [
     bookId: 'book',
     storyId: null,
     reviewerId: 'other',
+    reviewerName: 'Marina',
     rating: 5,
     content: 'Otra mirada',
     createdAt: '2026-02-01',
@@ -31,6 +32,7 @@ const reviews = [
     bookId: null,
     storyId: 'story',
     reviewerId: 'other',
+    reviewerName: 'Marina',
     rating: 4,
     content: 'Una historia',
     createdAt: '2026-03-01',
@@ -43,10 +45,7 @@ describe('Review discovery', () => {
       imports: [ReviewList],
       providers: [
         provideRouter([]),
-        {
-          provide: ReviewReadersService,
-          useValue: { resolve: () => of({ [user]: 'Alex Lane', other: 'Marina' }) },
-        },
+
         { provide: ReviewsService, useValue: { getAll: () => of(reviews) } },
         {
           provide: ReviewWorkService,
