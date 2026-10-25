@@ -132,4 +132,39 @@ describe('Review discovery', () => {
     component.sort.set('rating');
     expect(component.groups()[0].reviews.map((review) => review.rating)).toEqual([5, 3]);
   });
+  it('paginates filtered reviews and resets after filtering without changing the summary', () => {
+    const fixture = TestBed.createComponent(ReviewList);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.reviews.set(
+      Array.from({ length: 19 }, (_, i) => ({ ...reviews[0], reviewId: String(i) })),
+    );
+    fixture.detectChanges();
+    expect(component.pageCount()).toBe(3);
+    expect(fixture.nativeElement.querySelectorAll('.review-card')).toHaveLength(8);
+    component.goToPage(3);
+    fixture.detectChanges();
+    expect(component.paginatedCards()).toHaveLength(3);
+    expect(component.pageStart()).toBe(17);
+    expect(component.pageEnd()).toBe(19);
+    expect(component.average()).toBe('3.0');
+    component.goToPage(4);
+    expect(component.page()).toBe(3);
+    component.search.set('El libro');
+    expect(component.page()).toBe(1);
+    component.goToPage(2);
+    component.sort.set('rating');
+    expect(component.page()).toBe(1);
+    component.view.set('groups');
+    component.goToPage(3);
+    fixture.detectChanges();
+    expect(component.paginatedGroups()[0].reviews).toHaveLength(3);
+    expect(fixture.nativeElement.querySelectorAll('.review-card')).toHaveLength(3);
+    component.selectTab('story');
+    fixture.detectChanges();
+    expect(component.page()).toBe(1);
+    expect(component.pageCount()).toBe(0);
+    expect(component.pageStart()).toBe(0);
+    expect(fixture.nativeElement.querySelector('.pagination')).toBeNull();
+  });
 });

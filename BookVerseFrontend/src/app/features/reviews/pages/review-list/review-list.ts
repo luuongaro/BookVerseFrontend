@@ -6,7 +6,7 @@ import { ReviewSessionService } from '../../services/review-session.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DestroyRef } from '@angular/core';
 import { CatalogNav } from '../../../../shared/components/catalog-nav/catalog-nav';
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, linkedSignal, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ReactiveFormsModule } from '@angular/forms';
 import { apiError } from '../../../../core/api/api.config';
@@ -23,6 +23,38 @@ export class ReviewList implements OnInit {
   private readonly worksService = inject(ReviewWorkService);
   readonly session = inject(ReviewSessionService);
   view = signal('cards');
+  readonly pageSize = 8;
+  page = linkedSignal({
+    source: () => ({
+      mine: this.mine(),
+      kind: this.kind(),
+      genre: this.genre(),
+      search: this.search(),
+      sort: this.sort(),
+      reviews: this.reviews(),
+      view: this.view(),
+    }),
+    computation: () => 1,
+  });
+  pageCount = computed(() => Math.ceil(this.cards().length / this.pageSize));
+  pageStart = computed(() => (this.cards().length ? (this.page() - 1) * this.pageSize + 1 : 0));
+  pageEnd = computed(() => Math.min(this.page() * this.pageSize, this.cards().length));
+  paginatedCards = computed(() =>
+    this.cards().slice((this.page() - 1) * this.pageSize, this.page() * this.pageSize),
+  );
+  paginatedGroups = computed(() =>
+    this.groups()
+      .map((group) => ({
+        ...group,
+        reviews: this.paginatedCards()
+          .filter((entry) => entry.work.key === group.work.key)
+          .map((entry) => entry.review),
+      }))
+      .filter((group) => group.reviews.length),
+  );
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.pageCount()) this.page.set(page);
+  }
   readonly ratingLevels = [5, 4, 3, 2, 1];
   activeTab = computed(() => (this.mine() ? 'mine' : this.kind()));
   selectTab(tab: string): void {

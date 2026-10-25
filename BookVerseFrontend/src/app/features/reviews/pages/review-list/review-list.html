@@ -147,11 +147,11 @@
         <p class="hint"><a routerLink="/login">Iniciá sesión</a> para ver tus reseñas.</p>
       }
       <p class="count" role="status">
-        Mostrando {{ visibleReviews().length }} reseñas
+        Mostrando {{ pageStart() }}–{{ pageEnd() }} de {{ visibleReviews().length }} reseñas
         {{ mine() ? 'tuyas' : 'de la comunidad' }} en {{ groups().length }} obras
       </p>
       @if (view() === 'groups') {
-        @for (group of groups(); track group.work.key) {
+        @for (group of paginatedGroups(); track group.work.key) {
           <section class="work-group" [attr.aria-label]="group.work.title">
             <header class="work-heading">
               <span class="eyebrow">{{ group.work.kind === 'book' ? 'LIBRO' : 'HISTORIA' }}</span>
@@ -170,7 +170,7 @@
         }
       } @else {
         <section class="review-list" aria-label="Reseñas de la comunidad">
-          @for (entry of cards(); track entry.review.reviewId) {
+          @for (entry of paginatedCards(); track entry.review.reviewId) {
             <ng-container
               [ngTemplateOutlet]="reviewCard"
               [ngTemplateOutletContext]="{ $implicit: entry.review, work: entry.work }"
@@ -200,6 +200,21 @@
           }
         </div>
       }
+    }
+    @if (!loading() && !error() && pageCount() > 1) {
+      <nav class="pagination" aria-label="Páginas de reseñas">
+        <button class="page-button" [disabled]="page() === 1" (click)="goToPage(page() - 1)">
+          ← Anterior
+        </button>
+        <span role="status" aria-live="polite">Página {{ page() }} de {{ pageCount() }}</span>
+        <button
+          class="page-button"
+          [disabled]="page() === pageCount()"
+          (click)="goToPage(page() + 1)"
+        >
+          Siguiente →
+        </button>
+      </nav>
     }
     <footer class="footer">
       <span>Un pequeño mundo propio.</span><strong>BOOKVERSE &nbsp; ✧</strong>

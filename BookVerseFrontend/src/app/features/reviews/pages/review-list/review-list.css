@@ -650,3 +650,29 @@ select:focus-visible {
     transform: none;
   }
 }
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 28px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.page-button {
+  border: 1px solid var(--line);
+  background: white;
+  color: var(--violet);
+  border-radius: 9px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+.page-button:hover:not(:disabled) {
+  background: var(--pale);
+}
+.page-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
