@@ -2,7 +2,7 @@
 <main>
   <span class="eyebrow">MÁS ALLÁ DE TU ESTANTERÍA</span>
   <h1>Encontrá tu próxima historia.</h1>
-  <p>Buscá en Google Books y guardá tu próxima lectura en tu biblioteca.</p>
+  <p>Buscá un libro y guardalo en tu biblioteca.</p>
   <form class="search panel" [formGroup]="form" (ngSubmit)="search()">
     <div>
       <label for="type">Buscar por</label
@@ -17,7 +17,7 @@
       ><input
         id="query"
         formControlName="value"
-        placeholder="Un título, un autor, un mundo…"
+        placeholder="Título, autor o palabra clave"
         required
       />
     </div>
