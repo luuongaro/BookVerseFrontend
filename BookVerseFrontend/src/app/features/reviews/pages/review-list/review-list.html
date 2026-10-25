@@ -1,122 +1,240 @@
 <app-catalog-nav />
-<main>
-  <span class="eyebrow">LECTURAS QUE DEJAN HUELLA</span>
-  <h1>Entre lectores.</h1>
-  <p>Opiniones, descubrimientos y otras formas de vivir una historia.</p>
-  <div class="actions">
+<div class="main">
+  <header class="topbar">
+    <nav aria-label="Ruta de navegación">
+      <a routerLink="/dashboard">Mi universo</a><span aria-hidden="true">/</span
+      ><strong>Reseñas</strong>
+    </nav>
+    <span class="top-message">☾ &nbsp; Un buen día para un nuevo capítulo</span>
+  </header>
+  <main class="content">
+    <section class="intro">
+      <div>
+        <span class="eyebrow">LECTURAS QUE DEJAN HUELLA</span>
+        <h1>Entre lectores.</h1>
+        <p>Opiniones, descubrimientos y otras formas de vivir una historia.</p>
+      </div>
+      <a class="primary" routerLink="/reviews/new" [queryParams]="{ bookId, storyId }"
+        ><span class="plus" aria-hidden="true">＋</span> Escribir una reseña</a
+      >
+    </section>
     @if (bookId) {
-      <a [routerLink]="['/books', bookId]">← Volver al libro</a>
+      <a class="back-link" [routerLink]="['/books', bookId]">← Volver al libro</a>
     }
-    <a class="button" routerLink="/reviews/new" [queryParams]="{ bookId: bookId, storyId: storyId }"
-      >Escribir una reseña</a
-    >
-  </div>
-  @if (loading()) {
-    <p class="state" role="status">Cargando reseñas…</p>
-  } @else if (error()) {
-    <div class="state error" role="alert">
-      {{ error() }} <button (click)="load()">Reintentar</button>
-    </div>
-  } @else {
-    <div class="filters" aria-label="Filtros de reseñas">
-      <label
-        >Buscar título o autor<input
-          #query
-          type="search"
-          [value]="search()"
-          (input)="search.set(query.value)"
-          placeholder="Título o autor"
-      /></label>
-      <label
-        >Reseñas<select
-          #scope
-          [value]="mine() ? 'mine' : 'all'"
-          (change)="mine.set(scope.value === 'mine')"
-        >
-          <option value="all">Todas las reseñas</option>
-          <option value="mine" [disabled]="!session.userId()">Mis reseñas</option>
-        </select></label
-      >
-      <label
-        >Tipo de obra<select #type [value]="kind()" (change)="kind.set(type.value)">
-          <option value="all">Libros e historias</option>
-          <option value="book">Libros</option>
-          <option value="story">Historias</option>
-        </select></label
-      >
-      <label
-        >Género / categoría<select #category [value]="genre()" (change)="genre.set(category.value)">
-          <option value="">Todos los géneros</option>
-          @for (genre of genres(); track genre) {
-            <option [value]="genre">{{ genre }}</option>
-          }
-        </select></label
-      >
-      <label
-        >Ordenar por<select #order [value]="sort()" (change)="sort.set(order.value)">
-          <option value="newest">Más recientes</option>
-          <option value="rating">Mayor valoración</option>
-        </select></label
-      >
-      <button class="secondary" (click)="resetFilters()">Limpiar filtros</button>
-    </div>
-    <p class="filter-help">
-      El género usa las categorías disponibles de los libros. Las historias aún no tienen género.
-    </p>
-    @if (!session.userId()) {
-      <p><a routerLink="/login">Iniciá sesión</a> para filtrar tus reseñas.</p>
+    @if (storyId) {
+      <a class="back-link" [routerLink]="['/stories', storyId]">← Volver a la historia</a>
     }
-    <p role="status">
-      {{ visibleReviews().length }} reseñas en {{ groups().length }} obras
-      @if (average(); as average) {
-        · Promedio {{ average }} / 5
-      }
-    </p>
-    @for (group of groups(); track group.work.key) {
-      <section class="work-group" [attr.aria-label]="group.work.title">
-        <header class="work-heading">
-          <span class="eyebrow">{{ group.work.kind === 'book' ? 'LIBRO' : 'HISTORIA' }}</span>
-          <h2>
-            @if (!group.work.unavailable) {
-              <a
-                [routerLink]="[group.work.kind === 'book' ? '/books' : '/stories', group.work.id]"
-                >{{ group.work.title }}</a
+    @if (loading()) {
+      <p class="state" role="status">Cargando reseñas…</p>
+    } @else if (error()) {
+      <div class="state error" role="alert">
+        {{ error() }} <button (click)="load()">Reintentar</button>
+      </div>
+    } @else {
+      <section class="overview" aria-label="Resumen de las reseñas filtradas">
+        <div class="rating-panel">
+          <div>
+            <div class="score">{{ average() || '—' }}</div>
+            <div
+              class="stars"
+              [attr.aria-label]="'Promedio ' + (average() || 'sin valoraciones') + ' de 5'"
+            >
+              {{ stars(+(average() || 0)) }}
+            </div>
+            <div class="total">Promedio de las reseñas mostradas</div>
+          </div>
+          <div class="rating-breakdown">
+            @for (rating of ratingLevels; track rating) {
+              <div
+                class="bar-row"
+                [attr.aria-label]="rating + ' estrellas: ' + ratingPercent(rating) + '%'"
               >
-            } @else {
-              {{ group.work.title }}
+                {{ rating }}
+                <div class="bar"><i [style.width.%]="ratingPercent(rating)"></i></div>
+                <span>{{ ratingPercent(rating) }}%</span>
+              </div>
             }
-          </h2>
-          <p>De {{ group.work.author }}</p>
-          @if (group.work.genres.length) {
-            <p>{{ group.work.genres.join(' · ') }}</p>
-          }
-        </header>
-        <div class="grid">
-          @for (review of group.reviews; track review.reviewId) {
-            <article class="card">
-              <h3 class="rating">★ {{ review.rating }} / 5</h3>
-              @if (session.userId() === review.reviewerId) {
-                <span class="eyebrow">TU RESEÑA</span>
-              }
-              <p class="prose">
-                {{
-                  review.content.length > 180 ? review.content.slice(0, 180) + '…' : review.content
-                }}
-              </p>
-              <p>{{ review.createdAt.slice(0, 10) }}</p>
-              <a [routerLink]="['/reviews', review.reviewId]">Leer reseña →</a>
-            </article>
+          </div>
+        </div>
+        @if (featured(); as featured) {
+          <a class="featured" [routerLink]="['/reviews', featured.review.reviewId]">
+            <app-book-cover
+              class="featured-cover"
+              [src]="featured.work.coverUrl"
+              [title]="featured.work.title"
+            />
+            <div class="featured-copy">
+              <span class="featured-label">RESEÑA DESTACADA</span>
+              <h2>{{ featured.work.title }}</h2>
+              <p class="featured-excerpt">{{ featured.review.content }}</p>
+              <small>Mayor valoración · Más reciente en caso de empate</small>
+            </div>
+            <span
+              class="featured-rating"
+              [attr.aria-label]="featured.review.rating + ' de 5 estrellas'"
+              >{{ stars(featured.review.rating) }}</span
+            >
+          </a>
+        } @else {
+          <div class="featured empty-featured">
+            <span aria-hidden="true">✧</span>
+            <p>Una nueva mirada puede empezar con tu reseña.</p>
+          </div>
+        }
+      </section>
+      <section class="filters" aria-label="Filtros de reseñas">
+        <div class="tabs" aria-label="Tipo de reseñas">
+          @for (
+            tab of [
+              { value: 'all', label: 'Todas' },
+              { value: 'book', label: 'Libros' },
+              { value: 'story', label: 'Historias' },
+              { value: 'mine', label: 'Mis reseñas' },
+            ];
+            track tab.value
+          ) {
+            <button
+              class="tab"
+              [class.active]="activeTab() === tab.value"
+              [attr.aria-pressed]="activeTab() === tab.value"
+              [disabled]="tab.value === 'mine' && !session.userId()"
+              (click)="selectTab(tab.value)"
+            >
+              {{ tab.label }}
+            </button>
           }
         </div>
+        <div class="tools">
+          <label class="search"
+            ><span aria-hidden="true">⌕</span
+            ><input
+              #query
+              type="search"
+              aria-label="Buscar por título o autor"
+              placeholder="Buscar título o autor…"
+              [value]="search()"
+              (input)="search.set(query.value)" /></label
+          ><select
+            class="sort"
+            #order
+            aria-label="Ordenar reseñas"
+            [value]="sort()"
+            (change)="sort.set(order.value)"
+          >
+            <option value="newest">Más recientes</option>
+            <option value="rating">Mejor valoradas</option>
+          </select>
+        </div>
       </section>
-    } @empty {
-      <p class="state">
-        {{
-          reviews().length
-            ? 'No hay reseñas que coincidan con estos filtros.'
-            : 'Todavía no hay reseñas. Compartí tu primera impresión.'
-        }}
+      <div class="secondary-filters">
+        <label
+          >Género / categoría
+          <select #category [value]="genre()" (change)="genre.set(category.value)">
+            <option value="">Todos los géneros</option>
+            @for (genre of genres(); track genre) {
+              <option [value]="genre">{{ genre }}</option>
+            }
+          </select></label
+        ><label
+          >Vista
+          <select #layout [value]="view()" (change)="view.set(layout.value)">
+            <option value="cards">Tarjetas</option>
+            <option value="groups">Agrupadas por obra</option>
+          </select></label
+        ><button class="clear" (click)="resetFilters()">Limpiar filtros</button>
+      </div>
+      @if (!session.userId()) {
+        <p class="hint"><a routerLink="/login">Iniciá sesión</a> para ver tus reseñas.</p>
+      }
+      <p class="count" role="status">
+        Mostrando {{ visibleReviews().length }} reseñas
+        {{ mine() ? 'tuyas' : 'de la comunidad' }} en {{ groups().length }} obras
       </p>
+      @if (view() === 'groups') {
+        @for (group of groups(); track group.work.key) {
+          <section class="work-group" [attr.aria-label]="group.work.title">
+            <header class="work-heading">
+              <span class="eyebrow">{{ group.work.kind === 'book' ? 'LIBRO' : 'HISTORIA' }}</span>
+              <h2>{{ group.work.title }}</h2>
+              <p>De {{ group.work.author }}</p>
+            </header>
+            <div class="review-list">
+              @for (review of group.reviews; track review.reviewId) {
+                <ng-container
+                  [ngTemplateOutlet]="reviewCard"
+                  [ngTemplateOutletContext]="{ $implicit: review, work: group.work }"
+                />
+              }
+            </div>
+          </section>
+        }
+      } @else {
+        <section class="review-list" aria-label="Reseñas de la comunidad">
+          @for (entry of cards(); track entry.review.reviewId) {
+            <ng-container
+              [ngTemplateOutlet]="reviewCard"
+              [ngTemplateOutletContext]="{ $implicit: entry.review, work: entry.work }"
+            />
+          }
+        </section>
+      }
+      @if (!visibleReviews().length) {
+        <div class="state">
+          <span class="empty-spark" aria-hidden="true">✧</span>
+          <h2>
+            {{
+              reviews().length
+                ? 'Todavía hay mundos por descubrir.'
+                : 'La conversación empieza con vos.'
+            }}
+          </h2>
+          <p>
+            {{
+              reviews().length
+                ? 'No hay reseñas que coincidan con estos filtros.'
+                : 'Todavía no hay reseñas. Compartí tu primera impresión.'
+            }}
+          </p>
+          @if (reviews().length) {
+            <button (click)="resetFilters()">Limpiar filtros</button>
+          }
+        </div>
+      }
     }
-  }
-</main>
+    <footer class="footer">
+      <span>Un pequeño mundo propio.</span><strong>BOOKVERSE &nbsp; ✧</strong>
+    </footer>
+  </main>
+</div>
+<ng-template #reviewCard let-review let-work="work">
+  <article class="review-card">
+    <div class="card-head">
+      <div class="person">
+        <span class="avatar" aria-hidden="true">{{ initials(review) }}</span>
+        <div>
+          <strong>{{ readerName(review) }}</strong
+          ><small
+            >{{ review.createdAt | date: 'dd/MM/yyyy' }}
+            @if (session.userId() === review.reviewerId) {
+              · Tu reseña
+            }
+          </small>
+        </div>
+      </div>
+      <span class="rating-stars" [attr.aria-label]="review.rating + ' de 5 estrellas'">{{
+        stars(review.rating)
+      }}</span>
+    </div>
+    <h3>{{ work.title }}</h3>
+    <p class="quote-text">{{ review.content }}</p>
+    <div class="book-row">
+      <div class="book-tag">
+        <app-book-cover class="book-thumb" [src]="work.coverUrl" [title]="work.title" /><span
+          >{{ work.title }} · {{ work.author
+          }}<small>{{ work.kind === 'book' ? 'Libro' : 'Historia' }}</small></span
+        >
+      </div>
+      <a class="read-link" [routerLink]="['/reviews', review.reviewId]">Leer reseña completa →</a>
+    </div>
+  </article>
+</ng-template>
