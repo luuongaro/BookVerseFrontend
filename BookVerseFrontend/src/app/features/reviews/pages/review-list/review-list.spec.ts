@@ -1,3 +1,4 @@
+import { ReviewReadersService } from '../../services/review-readers.service';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
@@ -42,6 +43,10 @@ describe('Review discovery', () => {
       imports: [ReviewList],
       providers: [
         provideRouter([]),
+        {
+          provide: ReviewReadersService,
+          useValue: { resolve: () => of({ [user]: 'Alex Lane', other: 'Marina' }) },
+        },
         { provide: ReviewsService, useValue: { getAll: () => of(reviews) } },
         {
           provide: ReviewWorkService,
@@ -78,8 +83,29 @@ describe('Review discovery', () => {
     fixture.detectChanges();
     expect(fixture.componentInstance.groups().map((group) => group.reviews.length)).toEqual([1, 2]);
     expect(fixture.nativeElement.textContent).toContain('El libro');
-    expect(fixture.nativeElement.textContent).toContain('De Autora');
+    expect(fixture.nativeElement.textContent).toContain('Autora');
+    fixture.componentInstance.view.set('groups');
+    fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('.work-group')).toHaveLength(2);
+  });
+  it('uses real ratings and readers in the mockup cards', () => {
+    const fixture = TestBed.createComponent(ReviewList);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    expect(component.ratingPercent(5)).toBe(33);
+    expect(component.featured()?.review.reviewId).toBe('2');
+    expect(component.cards().map((entry) => entry.review.reviewId)).toEqual(['3', '2', '1']);
+    expect(fixture.nativeElement.querySelectorAll('.review-card')).toHaveLength(3);
+    expect(fixture.nativeElement.textContent).toContain('Alex Lane');
+    component.selectTab('mine');
+    fixture.detectChanges();
+    expect(component.visibleReviews().map((review) => review.reviewId)).toEqual(['1']);
+    expect(component.ratingPercent(3)).toBe(100);
+    component.genre.set('Unknown');
+    fixture.detectChanges();
+    expect(component.featured()).toBeNull();
+    expect(component.average()).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('.review-card')).toHaveLength(0);
   });
   it('combines ownership, genre, type and author search and clears filters', () => {
     const fixture = TestBed.createComponent(ReviewList);

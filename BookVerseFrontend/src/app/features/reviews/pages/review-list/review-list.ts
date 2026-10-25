@@ -1,4 +1,7 @@
-import { Subscription, switchMap, map } from 'rxjs';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { BookCover } from '../../../../shared/components/book-cover/book-cover';
+import { ReviewReadersService } from '../../services/review-readers.service';
+import { Subscription, switchMap, map, forkJoin } from 'rxjs';
 import { ReviewWork, ReviewWorkService } from '../../services/review-work.service';
 import { ReviewSessionService } from '../../services/review-session.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -12,7 +15,7 @@ import { ReviewsService } from '../../services/reviews.service';
 import { Review } from '../../models/review.model';
 @Component({
   selector: 'app-review-list',
-  imports: [RouterLink, ReactiveFormsModule, CatalogNav],
+  imports: [RouterLink, ReactiveFormsModule, CatalogNav, DatePipe, BookCover, NgTemplateOutlet],
   templateUrl: './review-list.html',
   styleUrl: './review-list.css',
 })
@@ -20,6 +23,58 @@ export class ReviewList implements OnInit {
   private readonly service = inject(ReviewsService);
   private readonly worksService = inject(ReviewWorkService);
   readonly session = inject(ReviewSessionService);
+  private readonly readersService = inject(ReviewReadersService);
+  readers = signal<Record<string, string>>({});
+  view = signal('cards');
+  readonly ratingLevels = [5, 4, 3, 2, 1];
+  activeTab = computed(() => (this.mine() ? 'mine' : this.kind()));
+  selectTab(tab: string): void {
+    this.mine.set(tab === 'mine');
+    this.kind.set(tab === 'mine' ? 'all' : tab);
+  }
+  stars(rating: number): string {
+    return (
+      '★'.repeat(Math.max(0, Math.min(5, Math.round(rating)))) +
+      '☆'.repeat(5 - Math.max(0, Math.min(5, Math.round(rating))))
+    );
+  }
+  readerName(review: Review): string {
+    return this.readers()[review.reviewerId] || 'Lector de BookVerse';
+  }
+  initials(review: Review): string {
+    return this.readerName(review)
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toLocaleUpperCase();
+  }
+  ratingPercent(rating: number): number {
+    const reviews = this.visibleReviews();
+    return reviews.length
+      ? Math.round(
+          (100 * reviews.filter((review) => review.rating === rating).length) / reviews.length,
+        )
+      : 0;
+  }
+  cards = computed(() =>
+    this.groups()
+      .flatMap((group) => group.reviews.map((review) => ({ review, work: group.work })))
+      .sort((a, b) =>
+        this.sort() === 'rating'
+          ? b.review.rating - a.review.rating ||
+            b.review.createdAt.localeCompare(a.review.createdAt)
+          : b.review.createdAt.localeCompare(a.review.createdAt),
+      ),
+  );
+  featured = computed(
+    () =>
+      [...this.cards()].sort(
+        (a, b) =>
+          b.review.rating - a.review.rating || b.review.createdAt.localeCompare(a.review.createdAt),
+      )[0] ?? null,
+  );
   works = signal<ReviewWork[]>([]);
   mine = signal(false);
   kind = signal('all');
@@ -108,12 +163,16 @@ export class ReviewList implements OnInit {
     this.request = request
       .pipe(
         switchMap((reviews) =>
-          this.worksService.resolveAll(reviews).pipe(map((works) => ({ reviews, works }))),
+          forkJoin({
+            works: this.worksService.resolveAll(reviews),
+            readers: this.readersService.resolve(reviews.map((review) => review.reviewerId)),
+          }).pipe(map(({ works, readers }) => ({ reviews, works, readers }))),
         ),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: ({ reviews, works }) => {
+        next: ({ reviews, works, readers }) => {
+          this.readers.set(readers);
           this.reviews.set(reviews);
           this.works.set(works);
           this.loading.set(false);

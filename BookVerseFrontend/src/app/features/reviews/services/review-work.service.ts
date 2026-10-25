@@ -12,6 +12,7 @@ export interface ReviewWork {
   author: string;
   genres: string[];
   unavailable: boolean;
+  coverUrl?: string | null;
 }
 @Injectable({ providedIn: 'root' })
 export class ReviewWorkService {
@@ -35,6 +36,7 @@ export class ReviewWorkService {
         map((book) => ({
           ...fallback,
           title: book.title,
+          coverUrl: book.thumbnailUrl,
           author: book.authors?.join(', ') || 'Autor desconocido',
           genres:
             book.categories
