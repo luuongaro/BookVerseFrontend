@@ -2,10 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Service } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import {
-  API_URL,
-  authHeaders
-} from '../../../core/api/api.config';
+import { API_URL } from '../../../core/api/api.config';
 
 import { StoryRequest } from '../models/story-request';
 import { StoryResponse } from '../models/story-response';
@@ -20,10 +17,7 @@ export class StoryService {
 
   getAll(): Observable<StoryResponse[]> {
     return this.http.get<StoryResponse[]>(
-      this.url,
-      {
-        headers: authHeaders()
-      }
+      this.url
     );
   }
 
@@ -31,10 +25,7 @@ export class StoryService {
     idExternal: string
   ): Observable<StoryDetailResponse> {
     return this.http.get<StoryDetailResponse>(
-      `${this.url}/${idExternal}`,
-      {
-        headers: authHeaders()
-      }
+      `${this.url}/${idExternal}`
     );
   }
 
@@ -42,10 +33,7 @@ export class StoryService {
     authorId: string
   ): Observable<StoryResponse[]> {
     return this.http.get<StoryResponse[]>(
-      `${this.url}/author/${authorId}`,
-      {
-        headers: authHeaders()
-      }
+      `${this.url}/author/${authorId}`
     );
   }
 
@@ -54,10 +42,7 @@ export class StoryService {
   ): Observable<StoryResponse> {
     return this.http.post<StoryResponse>(
       this.url,
-      request,
-      {
-        headers: authHeaders()
-      }
+      request
     );
   }
 
@@ -67,10 +52,7 @@ export class StoryService {
   ): Observable<StoryResponse> {
     return this.http.put<StoryResponse>(
       `${this.url}/${idExternal}`,
-      request,
-      {
-        headers: authHeaders()
-      }
+      request
     );
   }
 
@@ -78,10 +60,7 @@ export class StoryService {
     idExternal: string
   ): Observable<void> {
     return this.http.delete<void>(
-      `${this.url}/${idExternal}`,
-      {
-        headers: authHeaders()
-      }
+      `${this.url}/${idExternal}`
     );
   }
 }

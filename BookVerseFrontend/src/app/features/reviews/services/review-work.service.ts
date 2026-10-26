@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
-import { API_URL, authHeaders } from '../../../core/api/api.config';
+import { API_URL } from '../../../core/api/api.config';
 import { BooksService } from '../../books/services/books.service';
 import { Review } from '../models/review.model';
 
@@ -72,15 +72,11 @@ export class ReviewWorkService {
         catchError(() => of(fallback)),
       );
     return this.http
-      .get<{ title: string; authorId: string }>(`${API_URL}/stories/${encodeURIComponent(id)}`, {
-        headers: authHeaders(),
-      })
+      .get<{ title: string; authorId: string }>(`${API_URL}/stories/${encodeURIComponent(id)}`)
       .pipe(
         switchMap((story) =>
           this.http
-            .get<{ username: string }>(`${API_URL}/users/${encodeURIComponent(story.authorId)}`, {
-              headers: authHeaders(),
-            })
+            .get<{ username: string }>(`${API_URL}/users/${encodeURIComponent(story.authorId)}`)
             .pipe(
               map((user) => ({
                 ...fallback,

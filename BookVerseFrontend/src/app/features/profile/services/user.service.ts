@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Service, signal } from '@angular/core';
 import { of, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { API_URL, authHeaders } from '../../../core/api/api.config';
+import { API_URL } from '../../../core/api/api.config';
 import { User } from '../models/user.model';
 
 @Service()
@@ -14,7 +14,6 @@ export class UserService {
   getByIdExternal(idExternal: string): Observable<User> {
     return this.http.get<User>(
       `${API_URL}/users/${encodeURIComponent(idExternal)}`,
-      { headers: authHeaders() },
     );
   }
 
