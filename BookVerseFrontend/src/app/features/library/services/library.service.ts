@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, catchError, forkJoin, map, of, switchMap, throwError } from 'rxjs';
-import { API_URL, authHeaders } from '../../../core/api/api.config';
+import { API_URL } from '../../../core/api/api.config';
 import { BooksService } from '../../books/services/books.service';
 import { LibraryBook, LibraryResult, ReadingStatus } from '../models/library-book.model';
 export class LibrarySessionError extends Error {
@@ -17,9 +17,7 @@ export class LibraryService {
     const userId = localStorage.getItem('userId');
     if (!userId) return throwError(() => new LibrarySessionError());
     return this.http
-      .get<ReadingStatus[]>(`${API_URL}/reading-statuses/user/${encodeURIComponent(userId)}`, {
-        headers: authHeaders(),
-      })
+      .get<ReadingStatus[]>(`${API_URL}/reading-statuses/user/${encodeURIComponent(userId)}`)
       .pipe(map((statuses) => statuses.filter((status) => status.userId === userId)));
   }
   getBookStatus(bookId: string): Observable<ReadingStatus | null> {
@@ -69,7 +67,6 @@ export class LibraryService {
                 progressType: null,
                 progressValue: null,
               },
-              { headers: authHeaders() },
             ),
       ),
     );
