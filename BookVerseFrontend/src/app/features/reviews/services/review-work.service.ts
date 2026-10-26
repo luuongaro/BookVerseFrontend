@@ -4,6 +4,25 @@ import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { API_URL, authHeaders } from '../../../core/api/api.config';
 import { BooksService } from '../../books/services/books.service';
 import { Review } from '../models/review.model';
+
+type StoryCoverTheme = 'moon' | 'stars' | 'rose' | 'teal' | 'gold';
+
+const STORY_COVERS: {
+  theme: StoryCoverTheme;
+  symbol: string;
+}[] = [
+  { theme: 'moon', symbol: '☾' },
+  { theme: 'stars', symbol: '✦' },
+  { theme: 'rose', symbol: '✧' },
+  { theme: 'teal', symbol: '☽' },
+  { theme: 'gold', symbol: '✺' },
+];
+
+export function storyCoverFor(id: string) {
+  const seed = [...id].reduce((total, character) => total + character.charCodeAt(0), 0);
+  return STORY_COVERS[seed % STORY_COVERS.length];
+}
+
 export interface ReviewWork {
   key: string;
   id: string;
@@ -13,6 +32,8 @@ export interface ReviewWork {
   genres: string[];
   unavailable: boolean;
   coverUrl?: string | null;
+  coverTheme?: StoryCoverTheme;
+  coverSymbol?: string;
 }
 @Injectable({ providedIn: 'root' })
 export class ReviewWorkService {
@@ -21,6 +42,7 @@ export class ReviewWorkService {
   resolve(review: Review): Observable<ReviewWork> {
     const kind = review.bookId ? 'book' : 'story';
     const id = review.bookId ?? review.storyId ?? '';
+    const storyCover = kind === 'story' ? storyCoverFor(id) : null;
     const fallback: ReviewWork = {
       key: `${kind}:${id}`,
       id,
@@ -29,6 +51,8 @@ export class ReviewWorkService {
       author: 'Autor no disponible',
       genres: [],
       unavailable: true,
+      coverTheme: storyCover?.theme,
+      coverSymbol: storyCover?.symbol,
     };
     if (!id) return of(fallback);
     if (kind === 'book')
