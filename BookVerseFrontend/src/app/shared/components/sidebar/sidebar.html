@@ -1,0 +1,58 @@
+<aside class="sidebar" aria-label="Navegación principal">
+  <a class="sidebar-brand" routerLink="/dashboard" aria-label="BookVerse, Mi espacio">
+    <span class="brand-symbol" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path [attr.d]="iconPaths['book']" />
+      </svg>
+    </span>
+    <span class="brand-wordmark">Book<span>Verse</span><sup>✦</sup></span>
+  </a>
+
+  <p class="sidebar-label">TU PEQUEÑO UNIVERSO</p>
+
+  <nav class="sidebar-nav" aria-label="Secciones de BookVerse">
+    @for (item of commonLinks; track item.route) {
+      <a class="sidebar-link" [routerLink]="item.route" routerLinkActive="active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path [attr.d]="iconPaths[item.icon]" />
+        </svg>
+        <span>{{ item.label }}</span>
+        <span class="active-dot"></span>
+      </a>
+    }
+
+    @if (canModerate()) {
+      <span class="sidebar-section-label">MODERACIÓN</span>
+      <a class="sidebar-link" routerLink="/review-reports" routerLinkActive="active" ariaCurrentWhenActive="page">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path [attr.d]="iconPaths['report']" /></svg>
+        <span>Reportes de reseñas</span><span class="active-dot"></span>
+      </a>
+    }
+
+    @if (isAdmin()) {
+      <span class="sidebar-section-label">ADMINISTRACIÓN</span>
+      <a class="sidebar-link" routerLink="/role-management" routerLinkActive="active" ariaCurrentWhenActive="page">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path [attr.d]="iconPaths['roles']" /></svg>
+        <span>Gestión de roles</span><span class="active-dot"></span>
+      </a>
+    }
+  </nav>
+
+  <div class="sidebar-quote"><span class="quote-sparkle" aria-hidden="true">✧</span><p>«Un lector vive<br />mil vidas.»</p><span class="sidebar-reminder">UN PEQUEÑO RECORDATORIO</span></div>
+
+  <div class="sidebar-bottom">
+    <a class="sidebar-link" routerLink="/profile" routerLinkActive="active" ariaCurrentWhenActive="page">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path [attr.d]="iconPaths['profile']" /></svg>
+      <span>Mi perfil</span><span class="active-dot"></span>
+    </a>
+    <button class="sidebar-link logout-link" type="button" (click)="logout()">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path [attr.d]="iconPaths['logout']" /></svg>
+      <span>Cerrar sesión</span>
+    </button>
+    <a class="account-link" routerLink="/profile" [attr.aria-label]="'Ir al perfil de ' + userName()">
+      <span class="avatar">{{ userInitials() }}</span>
+      <span class="account-info"><strong>{{ userName() }}</strong><small>Lector y soñador</small></span>
+      <span class="account-arrow" aria-hidden="true">›</span>
+    </a>
+  </div>
+</aside>

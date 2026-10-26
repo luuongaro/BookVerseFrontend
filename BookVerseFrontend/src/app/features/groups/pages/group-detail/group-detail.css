@@ -21,8 +21,7 @@
 
 .detail-layout {
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: 265px minmax(0, 1fr);
+  display: block;
   background: var(--paper);
 }
 

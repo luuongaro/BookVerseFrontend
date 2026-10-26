@@ -4,11 +4,10 @@ import { RouterLink } from '@angular/router';
 import { ReviewReportsService } from '../../services/review-reports.service';
 import { ReviewReport, ReviewReportStatus } from '../../models/review-report.model';
 import { apiError } from '../../../../core/api/api.config';
-import { CatalogNav } from '../../../../shared/components/catalog-nav/catalog-nav';
 
 @Component({
   selector: 'app-review-report-list',
-  imports: [RouterLink, DatePipe, CatalogNav],
+  imports: [RouterLink, DatePipe],
   templateUrl: './report-list.html',
   styleUrl: './report-list.css',
 })

@@ -6,11 +6,10 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ReviewReportsService } from '../../services/review-reports.service';
 import { ReviewReport } from '../../models/review-report.model';
 import { apiError } from '../../../../core/api/api.config';
-import { CatalogNav } from '../../../../shared/components/catalog-nav/catalog-nav';
 
 @Component({
   selector: 'app-review-report-detail',
-  imports: [RouterLink, DatePipe, ReactiveFormsModule, CatalogNav],
+  imports: [RouterLink, DatePipe, ReactiveFormsModule],
   templateUrl: './report-detail.html',
   styleUrl: './report-detail.css',
 })

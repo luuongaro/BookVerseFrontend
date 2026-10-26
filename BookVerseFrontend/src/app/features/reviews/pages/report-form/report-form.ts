@@ -5,12 +5,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ReviewReportsService } from '../../services/review-reports.service';
 import { ReviewSessionService } from '../../services/review-session.service';
 import { apiError } from '../../../../core/api/api.config';
-import { CatalogNav } from '../../../../shared/components/catalog-nav/catalog-nav';
 import { UUID_PATTERN } from '../../services/review-session.service';
 
 @Component({
   selector: 'app-review-report-form',
-  imports: [RouterLink, ReactiveFormsModule, CatalogNav],
+  imports: [RouterLink, ReactiveFormsModule],
   templateUrl: './report-form.html',
   styleUrl: './report-form.css',
 })

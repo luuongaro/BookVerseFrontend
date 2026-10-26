@@ -1,14 +1,13 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
-import { CatalogNav } from '../../../../shared/components/catalog-nav/catalog-nav';
 import { apiError } from '../../../../core/api/api.config';
 import { ManagedRole, ManagedUser } from '../../models/role-management.model';
 import { RoleManagementService } from '../../services/role-management.service';
 
 @Component({
   selector: 'app-role-management',
-  imports: [FormsModule, CatalogNav],
+  imports: [FormsModule],
   templateUrl: './role-management.html',
   styleUrl: './role-management.css',
 })
