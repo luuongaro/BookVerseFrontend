@@ -149,7 +149,8 @@
         </div>
 
         <small class="field-hint">
-          8 o más caracteres, mayúscula, minúscula, número y símbolo.
+          Entre 8 y 100 caracteres, con mayúscula, minúscula, número y un símbolo
+          permitido: @$!%*?&._-
         </small>
 
         @if (registerForm.controls.password.touched &&
@@ -157,15 +158,30 @@
           <small class="field-error">Ingresá una contraseña.</small>
         }
 
-        @if (registerForm.controls.password.touched &&
-        registerForm.controls.password.hasError('pattern')) {
+        @if (
+        registerForm.controls.password.touched &&
+        (registerForm.controls.password.hasError('pattern') ||
+        registerForm.controls.password.hasError('minlength') ||
+        registerForm.controls.password.hasError('maxlength'))
+        ) {
           <small class="field-error">
-            La contraseña no cumple con los requisitos.
+            La contraseña debe cumplir con los requisitos indicados.
           </small>
         }
 
-        <button class="button primary full" type="submit">
-          Crear mi cuenta
+        @if (errorMessage) {
+          <small class="field-error" role="alert">
+            {{ errorMessage }}
+          </small>
+        }
+
+        <button
+          class="button primary full"
+          type="submit"
+          [disabled]="isSubmitting"
+          [attr.aria-busy]="isSubmitting"
+        >
+          {{ isSubmitting ? 'Creando cuenta…' : 'Crear mi cuenta' }}
         </button>
 
         <span class="form-switch">
