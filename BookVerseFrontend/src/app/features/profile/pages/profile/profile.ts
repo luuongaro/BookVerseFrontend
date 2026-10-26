@@ -1,5 +1,6 @@
-import { Component, ElementRef, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { GroupMembersService } from '../../../groups/services/group-members.service';
 import { UserService } from '../../services/user.service';
 
 @Component({
@@ -8,8 +9,9 @@ import { UserService } from '../../services/user.service';
   styleUrl: './profile.css',
   templateUrl: './profile.html',
 })
-export class Profile {
+export class Profile implements OnInit {
   private readonly userService = inject(UserService);
+  private readonly groupMembersService = inject(GroupMembersService);
 
   @ViewChild('coverPicker')
   coverPicker!: ElementRef<HTMLDialogElement>;
@@ -78,8 +80,34 @@ export class Profile {
   statistics = [
   { value: '12', description: 'Historias en mi estantería', icon: 'book' },
   { value: '2', description: 'Historias en proceso', icon: 'feather' },
-  { value: '3', description: 'Círculos de lectura', icon: 'people' },
+  { value: '…', description: 'Círculos de lectura', icon: 'people' },
 ];
+
+  ngOnInit(): void {
+    const userId = localStorage.getItem('userId');
+
+    if (!userId) {
+      this.updateGroupCount('—');
+      return;
+    }
+
+    this.groupMembersService.getActiveByUser(userId).subscribe({
+      next: (memberships) => {
+        this.updateGroupCount(String(memberships.length));
+      },
+      error: () => {
+        this.updateGroupCount('—');
+      },
+    });
+  }
+
+  private updateGroupCount(value: string): void {
+    this.statistics = this.statistics.map((stat) =>
+      stat.description === 'Círculos de lectura'
+        ? { ...stat, value }
+        : stat,
+    );
+  }
 
   get currentCover() {
     return this.covers[this.selectedCoverIndex];

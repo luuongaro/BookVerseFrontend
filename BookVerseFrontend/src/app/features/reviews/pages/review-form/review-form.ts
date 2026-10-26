@@ -1,4 +1,3 @@
-import { CatalogNav } from '../../../../shared/components/catalog-nav/catalog-nav';
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -9,7 +8,7 @@ import { BooksService } from '../../../books/services/books.service';
 import { Book } from '../../../books/models/book.model';
 @Component({
   selector: 'app-review-form',
-  imports: [RouterLink, ReactiveFormsModule, CatalogNav],
+  imports: [RouterLink, ReactiveFormsModule],
   templateUrl: './review-form.html',
   styleUrl: './review-form.css',
 })

@@ -2,7 +2,6 @@ import { Subscription, switchMap, map } from 'rxjs';
 import { ReviewWork, ReviewWorkService } from '../../services/review-work.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DestroyRef } from '@angular/core';
-import { CatalogNav } from '../../../../shared/components/catalog-nav/catalog-nav';
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -12,7 +11,7 @@ import { Review } from '../../models/review.model';
 import { ReviewSessionService } from '../../services/review-session.service';
 @Component({
   selector: 'app-review-detail',
-  imports: [RouterLink, ReactiveFormsModule, CatalogNav],
+  imports: [RouterLink, ReactiveFormsModule],
   templateUrl: './review-detail.html',
   styleUrl: './review-detail.css',
 })

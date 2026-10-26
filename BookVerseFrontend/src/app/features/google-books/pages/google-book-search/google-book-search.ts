@@ -1,7 +1,6 @@
 import { switchMap } from 'rxjs';
 import { LibraryService, LibrarySessionError } from '../../../library/services/library.service';
 import { BookCover } from '../../../../shared/components/book-cover/book-cover';
-import { CatalogNav } from '../../../../shared/components/catalog-nav/catalog-nav';
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -12,7 +11,7 @@ import { BooksService } from '../../../books/services/books.service';
 import { HttpErrorResponse } from '@angular/common/http';
 @Component({
   selector: 'app-google-book-search',
-  imports: [ReactiveFormsModule, CatalogNav, BookCover],
+  imports: [ReactiveFormsModule, BookCover],
   templateUrl: './google-book-search.html',
   styleUrl: './google-book-search.css',
 })

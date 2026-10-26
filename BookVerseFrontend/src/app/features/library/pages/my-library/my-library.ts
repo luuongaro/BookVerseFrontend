@@ -1,13 +1,12 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { CatalogNav } from '../../../../shared/components/catalog-nav/catalog-nav';
 import { apiError } from '../../../../core/api/api.config';
 import { LibraryService, LibrarySessionError } from '../../services/library.service';
 import { LibraryBook, ReadingState } from '../../models/library-book.model';
 @Component({
   selector: 'app-my-library',
-  imports: [RouterLink, CatalogNav],
+  imports: [RouterLink],
   templateUrl: './my-library.html',
   styleUrl: './my-library.css',
 })

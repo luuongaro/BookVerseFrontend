@@ -5,7 +5,6 @@ import { ReviewWork, ReviewWorkService } from '../../services/review-work.servic
 import { ReviewSessionService } from '../../services/review-session.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DestroyRef } from '@angular/core';
-import { CatalogNav } from '../../../../shared/components/catalog-nav/catalog-nav';
 import { Component, inject, signal, computed, linkedSignal, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -14,7 +13,7 @@ import { ReviewsService } from '../../services/reviews.service';
 import { Review } from '../../models/review.model';
 @Component({
   selector: 'app-review-list',
-  imports: [RouterLink, ReactiveFormsModule, CatalogNav, DatePipe, BookCover, NgTemplateOutlet],
+  imports: [RouterLink, ReactiveFormsModule, DatePipe, BookCover, NgTemplateOutlet],
   templateUrl: './review-list.html',
   styleUrl: './review-list.css',
 })

@@ -236,7 +236,7 @@
 
 .dashboard-body {
   min-width: 0;
-  margin-left: 215px;
+  margin-left: 0;
 }
 
 .topbar {
@@ -646,10 +646,6 @@
     width: 215px;
     padding-right: 15px;
     padding-left: 15px;
-  }
-
-  .dashboard-body {
-    margin-left: 215px;
   }
 
   .workspace {

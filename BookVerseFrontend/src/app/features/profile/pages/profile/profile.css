@@ -211,7 +211,7 @@
 
 .profile-body {
   min-height: 100vh;
-  margin-left: 270px;
+  margin-left: 0;
 }
 
 .topbar {
@@ -601,10 +601,6 @@
     width: 230px;
   }
 
-  .profile-body {
-    margin-left: 230px;
-  }
-
   .profile-main {
     width: calc(100% - 48px);
   }
@@ -615,7 +611,7 @@
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 760px) {
   .sidebar {
     position: static;
     width: 100%;

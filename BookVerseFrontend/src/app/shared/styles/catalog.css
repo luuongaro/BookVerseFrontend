@@ -191,7 +191,7 @@ form.panel {
 }
 
 main {
-  margin-left: 215px;
+  margin-left: 0;
   margin-right: 0;
   max-width: none;
   padding: 45px clamp(24px, 4vw, 64px);

@@ -21,8 +21,7 @@
 
 .dashboard-layout {
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
+  display: block;
   background: var(--paper);
 }
 

@@ -1,5 +1,4 @@
 import { BookCover } from '../../../../shared/components/book-cover/book-cover';
-import { CatalogNav } from '../../../../shared/components/catalog-nav/catalog-nav';
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -8,7 +7,7 @@ import { BooksService } from '../../services/books.service';
 import { BookPage } from '../../models/book.model';
 @Component({
   selector: 'app-book-list',
-  imports: [RouterLink, ReactiveFormsModule, CatalogNav, BookCover],
+  imports: [RouterLink, ReactiveFormsModule, BookCover],
   templateUrl: './book-list.html',
   styleUrl: './book-list.css',
 })

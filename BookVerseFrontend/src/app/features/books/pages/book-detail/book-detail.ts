@@ -3,7 +3,6 @@ import { BookCover } from '../../../../shared/components/book-cover/book-cover';
 import { Subscription } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DestroyRef } from '@angular/core';
-import { CatalogNav } from '../../../../shared/components/catalog-nav/catalog-nav';
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -12,7 +11,7 @@ import { BooksService } from '../../services/books.service';
 import { Book } from '../../models/book.model';
 @Component({
   selector: 'app-book-detail',
-  imports: [RouterLink, ReactiveFormsModule, CatalogNav, BookCover],
+  imports: [RouterLink, ReactiveFormsModule, BookCover],
   templateUrl: './book-detail.html',
   styleUrl: './book-detail.css',
 })
