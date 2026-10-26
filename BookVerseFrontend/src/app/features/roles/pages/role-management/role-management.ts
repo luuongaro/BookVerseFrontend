@@ -7,6 +7,7 @@ import { RoleManagementService } from '../../services/role-management.service';
 
 @Component({
   selector: 'app-role-management',
+  standalone: true,
   imports: [FormsModule],
   templateUrl: './role-management.html',
   styleUrl: './role-management.css',
@@ -21,14 +22,85 @@ export class RoleManagement implements OnInit {
   savingUserId = signal<string | null>(null);
   error = signal('');
   notice = signal('');
-  visibleUsers = computed(() => {
+  currentPage = signal(1);
+  pageSize = 5;
+  roleFilter = signal('ALL');
+
+  filteredUsers = computed(() => {
     const query = this.query().trim().toLocaleLowerCase();
-    return query
-      ? this.users().filter((user) =>
-          `${user.username} ${user.email}`.toLocaleLowerCase().includes(query),
-        )
-      : this.users();
+    const roleFilter = this.roleFilter();
+
+    return this.users().filter((user) => {
+      const matchesQuery =
+        !query ||
+        `${user.username} ${user.email}`.toLocaleLowerCase().includes(query);
+
+      const matchesRole =
+        roleFilter === 'ALL' || (user.roles ?? []).includes(roleFilter);
+
+      return matchesQuery && matchesRole;
+    });
   });
+
+  pageCount = computed(() =>
+    Math.max(1, Math.ceil(this.filteredUsers().length / this.pageSize)),
+  );
+
+  pageNumbers = computed(() =>
+    Array.from({ length: this.pageCount() }, (_, index) => index + 1),
+  );
+
+  paginatedUsers = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredUsers().slice(start, start + this.pageSize);
+  });
+
+  firstVisibleUser = computed(() =>
+    this.filteredUsers().length === 0
+      ? 0
+      : (this.currentPage() - 1) * this.pageSize + 1,
+  );
+
+  lastVisibleUser = computed(() =>
+    Math.min(this.currentPage() * this.pageSize, this.filteredUsers().length),
+  );
+
+  // Kept until the table template is switched to paginatedUsers.
+  visibleUsers = computed(() => this.paginatedUsers());
+
+  changePage(page: number): void {
+    if (page >= 1 && page <= this.pageCount()) {
+      this.currentPage.set(page);
+    }
+  }
+
+  onSearchChange(value: string): void {
+    this.query.set(value);
+    this.currentPage.set(1);
+  }
+
+  onRoleFilterChange(roleName: string): void {
+    this.roleFilter.set(roleName);
+    this.currentPage.set(1);
+  }
+
+  roleLabel(roleName: string): string {
+    const role = roleName.toUpperCase().replace(/^ROLE_/, '');
+
+    if (role === 'USER' || role === 'USUARIO') return 'USUARIO';
+    if (role === 'MODERATOR' || role === 'MODERADOR') return 'MODERADOR';
+    if (role === 'ADMIN') return 'ADMIN';
+
+    return role;
+  }
+
+  countUsersWithRole(roleName: string): number {
+    const role = this.roles().find(
+      (item) => this.roleLabel(item.name) === roleName,
+    );
+
+    return role?.usersCount ?? 0;
+  }
 
   ngOnInit(): void {
     this.load();
