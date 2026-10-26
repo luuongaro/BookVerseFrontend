@@ -1,6 +1,8 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-register',
@@ -9,11 +11,15 @@ import { RouterLink } from '@angular/router';
   styleUrl: './register.css',
 })
 export class Register {
-  private formBuilder = inject(FormBuilder);
+  private readonly formBuilder = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   showPassword = false;
+  isSubmitting = false;
+  errorMessage = '';
 
-  registerForm = this.formBuilder.group({
+  registerForm = this.formBuilder.nonNullable.group({
     username: [
       '',
       [
@@ -27,8 +33,10 @@ export class Register {
       '',
       [
         Validators.required,
+        Validators.minLength(8),
+        Validators.maxLength(100),
         Validators.pattern(
-          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/,
+          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._-]).{8,100}$/,
         ),
       ],
     ],
@@ -39,10 +47,28 @@ export class Register {
   }
 
   onSubmit(): void {
-    if (this.registerForm.invalid) {
+    if (this.registerForm.invalid || this.isSubmitting) {
       this.registerForm.markAllAsTouched();
       return;
     }
 
+    this.isSubmitting = true;
+    this.errorMessage = '';
+
+    this.authService.register(this.registerForm.getRawValue()).subscribe({
+      next: () => {
+        this.isSubmitting = false;
+        alert('Cuenta creada correctamente. Ahora podés iniciar sesión.');
+        void this.router.navigate(['/login']);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isSubmitting = false;
+
+        this.errorMessage =
+          error.status === 409
+            ? 'Ese correo o nombre de usuario ya está registrado.'
+            : 'No se pudo crear la cuenta. Revisá los datos e intentá nuevamente.';
+      },
+    });
   }
 }

@@ -140,14 +140,6 @@
   }
 }
 
-@media (max-width: 950px) {
-  .public-header nav .nav-home,
-  .public-header nav > a:nth-child(2),
-  .header-divider {
-    display: none;
-  }
-}
-
 @media (max-width: 700px) {
   .public-header {
     height: 80px;
