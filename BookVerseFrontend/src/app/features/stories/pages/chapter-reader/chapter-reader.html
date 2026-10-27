@@ -1,0 +1,300 @@
+<div class="reader-layout">
+
+  <app-sidebar />
+
+  <main class="reader-page">
+
+    @if (isLoading()) {
+
+      <div
+        class="reader-state"
+        role="status"
+      >
+        <span aria-hidden="true">✦</span>
+        <p>Abriendo el capítulo...</p>
+      </div>
+
+    } @else if (errorMessage()) {
+
+      <div
+        class="reader-state error"
+        role="alert"
+      >
+        <span aria-hidden="true">✧</span>
+        <p>
+          {{ errorMessage() }}
+        </p>
+
+        @if (storyId()) {
+
+          <a
+            class="text-button"
+            [routerLink]="[
+              '/stories',
+              storyId()
+            ]"
+          >
+            Volver a la historia
+          </a>
+
+        }
+
+      </div>
+
+    } @else if (
+      chapter();
+      as currentChapter
+    ) {
+
+      <header class="reader-heading">
+
+        <a
+          class="back-link"
+          [routerLink]="[
+            '/stories',
+            storyId()
+          ]"
+        >
+          <span aria-hidden="true">
+            ←
+          </span>
+
+          {{ currentChapter.storyTitle }}
+        </a>
+
+        <span class="chapter-position">
+
+          CAPÍTULO
+          {{
+            currentChapter.chapterNumber
+              .toString()
+              .padStart(2, '0')
+          }}
+
+          @if (story(); as currentStory) {
+            / {{ currentStory.chaptersCount }}
+          }
+
+        </span>
+
+        <button
+          class="bookmark-button"
+          type="button"
+          [attr.aria-pressed]="bookmarked()"
+          [attr.aria-label]="
+            bookmarked()
+              ? 'Quitar marcador'
+              : 'Guardar marcador'
+          "
+          [title]="
+            bookmarked()
+              ? 'Quitar marcador'
+              : 'Guardar marcador'
+          "
+          (click)="toggleBookmark()"
+        >
+
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path
+              d="M6 3h12v19l-6-5-6 5Z"
+            />
+          </svg>
+
+        </button>
+
+      </header>
+
+      <article
+        class="reader-paper"
+        aria-labelledby="chapter-title"
+      >
+
+        <span class="eyebrow">
+          {{
+            currentChapter.storyTitle
+              .toUpperCase()
+          }}
+        </span>
+
+        <h1 id="chapter-title">
+          {{ currentChapter.title }}
+        </h1>
+
+        <p class="chapter-number-label">
+          Capítulo {{ currentChapter.chapterNumber }}
+        </p>
+
+        <div
+  class="reading-progress-state"
+  aria-live="polite"
+>
+
+  @if (isSavingProgress()) {
+
+    <span>
+      Guardando progreso...
+    </span>
+
+  } @else if (progressError()) {
+
+    <span class="progress-error">
+      {{ progressError() }}
+    </span>
+
+  } @else if (progressMessage()) {
+
+    <span class="progress-saved">
+      {{ progressMessage() }}
+    </span>
+
+  }
+
+</div>
+        <div
+          class="paper-divider moon"
+          aria-hidden="true"
+        >
+          ☾
+        </div>
+
+        <div
+          class="chapter-body"
+          [innerHTML]="currentChapter.content"
+        ></div>
+<nav
+  class="chapter-navigation"
+  aria-label="Navegación entre capítulos"
+>
+
+  <div class="chapter-nav-side">
+
+    @if (previousChapter(); as previous) {
+
+      <a
+        class="chapter-nav-link previous"
+        [routerLink]="[
+          '/stories',
+          storyId(),
+          'chapters',
+          previous.idExternal
+        ]"
+      >
+
+        <span
+          class="nav-arrow"
+          aria-hidden="true"
+        >
+          ←
+        </span>
+
+        <span>
+
+          <small>
+            CAPÍTULO ANTERIOR
+          </small>
+
+          <strong>
+            {{ previous.title }}
+          </strong>
+
+        </span>
+
+      </a>
+
+    }
+
+  </div>
+
+  <div class="chapter-nav-side next-side">
+
+    @if (nextChapter(); as next) {
+
+      <a
+        class="chapter-nav-link next"
+        [routerLink]="[
+          '/stories',
+          storyId(),
+          'chapters',
+          next.idExternal
+        ]"
+      >
+
+        <span>
+
+          <small>
+            SIGUIENTE CAPÍTULO
+          </small>
+
+          <strong>
+            {{ next.title }}
+          </strong>
+
+        </span>
+
+        <span
+          class="nav-arrow"
+          aria-hidden="true"
+        >
+          →
+        </span>
+
+      </a>
+
+    }
+
+  </div>
+
+</nav>
+        <div
+          class="paper-divider end-mark"
+          aria-hidden="true"
+        >
+          ✧
+        </div>
+
+        <div class="reader-end">
+
+          <p>
+            Llegaste al final de este capítulo.
+          </p>
+
+          <a
+            class="return-link"
+            [routerLink]="[
+              '/stories',
+              storyId()
+            ]"
+          >
+            Volver a la historia
+            <span aria-hidden="true">→</span>
+          </a>
+
+        </div>
+
+      </article>
+
+      <footer class="reader-footer">
+
+        <span>
+          Un pequeño mundo propio.
+        </span>
+
+        <span>
+          BOOKVERSE ✦
+        </span>
+
+      </footer>
+
+    }
+
+  </main>
+
+</div>

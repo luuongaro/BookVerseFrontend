@@ -1,0 +1,244 @@
+<div class="chapter-layout">
+
+  <app-sidebar />
+
+  <main class="chapter-page">
+
+    @if (isLoading()) {
+
+      <div
+        class="page-state"
+        role="status"
+      >
+        <span class="state-mark">✦</span>
+        Cargando capítulos...
+      </div>
+
+    } @else if (errorMessage()) {
+
+      <div
+        class="page-state error"
+        role="alert"
+      >
+        {{ errorMessage() }}
+      </div>
+
+    } @else if (story(); as currentStory) {
+
+      <header class="chapter-topbar">
+
+        <a
+          class="back-link"
+          [routerLink]="[
+            '/stories',
+            currentStory.idExternal
+          ]"
+        >
+          <span aria-hidden="true">←</span>
+          Volver a la historia
+        </a>
+
+        <span class="topbar-caption">
+          Tu historia, capítulo a capítulo
+        </span>
+
+      </header>
+
+      <section class="chapter-hero">
+
+        <div>
+
+          <span class="eyebrow">
+            EL MANUSCRITO
+          </span>
+
+          <h1>
+            {{ currentStory.title }}
+          </h1>
+
+          <p>
+            {{ currentStory.description }}
+          </p>
+
+        </div>
+
+        <div class="hero-meta">
+
+          <span
+            class="access-badge"
+            [class.premium]="
+              currentStory.accessType === 'PREMIUM'
+            "
+          >
+            {{
+              currentStory.accessType === 'PREMIUM'
+                ? 'PREMIUM'
+                : 'GRATUITA'
+            }}
+          </span>
+
+          <span class="chapter-count">
+            {{ chapters().length }}
+            capítulos
+          </span>
+
+        </div>
+
+      </section>
+
+      <div class="ornament" aria-hidden="true">
+        ✦
+      </div>
+
+      <section
+        class="manuscript-section"
+        aria-labelledby="chapters-title"
+      >
+
+        <div class="section-heading">
+
+          <div>
+
+            <span class="eyebrow">
+              ENTRE SUS PÁGINAS
+            </span>
+
+            <h2 id="chapters-title">
+              Capítulos
+            </h2>
+
+          </div>
+
+        </div>
+
+        <div class="chapter-list">
+
+          @for (
+            chapter of chapters();
+            track chapter.idExternal
+          ) {
+
+            <article
+              class="chapter-card"
+              [class.draft]="!chapter.published"
+            >
+
+              <div class="chapter-number">
+
+                {{
+                  chapter.chapterNumber
+                    .toString()
+                    .padStart(2, '0')
+                }}
+
+              </div>
+
+              <div class="chapter-content">
+
+                <span class="chapter-kicker">
+                  CAPÍTULO {{ chapter.chapterNumber }}
+                </span>
+
+                <h3>
+                  {{ chapter.title }}
+                </h3>
+
+                <div class="chapter-meta">
+
+                  @if (chapter.published) {
+
+                    <span class="status published">
+                      <span
+                        class="status-dot"
+                        aria-hidden="true"
+                      ></span>
+
+                      PUBLICADO
+                    </span>
+
+                  } @else {
+
+                    <span class="status draft-status">
+                      BORRADOR
+                    </span>
+
+                  }
+
+                </div>
+
+              </div>
+
+              @if (chapter.published) {
+
+                <a
+                  class="chapter-action"
+                  [routerLink]="[
+                    '/stories',
+                    currentStory.idExternal,
+                    'chapters',
+                    chapter.idExternal
+                  ]"
+                  [attr.aria-label]="
+                    'Leer capítulo '
+                    + chapter.chapterNumber
+                    + ': '
+                    + chapter.title
+                  "
+                >
+                  <span>Leer capítulo</span>
+                  <span aria-hidden="true">→</span>
+                </a>
+
+              } @else {
+
+                <div class="draft-mark">
+                  <span aria-hidden="true">✧</span>
+                  En edición
+                </div>
+
+              }
+
+            </article>
+
+          } @empty {
+
+            <div class="empty-state">
+
+              <span aria-hidden="true">
+                ✦
+              </span>
+
+              <h2>
+                Las páginas todavía están en blanco
+              </h2>
+
+              <p>
+                Esta historia aún no tiene capítulos
+                disponibles.
+              </p>
+
+            </div>
+
+          }
+
+        </div>
+
+      </section>
+
+      <footer class="chapter-footer">
+
+        <span>
+          Cada mundo comienza con una sola palabra.
+        </span>
+
+        <span>
+          BOOKVERSE ✦
+        </span>
+
+      </footer>
+
+    }
+
+  </main>
+
+</div>

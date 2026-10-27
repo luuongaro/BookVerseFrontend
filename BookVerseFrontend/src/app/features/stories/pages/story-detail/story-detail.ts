@@ -1,38 +1,81 @@
-import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+
+import {Component,inject,OnInit,signal} from '@angular/core';
+
+import {ActivatedRoute,RouterModule} from '@angular/router';
+
+import { finalize } from 'rxjs';
+
+import { StoryDetailResponse } from '../../models/story-detail-response';
+import { StoryService } from '../../services/story.services';
 
 @Component({
   selector: 'app-story-detail',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule,RouterModule],
   templateUrl: './story-detail.html',
   styleUrl: './story-detail.css'
 })
-export class StoryDetail {
+export class StoryDetail implements OnInit {
 
-  story = signal({
+  private readonly route = inject(ActivatedRoute);
+  private readonly storyService = inject(StoryService);
 
-    title: 'Cartas para la Luna',
+  readonly story =
+    signal<StoryDetailResponse | null>(null);
 
-    description:
-      'Cada noche Elara escribe una carta.',
+  readonly isLoading =
+    signal(false);
 
-    accessType: 'FREE',
+  readonly errorMessage =
+    signal<string | null>(null);
 
-    chaptersCount: 4,
+  ngOnInit(): void {
 
-    chapters: [
-      {
-        chapterNumber: 1,
-        title: 'La primera carta',
-        published: true
-      },
-      {
-        chapterNumber: 2,
-        title: 'La respuesta',
-        published: false
-      }
-    ]
-  });
+    const id =
+      this.route.snapshot.paramMap.get('id');
 
+    if (!id) {
+      this.errorMessage.set(
+        'No pudimos identificar la historia.'
+      );
+
+      return;
+    }
+
+    this.loadStory(id);
+  }
+
+  private loadStory(
+    idExternal: string
+  ): void {
+
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+
+    this.storyService
+      .getById(idExternal)
+      .pipe(
+        finalize(() => {
+          this.isLoading.set(false);
+        })
+      )
+      .subscribe({
+
+        next: story => {
+
+          this.story.set(story);
+
+        },
+
+        error: () => {
+
+          this.errorMessage.set(
+            'No pudimos cargar la historia.'
+          );
+
+        }
+
+      });
+  }
 }

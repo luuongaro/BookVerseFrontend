@@ -1,57 +1,184 @@
 <section class="story-detail">
 
-  <h1>
-    {{story().title}}
-  </h1>
+  @if (isLoading()) {
 
-  <p>
-    {{story().description}}
-  </p>
+    <div
+      class="story-state"
+      role="status"
+    >
+      Cargando historia...
+    </div>
 
-  <div class="story-metadata">
+  } @else if (errorMessage()) {
 
-    <span>
-      {{story().chaptersCount}} capítulos
-    </span>
+    <div
+      class="story-state error"
+      role="alert"
+    >
+      {{ errorMessage() }}
+    </div>
 
-    <span>
-      {{story().accessType}}
-    </span>
+  } @else if (story(); as currentStory) {
 
-  </div>
+    <a
+      class="back-link"
+      routerLink="/stories"
+    >
+      ← Volver a historias
+    </a>
 
-  <h2>
-    Capítulos
-  </h2>
+    <header class="story-header">
 
-  <div class="chapters-list">
+      <span class="eyebrow">
+        HISTORIA ORIGINAL
+      </span>
 
-    @for(chapter of story().chapters; track chapter.chapterNumber){
+      <h1>
+        {{ currentStory.title }}
+      </h1>
 
-      <article class="chapter-card">
+      <p class="story-description">
+        {{ currentStory.description }}
+      </p>
 
-        <strong>
-          Capítulo {{chapter.chapterNumber}}
-        </strong>
+      <div class="story-metadata">
 
-        <p>
-          {{chapter.title}}
-        </p>
+        <span>
+          {{ currentStory.chaptersCount }}
+          capítulos
+        </span>
 
-        @if(chapter.published){
+        <span
+          class="badge"
+          [class.premium]="
+            currentStory.accessType === 'PREMIUM'
+          "
+        >
+          {{
+            currentStory.accessType === 'PREMIUM'
+              ? 'PREMIUM'
+              : 'GRATUITA'
+          }}
+        </span>
 
-          <span>Publicado</span>
+      </div>
 
-        } @else {
+    </header>
 
-          <span>Borrador</span>
+    <section class="story-chapters">
+
+      <div class="section-heading">
+
+        <div>
+          <span class="eyebrow">
+            EL MANUSCRITO
+          </span>
+
+          <h2>
+            Capítulos
+          </h2>
+        </div>
+
+        @if (currentStory.chapters.length > 0) {
+
+          <a
+            class="button secondary"
+            [routerLink]="[
+              '/stories',
+              currentStory.idExternal,
+              'chapters'
+            ]"
+          >
+            Ver todos los capítulos
+          </a>
 
         }
 
-      </article>
+      </div>
 
-    }
+      <div class="chapters-list">
 
-  </div>
+        @for (
+          chapter of currentStory.chapters;
+          track chapter.idExternal
+        ) {
+
+          <article class="chapter-card">
+
+            <span class="chapter-number">
+              {{
+                chapter.chapterNumber
+                  .toString()
+                  .padStart(2, '0')
+              }}
+            </span>
+
+            <div class="chapter-info">
+
+              <small>
+                CAPÍTULO
+                {{ chapter.chapterNumber }}
+              </small>
+
+              <h3>
+                {{ chapter.title }}
+              </h3>
+
+              @if (chapter.published) {
+
+                <span class="chapter-status published">
+                  Publicado
+                </span>
+
+              } @else {
+
+                <span class="chapter-status draft">
+                  Borrador
+                </span>
+
+              }
+
+            </div>
+
+            @if (chapter.published) {
+
+              <a
+                class="chapter-open"
+                [routerLink]="[
+                  '/stories',
+                  currentStory.idExternal,
+                  'chapters',
+                  chapter.idExternal
+                ]"
+                [attr.aria-label]="
+                  'Leer capítulo ' + chapter.chapterNumber
+                "
+              >
+                →
+              </a>
+
+            }
+
+          </article>
+
+        } @empty {
+
+          <div class="empty-chapters">
+
+            <span>✧</span>
+
+            <p>
+              Esta historia todavía no tiene capítulos disponibles.
+            </p>
+
+          </div>
+
+        }
+
+      </div>
+
+    </section>
+
+  }
 
 </section>
