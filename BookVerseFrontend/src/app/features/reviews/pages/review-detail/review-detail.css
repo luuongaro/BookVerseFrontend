@@ -1,1 +1,27 @@
 @import '../../../../shared/styles/catalog.css';
+.eyebrow {
+  display: block;
+  margin-top: 20px;
+}
+.danger {
+  background: #933c4a;
+}
+.delete-dialog {
+  width: min(460px, calc(100% - 32px));
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  padding: 28px;
+  border: 1px solid #e8e2ef;
+  border-radius: 14px;
+  background: #fbf9fd;
+  color: #302b43;
+}
+.delete-dialog::backdrop {
+  background: #302b4370;
+}
+.delete-dialog h2 {
+  margin-top: 0;
+}
+.delete-dialog .actions {
+  margin-bottom: 0;
+}

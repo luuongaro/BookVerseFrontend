@@ -1,5 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { authInterceptor } from '../../../core/interceptors/auth.interceptor';
+import { TokenService } from '../../../core/services/token.service';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { BooksService } from './books.service';
 import { GoogleBooksService } from '../../google-books/services/google-books.service';
@@ -11,7 +13,11 @@ describe('Books, Google Books and reviews API contracts', () => {
   let http: HttpTestingController;
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(withInterceptors([authInterceptor])),
+        provideHttpClientTesting(),
+        { provide: TokenService, useValue: { getToken: () => localStorage.getItem('token') } },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     localStorage.setItem('token', 'test-token');
@@ -74,5 +80,17 @@ describe('Books, Google Books and reviews API contracts', () => {
     expect(apiError(new HttpErrorResponse({ status: 403 }))).toContain('permiso');
     expect(apiError(new HttpErrorResponse({ status: 409 }))).toContain('Ya publicaste');
     expect(apiError(new HttpErrorResponse({ status: 0 }))).toContain('conectar');
+  });
+  it('deletes a review through its encoded id and accepts the empty 204 response', () => {
+    let completed = false;
+    TestBed.inject(ReviewsService)
+      .delete('review/id')
+      .subscribe({ complete: () => (completed = true) });
+    const request = http.expectOne('http://localhost:8080/api/reviews/review%2Fid');
+    expect(request.request.method).toBe('DELETE');
+    expect(request.request.body).toBeNull();
+    expect(request.request.headers.get('Authorization')).toBe('Bearer test-token');
+    request.flush(null, { status: 204, statusText: 'No Content' });
+    expect(completed).toBe(true);
   });
 });

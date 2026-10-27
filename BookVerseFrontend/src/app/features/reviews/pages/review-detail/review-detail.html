@@ -6,6 +6,8 @@
     <div class="state error" role="alert">
       {{ error() }} <button (click)="load()">Reintentar</button>
     </div>
+  } @else if (deleted()) {
+    <p class="state" role="status">Reseña eliminada.</p>
   } @else if (review(); as review) {
     @if (work(); as work) {
       <span class="eyebrow">{{ work.kind === 'book' ? 'LIBRO' : 'HISTORIA' }}</span>
@@ -14,8 +16,9 @@
     }
     <article class="panel">
       <h2 class="rating">★ {{ review.rating }} / 5</h2>
+      <p>Por {{ review.reviewerName?.trim() || 'Usuario' }}</p>
       <p class="prose">{{ review.content }}</p>
-      <p>Publicada: {{ review.createdAt.slice(0, 10) }}</p>
+      <p>Publicada el {{ review.createdAt | date: 'dd/MM/yyyy' }}</p>
       <div class="actions">
         @if (review.bookId) {
           <a [routerLink]="['/books', review.bookId]">Ver libro</a>
@@ -27,9 +30,8 @@
           >Reseñas de esta obra</a
         >
         @if (session.canEdit(review)) {
-          <a class="button" [routerLink]="['/reviews', review.reviewId, 'edit']"
-            >Editar mi reseña</a
-          >
+          <a class="button" [routerLink]="['/reviews', review.reviewId, 'edit']">Editar reseña</a>
+          <button type="button" class="danger" (click)="confirmDelete()">Eliminar reseña</button>
         }
         @if (
           session.userId() &&
@@ -47,3 +49,30 @@
     </article>
   }
 </main>
+<dialog
+  #deleteDialog
+  class="delete-dialog"
+  aria-labelledby="delete-heading"
+  aria-describedby="delete-description"
+  (cancel)="deleting() && $event.preventDefault()"
+>
+  <h2 id="delete-heading">¿Eliminar esta reseña?</h2>
+  <p id="delete-description">La reseña dejará de aparecer en BookVerse.</p>
+  @if (deleteError()) {
+    <p class="validation" role="alert">{{ deleteError() }}</p>
+  }
+  <div class="actions" [attr.aria-busy]="deleting()">
+    <button type="button" class="danger" [disabled]="deleting()" (click)="deleteReview()">
+      {{ deleting() ? 'Eliminando…' : 'Eliminar reseña' }}
+    </button>
+    <button
+      type="button"
+      class="secondary"
+      [disabled]="deleting()"
+      (click)="cancelDelete()"
+      autofocus
+    >
+      Cancelar
+    </button>
+  </div>
+</dialog>

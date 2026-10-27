@@ -1,7 +1,5 @@
 <main>
-  <span class="eyebrow">MÁS ALLÁ DE TU ESTANTERÍA</span>
-  <h1>Encontrá tu próxima historia.</h1>
-  <p>Buscá un libro y guardalo en tu biblioteca.</p>
+  <h1>Buscar libros</h1>
   <form class="search panel" [formGroup]="form" (ngSubmit)="search()">
     <div>
       <label for="type">Buscar por</label
@@ -46,11 +44,9 @@
           </button>
         </article>
       } @empty {
-        <p class="state">No encontramos libros. Probá otro título o autor.</p>
+        <p class="state">No encontramos libros para esa búsqueda.</p>
       }
     </div>
-  } @else {
-    <p class="state">Cada lectura empieza con una búsqueda.</p>
   }
   @if (importError()) {
     <p class="state error" role="alert">{{ importError() }}</p>

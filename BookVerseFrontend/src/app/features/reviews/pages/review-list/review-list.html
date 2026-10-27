@@ -1,17 +1,13 @@
 <div class="main">
   <header class="topbar">
     <nav aria-label="Ruta de navegación">
-      <a routerLink="/dashboard">Mi universo</a><span aria-hidden="true">/</span
-      ><strong>Reseñas</strong>
+      <a routerLink="/dashboard">Inicio</a><span aria-hidden="true">/</span><strong>Reseñas</strong>
     </nav>
-    <span class="top-message">☾ &nbsp; Un buen día para un nuevo capítulo</span>
   </header>
   <main class="content">
     <section class="intro">
       <div>
-        <span class="eyebrow">LECTURAS QUE DEJAN HUELLA</span>
-        <h1>Entre lectores.</h1>
-        <p>Opiniones, descubrimientos y otras formas de vivir una historia.</p>
+        <h1>Reseñas</h1>
       </div>
       <a class="primary" routerLink="/reviews/new" [queryParams]="{ bookId, storyId }"
         ><span class="plus" aria-hidden="true">＋</span> Escribir una reseña</a
@@ -73,11 +69,6 @@
               >{{ stars(featured.review.rating) }}</span
             >
           </a>
-        } @else {
-          <div class="featured empty-featured">
-            <span aria-hidden="true">✧</span>
-            <p>Una nueva mirada puede empezar con tu reseña.</p>
-          </div>
         }
       </section>
       <section class="filters" aria-label="Filtros de reseñas">
@@ -146,7 +137,6 @@
       }
       <p class="count" role="status">
         Mostrando {{ pageStart() }}–{{ pageEnd() }} de {{ visibleReviews().length }} reseñas
-        {{ mine() ? 'tuyas' : 'de la comunidad' }} en {{ groups().length }} obras
       </p>
       @if (view() === 'groups') {
         @for (group of paginatedGroups(); track group.work.key) {
@@ -178,19 +168,11 @@
       }
       @if (!visibleReviews().length) {
         <div class="state">
-          <span class="empty-spark" aria-hidden="true">✧</span>
-          <h2>
-            {{
-              reviews().length
-                ? 'Todavía hay mundos por descubrir.'
-                : 'La conversación empieza con vos.'
-            }}
-          </h2>
           <p>
             {{
               reviews().length
                 ? 'No hay reseñas que coincidan con estos filtros.'
-                : 'Todavía no hay reseñas. Compartí tu primera impresión.'
+                : 'Todavía no hay reseñas.'
             }}
           </p>
           @if (reviews().length) {
@@ -214,9 +196,6 @@
         </button>
       </nav>
     }
-    <footer class="footer">
-      <span>Un pequeño mundo propio.</span><strong>BOOKVERSE &nbsp; ✧</strong>
-    </footer>
   </main>
 </div>
 <ng-template #reviewCard let-review let-work="work">
@@ -247,7 +226,7 @@
           }}<small>{{ work.kind === 'book' ? 'Libro' : 'Historia' }}</small></span
         >
       </div>
-      <a class="read-link" [routerLink]="['/reviews', review.reviewId]">Leer reseña completa →</a>
+      <a class="read-link" [routerLink]="['/reviews', review.reviewId]">Ver reseña →</a>
     </div>
   </article>
 </ng-template>
