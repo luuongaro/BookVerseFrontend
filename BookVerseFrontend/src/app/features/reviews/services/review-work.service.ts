@@ -39,7 +39,7 @@ export interface ReviewWork {
 export class ReviewWorkService {
   private readonly books = inject(BooksService);
   private readonly http = inject(HttpClient);
-  resolve(review: Review): Observable<ReviewWork> {
+  resolve(review: Pick<Review, 'bookId' | 'storyId'>): Observable<ReviewWork> {
     const kind = review.bookId ? 'book' : 'story';
     const id = review.bookId ?? review.storyId ?? '';
     const storyCover = kind === 'story' ? storyCoverFor(id) : null;

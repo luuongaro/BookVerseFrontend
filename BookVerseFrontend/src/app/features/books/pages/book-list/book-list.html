@@ -1,7 +1,5 @@
 <main>
-  <span class="eyebrow">UN MUNDO ENTRE PÁGINAS</span>
-  <h1>El catálogo de BookVerse.</h1>
-  <p>Explorá el catálogo y guardá tus próximas lecturas en tu biblioteca personal.</p>
+  <h1>Catálogo de libros</h1>
   <a class="button secondary" routerLink="/library">Mi biblioteca</a>
   <a class="button" routerLink="/google-books">Buscar en Google Books</a>
   @if (loading()) {
@@ -20,7 +18,7 @@
           <p>{{ book.authors?.join(', ') || 'Autor desconocido' }}</p></a
         >
       } @empty {
-        <p class="state">Todavía no hay libros. Descubrí uno en Google Books.</p>
+        <p class="state">Todavía no hay libros en el catálogo.</p>
       }
     </div>
     @if (page.totalPages > 1) {

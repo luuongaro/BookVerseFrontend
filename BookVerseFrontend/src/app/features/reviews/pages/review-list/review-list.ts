@@ -67,7 +67,7 @@ export class ReviewList implements OnInit {
     );
   }
   readerName(review: Review): string {
-    return review.reviewerName?.trim() || 'Lector de BookVerse';
+    return review.reviewerName?.trim() || 'Usuario';
   }
   initials(review: Review): string {
     return this.readerName(review)

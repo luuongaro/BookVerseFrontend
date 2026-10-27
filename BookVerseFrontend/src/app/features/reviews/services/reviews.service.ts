@@ -23,4 +23,7 @@ export class ReviewsService {
   update(id: string, request: ReviewContent) {
     return this.http.put<Review>(`${API_URL}/reviews/${encodeURIComponent(id)}`, request);
   }
+  delete(id: string) {
+    return this.http.delete<void>(`${API_URL}/reviews/${encodeURIComponent(id)}`);
+  }
 }

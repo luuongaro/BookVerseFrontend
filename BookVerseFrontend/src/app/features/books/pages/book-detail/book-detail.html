@@ -12,11 +12,10 @@
         <app-book-cover class="cover" [src]="book.thumbnailUrl" [title]="book.title" />
       </div>
       <div>
-        <span class="eyebrow">UN LIBRO, MUCHAS VIDAS</span>
         <h1>{{ book.title }}</h1>
         <p>{{ book.authors?.join(', ') || 'Autor desconocido' }}</p>
         <p>{{ book.categories }}</p>
-        <p class="prose">{{ book.description || 'Este libro todavía no tiene descripción.' }}</p>
+        <div class="prose" [innerHTML]="book.description || 'Sin descripción.'"></div>
         @if (saveError()) {
           <p class="state error" role="alert">{{ saveError() }}</p>
         }

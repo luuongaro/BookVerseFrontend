@@ -1,4 +1,6 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, signal, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { map, switchMap } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { apiError } from '../../../../core/api/api.config';
@@ -6,6 +8,7 @@ import { ReviewsService } from '../../services/reviews.service';
 import { ReviewSessionService, UUID_PATTERN } from '../../services/review-session.service';
 import { BooksService } from '../../../books/services/books.service';
 import { Book } from '../../../books/models/book.model';
+import { ReviewWork, ReviewWorkService } from '../../services/review-work.service';
 @Component({
   selector: 'app-review-form',
   imports: [RouterLink, ReactiveFormsModule],
@@ -19,6 +22,8 @@ export class ReviewForm implements OnInit {
   private readonly fb = inject(FormBuilder);
   readonly session = inject(ReviewSessionService);
   private readonly booksService = inject(BooksService);
+  private readonly works = inject(ReviewWorkService);
+  private readonly destroyRef = inject(DestroyRef);
   id = this.route.snapshot.paramMap.get('id');
   bookId = this.route.snapshot.queryParamMap.get('bookId');
   storyId = this.route.snapshot.queryParamMap.get('storyId');
@@ -29,6 +34,7 @@ export class ReviewForm implements OnInit {
   allowed = signal(true);
   books = signal<Book[]>([]);
   selectedBook = signal<Book | null>(null);
+  selectedWork = signal<ReviewWork | null>(null);
   booksPage = signal(0);
   moreBooks = signal(false);
   form = this.fb.nonNullable.group({
@@ -46,19 +52,26 @@ export class ReviewForm implements OnInit {
       this.form.controls.bookId.clearValidators();
       this.form.controls.bookId.updateValueAndValidity();
       this.loading.set(true);
-      this.service.getById(this.id).subscribe({
-        next: (review) => {
-          this.allowed.set(this.session.canEdit(review));
-          this.form.patchValue({ rating: review.rating, content: review.content });
-          this.bookId = review.bookId;
-          this.storyId = review.storyId;
-          this.loading.set(false);
-        },
-        error: (error) => {
-          this.loadError.set(apiError(error));
-          this.loading.set(false);
-        },
-      });
+      this.service
+        .getById(this.id)
+        .pipe(
+          switchMap((review) => this.works.resolve(review).pipe(map((work) => ({ review, work })))),
+          takeUntilDestroyed(this.destroyRef),
+        )
+        .subscribe({
+          next: ({ review, work }) => {
+            this.allowed.set(this.session.canEdit(review));
+            this.form.patchValue({ rating: review.rating, content: review.content });
+            this.bookId = review.bookId;
+            this.storyId = review.storyId;
+            this.selectedWork.set(work);
+            this.loading.set(false);
+          },
+          error: (error) => {
+            this.loadError.set(apiError(error));
+            this.loading.set(false);
+          },
+        });
     } else if (this.bookId && this.storyId) {
       this.allowed.set(false);
       this.loadError.set('Una reseña debe corresponder a una sola obra.');
@@ -66,22 +79,41 @@ export class ReviewForm implements OnInit {
       if (!UUID_PATTERN.test(this.storyId)) {
         this.allowed.set(false);
         this.loadError.set('La historia seleccionada no es válida.');
+        return;
       }
       this.form.controls.bookId.clearValidators();
       this.form.controls.bookId.updateValueAndValidity();
+      this.loading.set(true);
+      this.works
+        .resolve({ bookId: null, storyId: this.storyId })
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (work) => {
+            this.selectedWork.set(work);
+            if (work.unavailable) this.loadError.set('No se pudo cargar la historia seleccionada.');
+            this.loading.set(false);
+          },
+          error: (error) => {
+            this.loadError.set(apiError(error));
+            this.loading.set(false);
+          },
+        });
     } else if (this.bookId) {
       this.loading.set(true);
-      this.booksService.getById(this.bookId).subscribe({
-        next: (book) => {
-          this.selectedBook.set(book);
-          this.form.controls.bookId.setValue(book.idExternal);
-          this.loading.set(false);
-        },
-        error: (error) => {
-          this.loadError.set(apiError(error));
-          this.loading.set(false);
-        },
-      });
+      this.booksService
+        .getById(this.bookId)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (book) => {
+            this.selectedBook.set(book);
+            this.form.controls.bookId.setValue(book.idExternal);
+            this.loading.set(false);
+          },
+          error: (error) => {
+            this.loadError.set(apiError(error));
+            this.loading.set(false);
+          },
+        });
     } else {
       this.loadBooks();
     }
@@ -90,18 +122,21 @@ export class ReviewForm implements OnInit {
     if (this.loading()) return;
     this.loading.set(true);
     this.loadError.set('');
-    this.booksService.getAll(this.booksPage()).subscribe({
-      next: (page) => {
-        this.books.update((books) => [...books, ...page.content]);
-        this.moreBooks.set(!page.last);
-        this.booksPage.set(page.number + 1);
-        this.loading.set(false);
-      },
-      error: (error) => {
-        this.loadError.set(apiError(error));
-        this.loading.set(false);
-      },
-    });
+    this.booksService
+      .getAll(this.booksPage())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (page) => {
+          this.books.update((books) => [...books, ...page.content]);
+          this.moreBooks.set(!page.last);
+          this.booksPage.set(page.number + 1);
+          this.loading.set(false);
+        },
+        error: (error) => {
+          this.loadError.set(apiError(error));
+          this.loading.set(false);
+        },
+      });
   }
   submit(): void {
     if (this.loading() || this.saving() || !this.allowed() || this.loadError()) return;
@@ -127,7 +162,7 @@ export class ReviewForm implements OnInit {
           bookId: this.storyId ? null : values.bookId,
           storyId: this.storyId,
         });
-    request.subscribe({
+    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (review) => {
         this.saving.set(false);
         void this.router.navigate(['/reviews', review.reviewId]);

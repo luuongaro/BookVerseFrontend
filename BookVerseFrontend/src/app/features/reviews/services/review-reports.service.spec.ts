@@ -1,5 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { authInterceptor } from '../../../core/interceptors/auth.interceptor';
+import { TokenService } from '../../../core/services/token.service';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { ReviewReportsService } from './review-reports.service';
 
@@ -8,7 +10,11 @@ describe('ReviewReportsService API contract', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(withInterceptors([authInterceptor])),
+        provideHttpClientTesting(),
+        { provide: TokenService, useValue: { getToken: () => localStorage.getItem('token') } },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     localStorage.setItem('token', 'test-token');
