@@ -145,6 +145,17 @@ h1 em {
   box-shadow: 0 3px 8px #160e0966;
   font-size: 20px;
 }
+@media (hover: hover) and (pointer: fine) {
+  .edit-status {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .shelf-book:hover .edit-status,
+  .shelf-book:focus-within .edit-status {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
 .edit-status:hover {
   background: #eed3a4;
 }
