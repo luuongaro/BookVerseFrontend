@@ -12,7 +12,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { apiError } from '../../../../core/api/api.config';
 import { LibraryService, LibrarySessionError } from '../../services/library.service';
-import { LibraryBook, ReadingState } from '../../models/library-book.model';
+import { LibraryBook, ReadingState, ReadingStatus } from '../../models/library-book.model';
 @Component({
   selector: 'app-my-library',
   imports: [RouterLink],
@@ -37,6 +37,34 @@ export class MyLibrary implements OnInit {
   ];
   editing = signal<LibraryBook | null>(null);
   draftStatus = signal<ReadingState>('WANT_TO_READ');
+  draftPercentage = signal('');
+  progressTouched = signal(false);
+  progressInputValid = signal(true);
+  readonly canEditPercentage = computed(() => this.allowsPercentage(this.draftStatus()));
+  readonly progressError = computed(() => {
+    if (!this.canEditPercentage()) return '';
+    const value = this.draftPercentage().trim();
+    const percentage = Number(value);
+    return !this.progressInputValid() ||
+      (value !== '' && (!Number.isInteger(percentage) || percentage < 0 || percentage > 100))
+      ? 'Ingresá un porcentaje entero entre 0 y 100.'
+      : '';
+  });
+  readonly percentage = computed(() => {
+    const value = this.draftPercentage().trim();
+    return value === '' || Number(value) === 0 ? null : Number(value);
+  });
+  readonly progressChanged = computed(() => {
+    const reading = this.editing()?.reading;
+    if (!reading || !this.canEditPercentage() || !this.progressTouched()) return false;
+    const value = this.percentage();
+    return value === null
+      ? reading.progressType != null || reading.progressValue != null
+      : reading.progressType !== 'PERCENTAGE' || reading.progressValue !== value;
+  });
+  readonly hasChanges = computed(
+    () => this.draftStatus() !== this.editing()?.reading.status || this.progressChanged(),
+  );
   saving = signal(false);
   saveError = signal('');
   confirmation = signal('');
@@ -44,6 +72,13 @@ export class MyLibrary implements OnInit {
     if (this.saving()) return;
     this.editing.set(entry);
     this.draftStatus.set(entry.reading.status);
+    this.draftPercentage.set(
+      entry.reading.progressType === 'PERCENTAGE'
+        ? (entry.reading.progressValue?.toString() ?? '')
+        : '',
+    );
+    this.progressTouched.set(false);
+    this.progressInputValid.set(true);
     this.saveError.set('');
     this.confirmation.set('');
     this.statusDialog().nativeElement.showModal();
@@ -52,16 +87,35 @@ export class MyLibrary implements OnInit {
     if (this.readingStates.includes(value as ReadingState))
       this.draftStatus.set(value as ReadingState);
   }
+  choosePercentage(value: string, valid = true): void {
+    this.draftPercentage.set(value);
+    this.progressTouched.set(true);
+    this.progressInputValid.set(valid);
+  }
+  readingPercentage(reading: ReadingStatus): number | null {
+    return this.allowsPercentage(reading.status) &&
+      reading.progressType === 'PERCENTAGE' &&
+      reading.progressValue != null
+      ? reading.progressValue
+      : null;
+  }
+  allowsPercentage(status: ReadingState): boolean {
+    return status === 'IN_PROGRESS' || status === 'RE_READING';
+  }
   closeEditor(): void {
     if (!this.saving()) this.statusDialog().nativeElement.close();
   }
   saveStatus(): void {
     const entry = this.editing();
-    if (!entry || this.saving() || this.draftStatus() === entry.reading.status) return;
+    if (!entry || this.saving() || this.progressError() || !this.hasChanges()) return;
     this.saving.set(true);
     this.saveError.set('');
     this.service
-      .updateStatus(entry.reading, this.draftStatus())
+      .updateStatus(
+        entry.reading,
+        this.draftStatus(),
+        this.progressChanged() ? this.percentage() : undefined,
+      )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (reading) => {
@@ -71,7 +125,10 @@ export class MyLibrary implements OnInit {
             ),
           );
           this.saving.set(false);
-          this.confirmation.set(`${entry.book.title}: ${this.statusLabel(reading.status)}.`);
+          const percentage = this.readingPercentage(reading);
+          this.confirmation.set(
+            `${entry.book.title}: ${this.statusLabel(reading.status)}${percentage === null ? '' : ` · ${percentage}%`}.`,
+          );
           this.statusDialog().nativeElement.close();
         },
         error: (error) => {
