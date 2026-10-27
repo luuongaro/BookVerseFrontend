@@ -109,6 +109,23 @@
 
           </div>
 
+          @if (isOwner()) {
+
+            <a
+                class="new-chapter-button"
+                [routerLink]="[
+                '/stories',
+                currentStory.idExternal,
+                'chapters',
+                'new'
+                ]"
+            >
+                <span aria-hidden="true">＋</span>
+                Nuevo capítulo
+            </a>
+
+            }
+
         </div>
 
         <div class="chapter-list">
@@ -168,35 +185,51 @@
 
               </div>
 
-              @if (chapter.published) {
+              <div class="chapter-actions">
 
-                <a
-                  class="chapter-action"
-                  [routerLink]="[
-                    '/stories',
-                    currentStory.idExternal,
-                    'chapters',
-                    chapter.idExternal
-                  ]"
-                  [attr.aria-label]="
-                    'Leer capítulo '
-                    + chapter.chapterNumber
-                    + ': '
-                    + chapter.title
-                  "
-                >
-                  <span>Leer capítulo</span>
-                  <span aria-hidden="true">→</span>
-                </a>
+  @if (chapter.published) {
 
-              } @else {
+    <a
+      class="chapter-action read"
+      [routerLink]="[
+        '/stories',
+        currentStory.idExternal,
+        'chapters',
+        chapter.idExternal
+      ]"
+    >
+      <span>Leer capítulo</span>
+      <span aria-hidden="true">→</span>
+    </a>
 
-                <div class="draft-mark">
-                  <span aria-hidden="true">✧</span>
-                  En edición
-                </div>
+  }
 
-              }
+  @if (isOwner()) {
+
+    <a
+      class="chapter-action edit"
+      [routerLink]="[
+        '/stories',
+        currentStory.idExternal,
+        'chapters',
+        chapter.idExternal,
+        'edit'
+      ]"
+    >
+      <span aria-hidden="true">✎</span>
+      <span>Editar</span>
+    </a>
+
+  } @else if (!chapter.published) {
+
+    <div class="draft-mark">
+      <span aria-hidden="true">✧</span>
+      En edición
+    </div>
+
+  }
+
+</div>
 
             </article>
 

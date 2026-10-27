@@ -1,16 +1,8 @@
 import { CommonModule } from '@angular/common';
 
-import {
-  Component,
-  inject,
-  OnInit,
-  signal
-} from '@angular/core';
+import {Component,computed,inject,OnInit,signal} from '@angular/core';
 
-import {
-  ActivatedRoute,
-  RouterModule
-} from '@angular/router';
+import {ActivatedRoute,RouterModule} from '@angular/router';
 
 import { finalize } from 'rxjs';
 
@@ -19,6 +11,7 @@ import { ChapterService } from '../../services/chapter.service';
 import { Sidebar } from '../../../../shared/components/sidebar/sidebar';
 import { StoryDetailResponse } from '../../models/story-detail-response';
 import { StoryService } from '../../services/story.services';
+import { UserService } from '../../../profile/services/user.service';
 
 @Component({
   selector: 'app-chapter-list',
@@ -30,23 +23,43 @@ import { StoryService } from '../../services/story.services';
 export class ChapterList implements OnInit {
 
   private readonly route = inject(ActivatedRoute);
-
   private readonly chapterService = inject(ChapterService);
-
   private readonly storyService = inject(StoryService);
+  private readonly userService = inject(UserService);
 
   readonly storyId = signal<string | null>(null);
-
+  readonly story = signal<StoryDetailResponse | null>(null);
   readonly chapters = signal<ChapterResponse[]>([]);
-
   readonly isLoading = signal(false);
-
   readonly errorMessage = signal<string | null>(null);
 
-  readonly story = signal<StoryDetailResponse | null>(null);
+  readonly isOwner = computed(() => {
+
+  const currentStory =
+    this.story();
+
+  const currentUser =
+    this.userService.currentUser();
+
+  if (!currentStory || !currentUser) {
+    return false;
+  }
+
+  return (
+    currentStory.authorId ===
+    currentUser.idExternal
+  );
+});
+
 
 ngOnInit(): void {
 
+  this.userService
+  .loadCurrentUser()
+  .subscribe({
+    error: () => undefined
+  });
+  
   const id = this.route.snapshot.paramMap.get('id');
 
   this.storyId.set(id);
@@ -83,7 +96,7 @@ ngOnInit(): void {
 
     });
 }
-  
+
   private loadChapters(
     storyId: string
   ): void {

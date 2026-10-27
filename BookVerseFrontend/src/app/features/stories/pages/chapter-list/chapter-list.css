@@ -310,7 +310,78 @@
   letter-spacing: 2px;
 }
 
+.new-chapter-button {
+  display: inline-flex;
+  min-height: 42px;
+
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 10px 16px;
+
+  border: 1px solid var(--lavender);
+  border-radius: 7px;
+
+  background: var(--lavender);
+  color: #fff;
+
+  font-size: 13px;
+  font-weight: 550;
+
+  text-decoration: none;
+
+  transition:
+    background 0.2s,
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.new-chapter-button:hover {
+  background: var(--violet);
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 5px 14px
+    rgb(80 60 104 / 14%);
+}
+
+.new-chapter-button span {
+  font-size: 17px;
+}
+
+.chapter-actions {
+  display: flex;
+
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+
+  flex-wrap: wrap;
+}
+
+.chapter-action.edit {
+  border: 1px solid var(--line);
+
+  background: #fff;
+
+  color: #8b759b;
+}
+
+.chapter-action.edit:hover {
+  background: #f1ebf6;
+
+  color: var(--violet);
+}
+
+.chapter-action.read {
+  color: var(--violet);
+}
+
+
 @media (max-width: 900px) {
+
   .chapter-page {
     padding-right: 28px;
     padding-left: 28px;
@@ -331,14 +402,14 @@
     grid-template-columns: 65px 1fr;
   }
 
-  .chapter-action,
-  .draft-mark {
+  .chapter-actions {
     grid-column: 2;
-    justify-self: start;
+    justify-content: flex-start;
   }
 }
 
 @media (max-width: 760px) {
+
   .chapter-page {
     margin-left: 0;
     padding: 0 20px 35px;
@@ -378,5 +449,21 @@
   .chapter-footer {
     flex-direction: column;
     gap: 8px;
+  }
+}
+  
+@media (max-width: 600px) {
+
+  .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .new-chapter-button {
+    align-self: flex-start;
+  }
+
+  .chapter-actions {
+    width: 100%;
   }
 }

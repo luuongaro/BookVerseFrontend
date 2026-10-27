@@ -1,0 +1,389 @@
+<div class="chapter-form-layout">
+
+  <app-sidebar />
+
+  <main class="chapter-form-page">
+
+    @if (isLoading()) {
+
+      <div
+        class="form-state"
+        role="status"
+      >
+        <span aria-hidden="true">✦</span>
+        <p>Cargando capítulo...</p>
+      </div>
+
+    } @else {
+
+      <header class="editor-header">
+
+        <a
+          class="back-link"
+          [routerLink]="[
+            '/stories',
+            storyId(),
+            'chapters'
+          ]"
+        >
+          <span aria-hidden="true">←</span>
+          Volver a capítulos
+        </a>
+
+        <span class="editor-context">
+          @if (isEditMode()) {
+            EDITANDO CAPÍTULO
+          } @else {
+            NUEVO CAPÍTULO
+          }
+        </span>
+
+      </header>
+
+      @if (errorMessage()) {
+
+        <div
+          class="message error-message"
+          role="alert"
+        >
+          {{ errorMessage() }}
+        </div>
+
+      }
+
+      @if (saveMessage()) {
+
+        <div
+          class="message success-message"
+          role="status"
+        >
+          {{ saveMessage() }}
+        </div>
+
+      }
+
+      <section class="editor-heading">
+
+        <span class="eyebrow">
+          ESCRITORIO DE ESCRITURA
+        </span>
+
+        <h1>
+          {{ pageTitle() }}
+        </h1>
+
+        @if (story(); as currentStory) {
+
+          <p>
+            {{ currentStory.title }}
+          </p>
+
+        }
+
+      </section>
+
+      <form
+        class="editor-layout"
+        [formGroup]="form"
+      >
+
+        <!-- SIDEBAR CONTEXTUAL -->
+
+        <aside
+          class="manuscript-sidebar"
+          aria-label="Información del manuscrito"
+        >
+
+          <span class="eyebrow">
+            TU MANUSCRITO
+          </span>
+
+          @if (story(); as currentStory) {
+
+            <h2>
+              {{ currentStory.title }}
+            </h2>
+
+            <span
+              class="story-access"
+              [class.premium]="
+                currentStory.accessType === 'PREMIUM'
+              "
+            >
+              {{
+                currentStory.accessType === 'PREMIUM'
+                  ? 'PREMIUM'
+                  : 'GRATUITA'
+              }}
+            </span>
+
+            <div class="sidebar-divider"></div>
+
+            <p class="chapters-label">
+              CAPÍTULOS
+            </p>
+
+            <nav
+              class="context-chapters"
+              aria-label="Capítulos de la historia"
+            >
+
+              @for (
+                chapter of currentStory.chapters;
+                track chapter.idExternal
+              ) {
+
+                <a
+                  class="context-chapter"
+                  [class.selected]="
+                    chapter.idExternal === chapterId()
+                  "
+                  [routerLink]="[
+                    '/stories',
+                    currentStory.idExternal,
+                    'chapters',
+                    chapter.idExternal,
+                    'edit'
+                  ]"
+                >
+
+                  <span class="context-number">
+                    {{
+                      chapter.chapterNumber
+                        .toString()
+                        .padStart(2, '0')
+                    }}
+                  </span>
+
+                  <span class="context-info">
+
+                    <strong>
+                      {{ chapter.title }}
+                    </strong>
+
+                    <small>
+                      {{
+                        chapter.published
+                          ? 'Publicado'
+                          : 'Borrador'
+                      }}
+                    </small>
+
+                  </span>
+
+                </a>
+
+              }
+
+            </nav>
+
+            <a
+              class="new-chapter-link"
+              [routerLink]="[
+                '/stories',
+                currentStory.idExternal,
+                'chapters',
+                'new'
+              ]"
+            >
+              <span aria-hidden="true">＋</span>
+              Nuevo capítulo
+            </a>
+
+          }
+
+          <div class="sidebar-quote">
+            <span aria-hidden="true">✧</span>
+
+            <p>
+              Cada historia comienza
+              con una página en blanco.
+            </p>
+          </div>
+
+        </aside>
+
+        <!-- EDITOR -->
+
+        <section class="manuscript-editor">
+
+          <div class="editor-toolbar">
+
+            <span>
+              CAPÍTULO
+            </span>
+
+            <span class="toolbar-divider"></span>
+
+            <span
+              class="document-state"
+              [class.published]="
+                form.controls.published.value
+              "
+            >
+              {{
+                form.controls.published.value
+                  ? 'PUBLICADO'
+                  : 'BORRADOR'
+              }}
+            </span>
+
+          </div>
+
+          <div class="paper">
+
+            <span class="paper-eyebrow">
+              {{
+                isEditMode()
+                  ? 'EDITAR CAPÍTULO'
+                  : 'NUEVO CAPÍTULO'
+              }}
+            </span>
+
+            <div class="field-group">
+
+              <label for="chapter-title">
+                Título del capítulo
+              </label>
+
+              <input
+                id="chapter-title"
+                class="chapter-title-input"
+                type="text"
+                formControlName="title"
+                maxlength="150"
+                placeholder="El nombre de este capítulo..."
+                autocomplete="off"
+              />
+
+              @if (
+                form.controls.title.touched
+                && form.controls.title.hasError('required')
+              ) {
+
+                <small class="field-error">
+                  El título del capítulo es obligatorio.
+                </small>
+
+              }
+
+              @if (
+                form.controls.title.touched
+                && form.controls.title.hasError('maxlength')
+              ) {
+
+                <small class="field-error">
+                  El título no puede superar los 150 caracteres.
+                </small>
+
+              }
+
+            </div>
+
+            <div
+              class="paper-divider"
+              aria-hidden="true"
+            >
+              ☾
+            </div>
+
+            <div class="field-group content-group">
+
+              <label for="chapter-content">
+                Contenido
+              </label>
+
+              <textarea
+                id="chapter-content"
+                class="chapter-content-input"
+                formControlName="content"
+                placeholder="Todo gran capítulo comienza con una primera línea..."
+                rows="18"
+              ></textarea>
+
+              @if (
+                form.controls.content.touched
+                && form.controls.content.hasError('required')
+              ) {
+
+                <small class="field-error">
+                  El contenido del capítulo es obligatorio.
+                </small>
+
+              }
+
+            </div>
+
+            <div
+              class="paper-end"
+              aria-hidden="true"
+            >
+              ✧
+            </div>
+
+          </div>
+
+          <!-- ACCIONES -->
+
+          <footer class="editor-actions">
+
+            <button
+              class="button cancel"
+              type="button"
+              [disabled]="isSaving()"
+              (click)="cancel()"
+            >
+              Cancelar
+            </button>
+
+            <div class="primary-actions">
+
+              <button
+                class="button draft"
+                type="button"
+                [disabled]="isSaving()"
+                (click)="saveDraft()"
+              >
+                @if (
+                  isSaving()
+                  && !form.controls.published.value
+                ) {
+                  Guardando...
+                } @else {
+                  Guardar borrador
+                }
+              </button>
+
+              <button
+                class="button publish"
+                type="button"
+                [disabled]="isSaving()"
+                (click)="publish()"
+              >
+                @if (
+                  isSaving()
+                  && form.controls.published.value
+                ) {
+                  Publicando...
+                } @else {
+                  {{
+                    isEditMode()
+                      ? 'Guardar y publicar'
+                      : 'Publicar capítulo'
+                  }}
+                }
+              </button>
+
+            </div>
+
+          </footer>
+
+        </section>
+
+      </form>
+
+    }
+
+  </main>
+
+</div>
