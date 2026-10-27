@@ -40,6 +40,7 @@
         </select>
       </div>
     </div>
+    <p class="save-confirmation" role="status" aria-live="polite">{{ confirmation() }}</p>
     @if (unavailableCount()) {
       <p class="state" role="status">
         {{ unavailableCount() }} libros guardados ya no están disponibles en el catálogo.
@@ -51,24 +52,35 @@
         <section class="shelf-section">
           <div class="books-row">
             @for (entry of shelf; track entry.reading.idExternal; let i = $index) {
-              <a
-                class="book-spine"
-                [routerLink]="['/books', entry.book.idExternal]"
-                [style.background-color]="colors[i % colors.length]"
-              [style.color]="inkColors[i % inkColors.length]"
-                [style.height.px]="240 + (i % 3) * 12"
-                [attr.aria-label]="
-                  entry.book.title +
-                  ', ' +
-                  (entry.book.authors?.join(', ') || 'Autor desconocido') +
-                  '. ' +
-                  statusLabel(entry.reading.status)
-                "
-                [title]="entry.book.title + ' · ' + statusLabel(entry.reading.status)"
-                ><span class="spine-mark" aria-hidden="true">✦</span
-                ><strong>{{ entry.book.title }}</strong
-                ><span class="spine-status">{{ statusLabel(entry.reading.status) }}</span></a
-              >
+              <div class="shelf-book">
+                <a
+                  class="book-spine"
+                  [routerLink]="['/books', entry.book.idExternal]"
+                  [style.background-color]="colors[i % colors.length]"
+                  [style.color]="inkColors[i % inkColors.length]"
+                  [style.height.px]="240 + (i % 3) * 12"
+                  [attr.aria-label]="
+                    entry.book.title +
+                    ', ' +
+                    (entry.book.authors?.join(', ') || 'Autor desconocido') +
+                    '. ' +
+                    statusLabel(entry.reading.status)
+                  "
+                  [title]="entry.book.title + ' · ' + statusLabel(entry.reading.status)"
+                  ><span class="spine-mark" aria-hidden="true">✦</span
+                  ><strong>{{ entry.book.title }}</strong
+                  ><span class="spine-status">{{ statusLabel(entry.reading.status) }}</span></a
+                >
+                <button
+                  type="button"
+                  class="edit-status"
+                  (click)="editStatus(entry)"
+                  [attr.aria-label]="'Cambiar estado de ' + entry.book.title"
+                  title="Cambiar estado"
+                >
+                  <span aria-hidden="true">✎</span>
+                </button>
+              </div>
             }
           </div>
           <div class="wood-shelf" aria-hidden="true"></div>
@@ -100,3 +112,42 @@
     <p class="library-legend">Elegí un lomo. Abrí un mundo.</p>
   }
 </main>
+
+<dialog
+  #statusDialog
+  class="status-dialog"
+  aria-labelledby="status-heading"
+  (cancel)="saving() && $event.preventDefault()"
+  (close)="editing.set(null)"
+>
+  @if (editing(); as entry) {
+    <form (submit)="$event.preventDefault(); saveStatus()" [attr.aria-busy]="saving()">
+      <span class="eyebrow">MI BIBLIOTECA</span>
+      <h2 id="status-heading">Tu lectura</h2>
+      <p class="selected-title">{{ entry.book.title }}</p>
+      <label for="book-reading-status">Estado de lectura</label>
+      <select
+        id="book-reading-status"
+        #newStatus
+        [value]="draftStatus()"
+        [disabled]="saving()"
+        (change)="chooseStatus(newStatus.value)"
+      >
+        @for (state of readingStates; track state) {
+          <option [value]="state">{{ statusLabel(state) }}</option>
+        }
+      </select>
+      @if (saveError()) {
+        <p class="validation" role="alert">{{ saveError() }}</p>
+      }
+      <div class="actions">
+        <button type="submit" [disabled]="saving() || draftStatus() === entry.reading.status">
+          {{ saving() ? 'Guardando…' : 'Guardar cambios' }}
+        </button>
+        <button type="button" class="secondary" [disabled]="saving()" (click)="closeEditor()">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  }
+</dialog>
