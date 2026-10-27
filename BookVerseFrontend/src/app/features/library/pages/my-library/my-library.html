@@ -49,9 +49,6 @@
       <div class="shelf-crown" aria-hidden="true"></div>
       @for (shelf of shelves(); track $index) {
         <section class="shelf-section">
-          <div class="shelf-label">
-            <span>LIBROS QUE SON PARTE DE TU MUNDO</span><span>ESTANTE {{ $index + 1 }}</span>
-          </div>
           <div class="books-row">
             @for (entry of shelf; track entry.reading.idExternal; let i = $index) {
               <a
@@ -59,7 +56,7 @@
                 [routerLink]="['/books', entry.book.idExternal]"
                 [style.background-color]="colors[i % colors.length]"
               [style.color]="inkColors[i % inkColors.length]"
-                [style.height.px]="210 + (i % 3) * 12"
+                [style.height.px]="240 + (i % 3) * 12"
                 [attr.aria-label]="
                   entry.book.title +
                   ', ' +
