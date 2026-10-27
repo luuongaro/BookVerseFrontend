@@ -1,0 +1,382 @@
+:host {
+  --lavender: #7465ad;
+  --violet: #665498;
+  --lilac: #bfa4cf;
+  --ink: #302b43;
+  --muted: #797486;
+  --paper: #fbf9fd;
+  --line: #e8e2ef;
+  --serif: 'Libre Caslon Display', Georgia, 'Times New Roman', serif;
+  --sans: 'DM Sans', Arial, sans-serif;
+
+  display: block;
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.chapter-layout {
+  min-height: 100vh;
+}
+
+.chapter-page {
+  min-height: 100vh;
+  margin-left: 240px;
+  padding: 0 54px 45px;
+}
+
+.chapter-topbar {
+  min-height: 82px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: var(--lavender);
+}
+
+.topbar-caption {
+  color: #a394ad;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+.chapter-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 40px;
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 68px 0 42px;
+  align-items: end;
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: 14px;
+  color: var(--lavender);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 2.2px;
+}
+
+.chapter-hero h1 {
+  max-width: 760px;
+  margin: 0;
+  font: 400 clamp(48px, 5vw, 72px) / 1.04 var(--serif);
+  letter-spacing: -2px;
+}
+
+.chapter-hero p {
+  max-width: 650px;
+  margin: 20px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.9;
+}
+
+.hero-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  padding-bottom: 8px;
+}
+
+.access-badge {
+  padding: 7px 11px;
+  border-radius: 6px;
+  background: #ece7f5;
+  color: var(--violet);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 1px;
+}
+
+.access-badge.premium {
+  background: #e2d7ef;
+  color: #604a91;
+}
+
+.chapter-count {
+  color: #a396ab;
+  font-size: 12px;
+}
+
+.ornament {
+  max-width: 1060px;
+  margin: 0 auto;
+  color: #baa3cb;
+  text-align: center;
+  font-size: 22px;
+}
+
+.manuscript-section {
+  max-width: 1060px;
+  margin: 26px auto 0;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 20px;
+  margin-bottom: 23px;
+}
+
+.section-heading h2 {
+  margin: 0;
+  font: 400 35px / 1.1 var(--serif);
+}
+
+.chapter-list {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.chapter-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 85px minmax(0, 1fr) auto;
+  gap: 23px;
+  min-height: 130px;
+  align-items: center;
+  padding: 25px 30px;
+  border-bottom: 1px solid var(--line);
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+
+.chapter-card:last-child {
+  border-bottom: 0;
+}
+
+.chapter-card:hover {
+  background: #fdfaff;
+}
+
+.chapter-card.draft {
+  background: #faf7fc;
+}
+
+.chapter-number {
+  color: #c3aece;
+  font: 400 43px / 1 var(--serif);
+}
+
+.chapter-content {
+  min-width: 0;
+}
+
+.chapter-kicker {
+  color: #ab99b8;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.7px;
+}
+
+.chapter-content h3 {
+  margin: 7px 0 10px;
+  color: var(--ink);
+  font: 400 27px / 1.2 var(--serif);
+}
+
+.chapter-meta {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #9a8da4;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #8da47f;
+}
+
+.draft-status {
+  color: #ac94ba;
+}
+
+.chapter-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  padding: 11px 15px;
+  border-radius: 7px;
+  color: var(--violet);
+  font-size: 13px;
+  font-weight: 550;
+  text-decoration: none;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+
+.chapter-action:hover {
+  background: #f0eaf6;
+  transform: translateX(3px);
+}
+
+.draft-mark {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #b09abc;
+  font-size: 12px;
+}
+
+.empty-state {
+  padding: 80px 25px;
+  text-align: center;
+}
+
+.empty-state > span {
+  color: #b89eca;
+  font-size: 30px;
+}
+
+.empty-state h2 {
+  margin: 18px 0 10px;
+  font: 400 31px var(--serif);
+}
+
+.empty-state p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.page-state {
+  display: grid;
+  min-height: 65vh;
+  place-items: center;
+  color: var(--muted);
+  text-align: center;
+}
+
+.page-state.error {
+  color: #956678;
+}
+
+.state-mark {
+  display: block;
+  color: var(--lavender);
+}
+
+.chapter-footer {
+  display: flex;
+  justify-content: space-between;
+  max-width: 1060px;
+  margin: 44px auto 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  color: #ab9bb5;
+  font-size: 11px;
+  letter-spacing: 0.6px;
+}
+
+.chapter-footer span:last-child {
+  letter-spacing: 2px;
+}
+
+@media (max-width: 900px) {
+  .chapter-page {
+    padding-right: 28px;
+    padding-left: 28px;
+  }
+
+  .chapter-hero {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .hero-meta {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .chapter-card {
+    grid-template-columns: 65px 1fr;
+  }
+
+  .chapter-action,
+  .draft-mark {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 760px) {
+  .chapter-page {
+    margin-left: 0;
+    padding: 0 20px 35px;
+  }
+
+  .chapter-topbar {
+    min-height: 65px;
+  }
+
+  .topbar-caption {
+    display: none;
+  }
+
+  .chapter-hero {
+    padding-top: 40px;
+  }
+
+  .chapter-hero h1 {
+    font-size: 47px;
+    letter-spacing: -1px;
+  }
+
+  .chapter-card {
+    grid-template-columns: 48px 1fr;
+    gap: 15px;
+    padding: 21px 17px;
+  }
+
+  .chapter-number {
+    font-size: 31px;
+  }
+
+  .chapter-content h3 {
+    font-size: 24px;
+  }
+
+  .chapter-footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
