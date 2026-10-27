@@ -1,5 +1,7 @@
+import { authInterceptor } from '../../../core/interceptors/auth.interceptor';
+import { TokenService } from '../../../core/services/token.service';
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LibraryService, LibrarySessionError } from './library.service';
 import { LibraryResult, ReadingStatus } from '../models/library-book.model';
@@ -21,7 +23,11 @@ describe('Personal library API', () => {
   let http: HttpTestingController;
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(withInterceptors([authInterceptor])),
+        provideHttpClientTesting(),
+        { provide: TokenService, useValue: { getToken: () => localStorage.getItem('token') } },
+      ],
     });
     service = TestBed.inject(LibraryService);
     http = TestBed.inject(HttpTestingController);
@@ -111,5 +117,34 @@ describe('Personal library API', () => {
       .expectOne('http://localhost:8080/api/books/saved-book')
       .flush({}, { status: 403, statusText: 'Forbidden' });
     expect(error?.status).toBe(403);
+  });
+  it('updates the existing reading record and preserves progress, dates and association', () => {
+    const reading = { ...status, startedAt: '2026-10-01T10:00:00', finishedAt: null };
+    service
+      .updateStatus(reading, 'FINISHED')
+      .subscribe((result) => expect(result.status).toBe('FINISHED'));
+    const request = http.expectOne('http://localhost:8080/api/reading-statuses/reading-id');
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.headers.get('Authorization')).toBe('Bearer session-token');
+    expect(request.request.body).toEqual({
+      bookId: 'saved-book',
+      storyId: null,
+      status: 'FINISHED',
+      startedAt: reading.startedAt,
+      finishedAt: null,
+      progressType: 'PERCENTAGE',
+      progressValue: 40,
+    });
+    request.flush({ ...reading, status: 'FINISHED' });
+  });
+  it('does not update someone else’s reading record or update without a session', () => {
+    service
+      .updateStatus({ ...status, userId: 'another-user' }, 'FINISHED')
+      .subscribe({ error: (error) => expect(error).toBeInstanceOf(LibrarySessionError) });
+    localStorage.removeItem('userId');
+    service
+      .updateStatus(status, 'FINISHED')
+      .subscribe({ error: (error) => expect(error).toBeInstanceOf(LibrarySessionError) });
+    http.expectNone(() => true);
   });
 });
