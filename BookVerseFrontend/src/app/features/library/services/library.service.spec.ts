@@ -147,4 +147,62 @@ describe('Personal library API', () => {
       .subscribe({ error: (error) => expect(error).toBeInstanceOf(LibrarySessionError) });
     http.expectNone(() => true);
   });
+  it('sends percentage progress with the current state and preserves reading dates', () => {
+    const reading = {
+      ...status,
+      startedAt: '2026-10-01T10:00:00',
+      finishedAt: '2026-10-25T10:00:00',
+    };
+    service.updateStatus(reading, 'RE_READING', 75).subscribe();
+    const request = http.expectOne('http://localhost:8080/api/reading-statuses/reading-id');
+    expect(request.request.body).toEqual({
+      bookId: reading.bookId,
+      storyId: null,
+      status: 'RE_READING',
+      progressType: 'PERCENTAGE',
+      progressValue: 75,
+      startedAt: reading.startedAt,
+      finishedAt: reading.finishedAt,
+    });
+    request.flush({ ...reading, status: 'RE_READING', progressValue: 75 });
+  });
+  it.each([0, null])(
+    'clears progress with %s using the null pair accepted by the backend',
+    (value) => {
+      service.updateStatus(status, 'IN_PROGRESS', value).subscribe();
+      const request = http.expectOne('http://localhost:8080/api/reading-statuses/reading-id');
+      expect(request.request.body.progressType).toBeNull();
+      expect(request.request.body.progressValue).toBeNull();
+      request.flush({ ...status, progressType: null, progressValue: null });
+    },
+  );
+  it.each([-1, 101, 4.5, NaN, Infinity])(
+    'does not send invalid percentage %s to the backend',
+    (value) => {
+      let error: unknown;
+      service
+        .updateStatus(status, 'IN_PROGRESS', value)
+        .subscribe({ error: (err) => (error = err) });
+      expect(error).toBeInstanceOf(RangeError);
+      http.expectNone(() => true);
+    },
+  );
+  it('preserves chapter progress when no new percentage was provided', () => {
+    service
+      .updateStatus({ ...status, progressType: 'CHAPTER', progressValue: 4 }, 'IN_PROGRESS')
+      .subscribe();
+    const request = http.expectOne('http://localhost:8080/api/reading-statuses/reading-id');
+    expect(request.request.body.progressType).toBe('CHAPTER');
+    expect(request.request.body.progressValue).toBe(4);
+    request.flush(status);
+  });
+  it.each(['WANT_TO_READ', 'FINISHED', 'ABANDONED'] as const)(
+    'does not assign a new percentage to %s',
+    (state) => {
+      let error: unknown;
+      service.updateStatus(status, state, 50).subscribe({ error: (err) => (error = err) });
+      expect(error).toBeInstanceOf(RangeError);
+      http.expectNone(() => true);
+    },
+  );
 });

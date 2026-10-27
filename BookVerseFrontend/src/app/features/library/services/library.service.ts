@@ -55,9 +55,25 @@ export class LibraryService {
       }),
     );
   }
-  updateStatus(reading: ReadingStatus, status: ReadingState): Observable<ReadingStatus> {
+  updateStatus(
+    reading: ReadingStatus,
+    status: ReadingState,
+    percentage?: number | null,
+  ): Observable<ReadingStatus> {
     const userId = localStorage.getItem('userId');
     if (!userId || reading.userId !== userId) return throwError(() => new LibrarySessionError());
+    if (percentage != null && percentage > 0 && status !== 'IN_PROGRESS' && status !== 'RE_READING')
+      return throwError(
+        () => new RangeError('El porcentaje solo se puede cargar en Leyendo o Releyendo.'),
+      );
+    if (percentage != null && (!Number.isInteger(percentage) || percentage < 0 || percentage > 100))
+      return throwError(() => new RangeError('Ingresá un porcentaje entero entre 0 y 100.'));
+    const progress =
+      percentage === undefined
+        ? { progressType: reading.progressType, progressValue: reading.progressValue }
+        : percentage === null || percentage === 0
+          ? { progressType: null, progressValue: null }
+          : { progressType: 'PERCENTAGE', progressValue: percentage };
     return this.http.put<ReadingStatus>(
       `${API_URL}/reading-statuses/${encodeURIComponent(reading.idExternal)}`,
       {
@@ -66,8 +82,7 @@ export class LibraryService {
         status,
         startedAt: reading.startedAt,
         finishedAt: reading.finishedAt,
-        progressType: reading.progressType,
-        progressValue: reading.progressValue,
+        ...progress,
       },
     );
   }

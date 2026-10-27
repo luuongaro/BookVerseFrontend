@@ -64,13 +64,26 @@
                     ', ' +
                     (entry.book.authors?.join(', ') || 'Autor desconocido') +
                     '. ' +
-                    statusLabel(entry.reading.status)
+                    statusLabel(entry.reading.status) +
+                    (readingPercentage(entry.reading) === null
+                      ? ''
+                      : '. ' + readingPercentage(entry.reading) + '% leído')
                   "
                   [title]="entry.book.title + ' · ' + statusLabel(entry.reading.status)"
                   ><span class="spine-mark" aria-hidden="true">✦</span
                   ><strong>{{ entry.book.title }}</strong
-                  ><span class="spine-status">{{ statusLabel(entry.reading.status) }}</span></a
-                >
+                  ><span class="spine-status"
+                    >{{ statusLabel(entry.reading.status) }}
+                    @if (readingPercentage(entry.reading) !== null) {
+                      · {{ readingPercentage(entry.reading) }}%
+                    }
+                  </span>
+                  @if (readingPercentage(entry.reading); as percentage) {
+                    <span class="spine-progress" aria-hidden="true"
+                      ><span [style.width.%]="percentage"></span
+                    ></span>
+                  }
+                </a>
                 <button
                   type="button"
                   class="edit-status"
@@ -137,11 +150,40 @@
           <option [value]="state">{{ statusLabel(state) }}</option>
         }
       </select>
+      @if (canEditPercentage()) {
+        <label for="book-reading-percentage">Porcentaje leído</label>
+        <div class="percentage-field">
+          <input
+            id="book-reading-percentage"
+            #readingPercentageInput
+            type="number"
+            inputmode="numeric"
+            min="0"
+            max="100"
+            step="1"
+            placeholder="Sin avance"
+            [value]="draftPercentage()"
+            [disabled]="saving()"
+            [attr.aria-invalid]="progressError() ? 'true' : null"
+            [attr.aria-describedby]="
+              progressError() ? 'percentage-help percentage-error' : 'percentage-help'
+            "
+            (input)="
+              choosePercentage(readingPercentageInput.value, readingPercentageInput.validity.valid)
+            "
+          />
+          <span aria-hidden="true">%</span>
+        </div>
+        <p id="percentage-help" class="percentage-help">0 o vacío para dejarlo sin avance.</p>
+        @if (progressError()) {
+          <p id="percentage-error" class="validation" role="alert">{{ progressError() }}</p>
+        }
+      }
       @if (saveError()) {
         <p class="validation" role="alert">{{ saveError() }}</p>
       }
       <div class="actions">
-        <button type="submit" [disabled]="saving() || draftStatus() === entry.reading.status">
+        <button type="submit" [disabled]="saving() || !!progressError() || !hasChanges()">
           {{ saving() ? 'Guardando…' : 'Guardar cambios' }}
         </button>
         <button type="button" class="secondary" [disabled]="saving()" (click)="closeEditor()">
