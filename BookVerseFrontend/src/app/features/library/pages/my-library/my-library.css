@@ -47,7 +47,7 @@ h1 em {
   );
   position: relative;
   isolation: isolate;
-  padding: 76px 28px 0;
+  padding: 64px 28px 0;
   border: 16px solid transparent;
   border-bottom-width: 23px;
   border-radius: 75px 75px 12px 12px / 33px 33px 12px 12px;
@@ -100,28 +100,14 @@ h1 em {
     0 8px 12px #1b120d66;
 }
 .shelf-section {
-  margin-bottom: 32px;
-}
-.shelf-label {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  color: #eed3a4;
-  font-size: 11px;
-  letter-spacing: 1.5px;
-  line-height: 1.7;
-}
-.shelf-label > span:last-child {
-  color: #d6bea2;
-  white-space: nowrap;
+  margin-bottom: 18px;
 }
 .books-row {
   display: flex;
   align-items: flex-end;
   justify-content: center;
   gap: 12px;
-  min-height: 282px;
-  padding: 28px 12px 0;
+  padding: 24px 12px 0;
   overflow-x: auto;
   scrollbar-color: #b68a5c #48352b;
 }
@@ -216,7 +202,7 @@ h1 em {
     serif;
   text-align: center;
   overflow: hidden;
-  max-height: 166px;
+  max-height: 196px;
 }
 .spine-status {
   position: absolute;
@@ -282,13 +268,6 @@ h1 em {
     padding: 65px 15px 0;
     border-width: 10px;
     border-bottom-width: 18px;
-  }
-  .shelf-label {
-    font-size: 10px;
-    letter-spacing: 0.5px;
-  }
-  .shelf-label > span:last-child {
-    display: none;
   }
   .books-row {
     justify-content: flex-start;
