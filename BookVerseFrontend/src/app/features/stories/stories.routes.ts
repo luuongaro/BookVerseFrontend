@@ -6,16 +6,20 @@ import { StoryForm } from './pages/story-form/story-form';
 import { StoryList } from './pages/story-list/story-list';
 import { ChapterList } from './pages/chapter-list/chapter-list';
 import { ChapterReader } from './pages/chapter-reader/chapter-reader';
+import { ChapterForm } from './pages/chapter-form/chapter-form';
 
 export const storiesRoutes: Routes = [
   { path: '', component: StoryList },
 
   { path: 'new', component: StoryForm },
-  
   { path: 'mine', component: MyStories },
 
   { path: ':id/edit', component: StoryForm },
+  
+  {path: ':id/chapters/new',component: ChapterForm},
 
+  {path: ':id/chapters/:chapterId/edit',component: ChapterForm},
+  
   {path: ':id/chapters/:chapterId',component: ChapterReader},
 
   {path: ':id/chapters',component: ChapterList},

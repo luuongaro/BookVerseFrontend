@@ -5,6 +5,8 @@ import { Observable } from 'rxjs';
 import {API_URL} from '../../../core/api/api.config';
 
 import { ChapterResponse } from '../models/chapter-response';
+import { ChapterCreateRequest } from '../models/chapter-create-request';
+import { ChapterUpdateRequest } from '../models/chapter-update-request';
 
 @Service()
 export class ChapterService {
@@ -42,4 +44,34 @@ export class ChapterService {
       `${this.url}/story/${storyId}`
     );
   }
+
+  create(
+  request: ChapterCreateRequest
+): Observable<ChapterResponse> {
+
+  return this.http.post<ChapterResponse>(
+    this.url,
+    request
+  );
+}
+
+update(
+  idExternal: string,
+  request: ChapterUpdateRequest
+): Observable<ChapterResponse> {
+
+  return this.http.put<ChapterResponse>(
+    `${this.url}/${idExternal}`,
+    request
+  );
+}
+
+delete(
+  idExternal: string
+): Observable<void> {
+
+  return this.http.delete<void>(
+    `${this.url}/${idExternal}`
+  );
+}
 }
