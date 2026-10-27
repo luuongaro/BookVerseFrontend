@@ -3,7 +3,12 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, catchError, forkJoin, map, of, switchMap, throwError } from 'rxjs';
 import { API_URL } from '../../../core/api/api.config';
 import { BooksService } from '../../books/services/books.service';
-import { LibraryBook, LibraryResult, ReadingStatus } from '../models/library-book.model';
+import {
+  LibraryBook,
+  LibraryResult,
+  ReadingStatus,
+  ReadingState,
+} from '../models/library-book.model';
 export class LibrarySessionError extends Error {
   constructor() {
     super('Volvé a iniciar sesión para acceder a tu biblioteca.');
@@ -50,24 +55,37 @@ export class LibraryService {
       }),
     );
   }
+  updateStatus(reading: ReadingStatus, status: ReadingState): Observable<ReadingStatus> {
+    const userId = localStorage.getItem('userId');
+    if (!userId || reading.userId !== userId) return throwError(() => new LibrarySessionError());
+    return this.http.put<ReadingStatus>(
+      `${API_URL}/reading-statuses/${encodeURIComponent(reading.idExternal)}`,
+      {
+        bookId: reading.bookId,
+        storyId: reading.storyId,
+        status,
+        startedAt: reading.startedAt,
+        finishedAt: reading.finishedAt,
+        progressType: reading.progressType,
+        progressValue: reading.progressValue,
+      },
+    );
+  }
   saveBook(bookId: string): Observable<ReadingStatus> {
     // Importing a Google volume into the shared catalog does not save it for a user.
     return this.getBookStatus(bookId).pipe(
       switchMap((existing) =>
         existing
           ? of(existing)
-          : this.http.post<ReadingStatus>(
-              `${API_URL}/reading-statuses`,
-              {
-                bookId,
-                storyId: null,
-                status: 'WANT_TO_READ',
-                startedAt: null,
-                finishedAt: null,
-                progressType: null,
-                progressValue: null,
-              },
-            ),
+          : this.http.post<ReadingStatus>(`${API_URL}/reading-statuses`, {
+              bookId,
+              storyId: null,
+              status: 'WANT_TO_READ',
+              startedAt: null,
+              finishedAt: null,
+              progressType: null,
+              progressValue: null,
+            }),
       ),
     );
   }
