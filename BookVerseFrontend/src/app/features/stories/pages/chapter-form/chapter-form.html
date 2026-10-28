@@ -37,8 +37,6 @@
       }
 
       <section class="editor-heading">
-        <span class="eyebrow"> ESCRITORIO DE ESCRITURA </span>
-
         <h1>
           {{ pageTitle() }}
         </h1>
@@ -54,7 +52,7 @@
         <!-- SIDEBAR CONTEXTUAL -->
 
         <aside class="manuscript-sidebar" aria-label="Información del manuscrito">
-          <span class="eyebrow"> TU MANUSCRITO </span>
+          <span class="eyebrow"> HISTORIA </span>
 
           @if (story(); as currentStory) {
             <h2>
@@ -107,12 +105,6 @@
               Nuevo capítulo
             </a>
           }
-
-          <div class="sidebar-quote">
-            <span aria-hidden="true">✧</span>
-
-            <p>Cada historia comienza con una página en blanco.</p>
-          </div>
         </aside>
 
         <!-- EDITOR -->
@@ -142,7 +134,7 @@
                 type="text"
                 formControlName="title"
                 maxlength="150"
-                placeholder="El nombre de este capítulo..."
+                placeholder="Título del capítulo"
                 autocomplete="off"
               />
 
@@ -168,7 +160,7 @@
                 id="chapter-content"
                 class="chapter-content-input"
                 formControlName="content"
-                placeholder="Todo gran capítulo comienza con una primera línea..."
+                placeholder="Contenido del capítulo"
                 rows="18"
               ></textarea>
 

@@ -29,6 +29,11 @@ export const routes: Routes = [
       { path: 'dashboard', component: Dashboard },
       { path: 'profile', component: Profile },
       { path: 'library', component: MyLibrary },
+      {
+        path: 'writer',
+        loadComponent: () =>
+          import('./features/stories/pages/writer-desk/writer-desk').then((m) => m.WriterDesk),
+      },
       { path: 'stories', children: storiesRoutes },
       { path: 'groups', children: groupsRoutes },
       { path: 'books', children: booksRoutes },

@@ -1,0 +1,175 @@
+<div class="writer-page">
+  <header class="page-heading">
+    <div>
+      <h1>Escritorio</h1>
+      <p>Tus historias y capítulos.</p>
+    </div>
+    <a class="button primary" routerLink="/stories/new">
+      <span aria-hidden="true">＋</span> Nueva historia
+    </a>
+  </header>
+
+  @if (loading()) {
+    <p class="state" role="status">Cargando tus historias…</p>
+  } @else if (error()) {
+    <div class="state error" role="alert">
+      <p>{{ error() }}</p>
+      <button type="button" (click)="loadStories(storyPage())">Reintentar</button>
+    </div>
+  } @else if (result(); as page) {
+    @if (page.content.length) {
+      <div class="desk-layout">
+        <section class="story-panel" aria-labelledby="my-stories-title">
+          <div class="panel-heading">
+            <h2 id="my-stories-title">Mis historias</h2>
+            <span class="count">{{ page.totalElements }}</span>
+          </div>
+          <nav class="story-list" aria-label="Tus historias">
+            @for (story of page.content; track story.idExternal) {
+              <button
+                type="button"
+                class="story-option"
+                [class.selected]="selected()?.idExternal === story.idExternal"
+                [attr.aria-current]="selected()?.idExternal === story.idExternal ? 'true' : null"
+                (click)="selectStory(story)"
+              >
+                <span class="story-mark" aria-hidden="true">✎</span>
+                <span class="story-label">
+                  <strong>{{ story.title }}</strong>
+                  <small
+                    >{{ story.accessType === 'PREMIUM' ? 'Premium' : 'Gratuita' }}
+                    @if (story.hidden) {
+                      · Oculta
+                    }
+                  </small>
+                </span>
+                <span class="story-arrow" aria-hidden="true">›</span>
+              </button>
+            }
+          </nav>
+          @if (page.totalPages > 1) {
+            <nav class="pagination story-pages" aria-label="Páginas de tus historias">
+              <button type="button" [disabled]="page.first" (click)="loadStories(page.number - 1)">
+                Anterior
+              </button>
+              <span>{{ page.number + 1 }} / {{ page.totalPages }}</span>
+              <button type="button" [disabled]="page.last" (click)="loadStories(page.number + 1)">
+                Siguiente
+              </button>
+            </nav>
+          }
+          <a class="explore-link" routerLink="/stories"
+            >Explorar historias</a
+          >
+        </section>
+
+        @if (selected(); as story) {
+          <section class="chapter-panel" aria-labelledby="selected-story-title">
+            <header class="story-heading">
+              <div class="story-meta">
+                <span class="badge" [class.premium]="story.accessType === 'PREMIUM'">{{
+                  story.accessType === 'PREMIUM' ? 'Premium' : 'Gratuita'
+                }}</span>
+                @if (story.hidden) {
+                  <span class="badge">Oculta</span>
+                }
+              </div>
+              <h2 id="selected-story-title">{{ story.title }}</h2>
+              <div class="story-actions">
+                <a [routerLink]="['/stories', story.idExternal, 'edit']">Editar historia</a>
+                <a [routerLink]="['/stories', story.idExternal]"
+                  >Ver historia</a
+                >
+              </div>
+            </header>
+            <div class="chapters-heading">
+              <h3>
+                Capítulos
+                @if (chapterResult(); as chapters) {
+                  <span class="count">{{ chapters.totalElements }}</span>
+                }
+              </h3>
+              <a
+                class="button primary"
+                [routerLink]="['/stories', story.idExternal, 'chapters', 'new']"
+              >
+                <span aria-hidden="true">＋</span> Nuevo capítulo
+              </a>
+            </div>
+            @if (loadingChapters()) {
+              <p class="chapter-state" role="status">Cargando capítulos…</p>
+            } @else if (chapterError()) {
+              <div class="chapter-state error" role="alert">
+                <p>{{ chapterError() }}</p>
+                <button type="button" (click)="loadChapters(chapterPage())">Reintentar</button>
+              </div>
+            } @else if (chapterResult(); as chapters) {
+              <ol class="chapter-list" aria-label="Capítulos de la historia seleccionada">
+                @for (chapter of chapters.content; track chapter.idExternal) {
+                  <li>
+                    <span class="chapter-number">{{
+                      chapter.chapterNumber.toString().padStart(2, '0')
+                    }}</span>
+                    <div class="chapter-info">
+                      <h4>{{ chapter.title }}</h4>
+                      <span class="chapter-status" [class.published]="chapter.published">
+                        <span aria-hidden="true">●</span>
+                        {{ chapter.published ? 'Publicado' : 'Borrador' }}
+                      </span>
+                    </div>
+                    <a
+                      class="edit-chapter"
+                      [routerLink]="[
+                        '/stories',
+                        story.idExternal,
+                        'chapters',
+                        chapter.idExternal,
+                        'edit',
+                      ]"
+                      [attr.aria-label]="'Editar capítulo: ' + chapter.title"
+                      >Editar <span aria-hidden="true">→</span></a
+                    >
+                  </li>
+                } @empty {
+                  <li class="chapter-state">
+                    Esta historia todavía no tiene capítulos. Usá “Nuevo capítulo” para crear el
+                    primero.
+                  </li>
+                }
+              </ol>
+              @if (chapters.totalPages > 1) {
+                <nav class="pagination" aria-label="Páginas de capítulos del escritorio">
+                  <button
+                    type="button"
+                    [disabled]="chapters.first"
+                    (click)="loadChapters(chapters.number - 1)"
+                  >
+                    Anterior
+                  </button>
+                  <span>Página {{ chapters.number + 1 }} de {{ chapters.totalPages }}</span>
+                  <button
+                    type="button"
+                    [disabled]="chapters.last"
+                    (click)="loadChapters(chapters.number + 1)"
+                  >
+                    Siguiente
+                  </button>
+                </nav>
+              }
+              <a class="manage-link" [routerLink]="['/stories', story.idExternal, 'chapters']"
+                >Gestionar capítulos <span aria-hidden="true">→</span></a
+              >
+            }
+          </section>
+        }
+      </div>
+    } @else {
+      <section class="empty-desk">
+        <span class="empty-icon" aria-hidden="true">✎</span>
+        <h2>Todavía no creaste historias</h2>
+        <p>Agregá el título y la descripción. Después podés escribir y publicar sus capítulos.</p>
+        <a class="button primary" routerLink="/stories/new">Crear historia</a>
+      </section>
+    }
+  }
+</div>

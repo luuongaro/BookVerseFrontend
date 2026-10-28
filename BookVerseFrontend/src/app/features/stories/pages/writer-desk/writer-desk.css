@@ -1,0 +1,423 @@
+:host {
+  display: block;
+  color: #302b43;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.writer-page {
+  max-width: 1280px;
+  margin: auto;
+  padding: 44px clamp(24px, 3.5vw, 48px) 56px;
+}
+
+.page-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+
+h1 {
+  font:
+    400 clamp(38px, 4vw, 50px)/1.15 'Libre Caslon Display',
+    Georgia,
+    serif;
+}
+.page-heading p {
+  margin-top: 10px;
+  color: #797486;
+  font-size: 14px;
+}
+a {
+  color: #665498;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+button {
+  cursor: pointer;
+  font: inherit;
+}
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.primary {
+  color: white;
+  background: #7465ad;
+}
+.primary:hover {
+  background: #665498;
+  text-decoration: none;
+}
+.desk-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.story-panel,
+.chapter-panel {
+  background: white;
+  border: 1px solid #e8e2ef;
+  border-radius: 14px;
+  overflow: hidden;
+}
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 20px 18px;
+}
+.panel-heading h2 {
+  font-size: 15px;
+  font-weight: 600;
+}
+.count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: #f1edf7;
+  color: #7465ad;
+  font:
+    500 12px/1.3 'DM Sans',
+    sans-serif;
+}
+.story-list {
+  display: grid;
+  gap: 6px;
+  padding: 0 10px;
+}
+.story-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 10px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: #514b61;
+  text-align: left;
+}
+.story-option:hover {
+  background: #faf8fc;
+}
+.story-option.selected {
+  border-color: #e5dcef;
+  background: #f3eef9;
+  color: #665498;
+}
+.story-mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 36px;
+  flex-shrink: 0;
+  border: 1px solid #dfd4ed;
+  border-radius: 3px 6px 6px 3px;
+  background: #fbf9fd;
+  font-size: 20px;
+}
+.story-label {
+  flex: 1;
+  min-width: 0;
+}
+.story-label strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.story-label small {
+  display: block;
+  margin-top: 4px;
+  color: #8a8297;
+  font-size: 11px;
+}
+.story-arrow {
+  color: #9b8bb4;
+  font-size: 22px;
+}
+.explore-link {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  margin-top: 14px;
+  border-top: 1px solid #f0ebf5;
+  font-size: 12px;
+}
+.story-heading {
+  padding: 28px;
+  border-bottom: 1px solid #eee8f3;
+  background: linear-gradient(120deg, #fcfafd, white);
+}
+.story-meta {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.badge {
+  padding: 4px 9px;
+  border-radius: 6px;
+  background: #f0eaf8;
+  color: #7465ad;
+  font-size: 11px;
+  font-weight: 600;
+}
+.badge.premium {
+  background: #f7eedc;
+  color: #946b24;
+}
+.story-heading h2 {
+  font:
+    400 36px/1.15 'Libre Caslon Display',
+    Georgia,
+    serif;
+  overflow-wrap: anywhere;
+}
+.story-actions {
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  font-size: 12px;
+}
+.chapters-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 24px 28px;
+}
+.chapters-heading h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.chapter-list {
+  margin: 0;
+  padding: 0 28px;
+  list-style: none;
+}
+.chapter-list li:not(.chapter-state) {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 0;
+  border-top: 1px solid #eee8f3;
+}
+.chapter-number {
+  flex-shrink: 0;
+  color: #aa9bbd;
+  font:
+    400 25px/1 'Libre Caslon Display',
+    Georgia,
+    serif;
+}
+.chapter-info {
+  flex: 1;
+  min-width: 0;
+}
+.chapter-info h4 {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.chapter-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  color: #91849f;
+  font-size: 11px;
+}
+.chapter-status span {
+  font-size: 6px;
+}
+.chapter-status.published {
+  color: #64816e;
+}
+.edit-chapter {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 500;
+}
+.manage-link {
+  display: flex;
+  justify-content: space-between;
+  margin: 4px 28px 0;
+  padding: 20px 0;
+  border-top: 1px solid #eee8f3;
+  font-size: 12px;
+}
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 20px;
+  color: #797486;
+  font-size: 12px;
+}
+.pagination button,
+.state button,
+.chapter-state button {
+  padding: 8px 12px;
+  border: 1px solid #ddd3e9;
+  border-radius: 7px;
+  background: white;
+  color: #665498;
+  font-size: 12px;
+}
+.pagination button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.story-pages {
+  gap: 8px;
+  padding: 18px 10px 4px;
+  font-size: 11px;
+}
+.story-pages button {
+  padding: 7px 9px;
+  font-size: 11px;
+}
+.state,
+.empty-desk {
+  padding: 40px;
+  border: 1px solid #e8e2ef;
+  border-radius: 14px;
+  background: white;
+  color: #797486;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.chapter-state {
+  padding: 24px 28px;
+  color: #797486;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.chapter-list .chapter-state {
+  padding: 20px 0 28px;
+}
+.error {
+  color: #933c4a;
+}
+.error button {
+  margin-top: 14px;
+}
+.empty-desk {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 64px 24px;
+  text-align: center;
+}
+.empty-icon {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: #f1edf7;
+  color: #7465ad;
+  font-size: 32px;
+  margin-bottom: 24px;
+}
+.empty-desk h2 {
+  color: #302b43;
+  font:
+    400 32px/1.2 'Libre Caslon Display',
+    Georgia,
+    serif;
+}
+.empty-desk p {
+  max-width: 420px;
+  margin: 14px 0 24px;
+}
+:where(a, button):focus-visible {
+  outline: 3px solid #a191c6;
+  outline-offset: 3px;
+}
+
+@media (max-width: 1100px) {
+  .desk-layout {
+    grid-template-columns: 1fr;
+  }
+  .story-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .story-option {
+    align-items: flex-start;
+  }
+  .explore-link {
+    padding: 16px 20px;
+  }
+}
+@media (max-width: 520px) {
+  .writer-page {
+    padding: 28px 20px 40px;
+  }
+  .story-list {
+    grid-template-columns: 1fr;
+  }
+  .story-heading {
+    padding: 24px 20px;
+  }
+  .story-heading h2 {
+    font-size: 31px;
+  }
+  .chapters-heading {
+    padding: 20px;
+  }
+  .chapter-list {
+    padding: 0 20px;
+  }
+  .chapter-list li:not(.chapter-state) {
+    gap: 12px;
+  }
+  .manage-link {
+    margin: 4px 20px 0;
+  }
+  .chapter-state {
+    padding: 20px;
+  }
+}

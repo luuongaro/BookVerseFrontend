@@ -1,9 +1,9 @@
 <section class="story-editor">
   <header class="editor-header">
-    <a class="back-link" routerLink="/stories/mine">
+    <a class="back-link" routerLink="/writer">
       <span aria-hidden="true"> ← </span>
 
-      Volver a tu escritorio
+      Volver al escritorio
     </a>
 
     <span class="muted editor-subtitle">
@@ -20,7 +20,7 @@
         <path d="M4 20 17 7M8 16C-1 5 16 0 22 2c0 13-5 20-14 14Zm4-4h8" />
       </svg>
 
-      Tu historia, tomando forma
+      Datos de la historia
     </span>
   </header>
 
@@ -38,12 +38,11 @@
   } @else {
     <div class="editor-layout">
       <aside class="chapter-list" aria-label="Secciones del manuscrito">
-        <span class="eyebrow"> TU MANUSCRITO </span>
+        <span class="eyebrow"> HISTORIA </span>
 
         <h2>
           {{
-            form.controls.title.value ||
-              (isEditMode() ? 'Historia sin título' : 'Tu nueva historia')
+            form.controls.title.value || (isEditMode() ? 'Historia sin título' : 'Nueva historia')
           }}
         </h2>
 
@@ -77,11 +76,7 @@
         <div class="chapter-item">
           <span>02</span>
 
-          <div>
-            Descripción
-
-            <small> La idea de tu historia </small>
-          </div>
+          <div>Descripción</div>
         </div>
 
         <div class="chapter-item">
@@ -92,18 +87,6 @@
 
             <small> Gratuita o Premium </small>
           </div>
-        </div>
-
-        <span class="chapter-add">
-          <span aria-hidden="true"> ＋ </span>
-
-          Tu primer capítulo
-        </span>
-
-        <div class="chapter-foot">
-          Cada mundo comienza
-          <br />
-          con una sola palabra. ✧
         </div>
       </aside>
 
@@ -184,8 +167,6 @@
         </div>
 
         <form class="paper" [formGroup]="form" (ngSubmit)="onSubmit()">
-          <span class="eyebrow"> EL COMIENZO DE TODO </span>
-
           <label class="visually-hidden" for="story-title"> Título </label>
 
           <input
@@ -193,7 +174,7 @@
             class="manuscript-title-input"
             type="text"
             formControlName="title"
-            placeholder="El título de tu historia"
+            placeholder="Título de la historia"
             maxlength="150"
             required
           />
@@ -233,14 +214,14 @@
             <label class="form-label" for="story-access-type"> Tipo de acceso </label>
 
             <select id="story-access-type" class="access-select" formControlName="accessType">
-              <option value="FREE">Gratuita para leer</option>
+              <option value="FREE">Gratuita</option>
 
               <option value="PREMIUM">Premium</option>
             </select>
           </div>
 
           <div class="paper-actions">
-            <a class="button cancel-button" routerLink="/stories/mine"> Cancelar </a>
+            <a class="button cancel-button" routerLink="/writer"> Cancelar </a>
 
             <button
               class="button primary"
@@ -268,14 +249,6 @@
             </button>
           </div>
         </form>
-
-        <div class="editor-bottom">
-          <span> Una historia en progreso </span>
-
-          <span class="badge">
-            {{ isEditMode() ? 'EDITANDO' : 'BORRADOR' }}
-          </span>
-        </div>
       </section>
     </div>
   }
