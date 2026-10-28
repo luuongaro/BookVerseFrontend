@@ -111,6 +111,48 @@ h1 em {
   overflow-x: auto;
   scrollbar-color: #b68a5c #48352b;
 }
+.shelf-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 0 -28px;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #c59869 #48352b;
+}
+.shelf-scroll:focus-visible {
+  outline: 2px solid #f7d69d;
+  outline-offset: -2px;
+}
+.shelf-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+.shelf-scroll::-webkit-scrollbar-track {
+  background: #48352b;
+}
+.shelf-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid #48352b;
+  border-radius: 8px;
+  background: #c59869;
+}
+.shelf-track {
+  width: max-content;
+  min-width: 100%;
+}
+.book-shelf-room .books-row {
+  min-height: 288px;
+  justify-content: flex-start;
+  padding: 24px 40px 0;
+  overflow: visible;
+}
+.book-shelf-room .shelf-book {
+  flex: 0 0 72px;
+}
+.shelf-scroll > .wood-shelf {
+  position: sticky;
+  left: 0;
+  width: 100%;
+  margin: 0;
+}
 .shelf-book {
   position: relative;
   flex: 0 1 72px;
@@ -292,6 +334,16 @@ h1 em {
   }
   .shelf-book {
     flex: 0 0 58px;
+  }
+  .shelf-scroll {
+    margin: 0 -15px;
+  }
+  .book-shelf-room .books-row {
+    padding-right: 19px;
+    padding-left: 19px;
+  }
+  .book-shelf-room .shelf-book {
+    flex-basis: 58px;
   }
   .wood-shelf {
     margin: 0 -15px;

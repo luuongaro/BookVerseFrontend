@@ -34,6 +34,7 @@ export class MyLibrary implements OnInit {
   unavailableCount = signal(0);
   filter = signal('all');
   readonly statusDialog = viewChild.required<ElementRef<HTMLDialogElement>>('statusDialog');
+  private readonly bookShelf = viewChild<ElementRef<HTMLDivElement>>('bookShelf');
   readonly readingStates: ReadingState[] = [
     'WANT_TO_READ',
     'IN_PROGRESS',
@@ -156,14 +157,16 @@ export class MyLibrary implements OnInit {
   }
   readonly colors = ['#42445e', '#93a897', '#766081', '#caa6b4', '#8c9bb9', '#d2ad93'];
   readonly inkColors = ['#e7dab6', '#263c32', '#fff0db', '#4d2b45', '#24324b', '#49352d'];
-  readonly shelves = computed(() => {
-    const entries = this.entries().filter(
+  readonly filteredBooks = computed(() =>
+    this.entries().filter(
       (entry) => this.filter() === 'all' || entry.reading.status === this.filter(),
-    );
-    const rows: LibraryBook[][] = [];
-    for (let i = 0; i < entries.length; i += 9) rows.push(entries.slice(i, i + 9));
-    return rows;
-  });
+    ),
+  );
+  setFilter(value: string): void {
+    this.filter.set(value);
+    const shelf = this.bookShelf()?.nativeElement;
+    if (shelf) shelf.scrollLeft = 0;
+  }
   readonly storyShelves = computed(() => {
     const stories = this.stories().filter(
       (entry) => this.filter() === 'all' || entry.reading.status === this.filter(),

@@ -84,6 +84,54 @@ describe('Personal bookshelf screen', () => {
     expect(el.querySelectorAll('.book-spine')).toHaveLength(0);
     expect(el.textContent).toContain('Todavía no tenés libros en este estado.');
   });
+  it('keeps more than two former rows of books in one shelf and allows editing the last book', async () => {
+    const entries = Array.from({ length: 22 }, (_, i) => {
+      const entry = savedEntry();
+      return {
+        book: { ...entry.book, idExternal: `book-${i}`, title: `Libro ${i + 1}` },
+        reading: { ...entry.reading, idExternal: `reading-${i}`, bookId: `book-${i}` },
+      };
+    });
+    const { fixture } = await setup({ entries, unavailableCount: 0 });
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelectorAll('.book-shelf-room .shelf-section')).toHaveLength(1);
+    expect(el.querySelectorAll('.book-shelf-room .wood-shelf')).toHaveLength(1);
+    expect(el.querySelectorAll('.book-shelf-room .book-spine')).toHaveLength(22);
+    expect(el.querySelector('.shelf-scroll')?.getAttribute('tabindex')).toBe('0');
+    expect(el.querySelector('a[href="/books/book-21"]')).not.toBeNull();
+
+    el.querySelector<HTMLButtonElement>('[aria-label="Cambiar estado de Libro 22"]')!.click();
+    fixture.detectChanges();
+
+    expect(el.querySelector('.selected-title')?.textContent).toBe('Libro 22');
+    expect(el.querySelector('dialog')?.hasAttribute('open')).toBe(true);
+  });
+  it('returns to the start of the shelf when the reading filter changes', async () => {
+    const first = savedEntry();
+    const second = {
+      book: { ...first.book, idExternal: 'second', title: 'Otro libro' },
+      reading: {
+        ...first.reading,
+        idExternal: 'second-reading',
+        bookId: 'second',
+        status: 'IN_PROGRESS' as const,
+      },
+    };
+    const { fixture } = await setup({ entries: [first, second], unavailableCount: 0 });
+    const el: HTMLElement = fixture.nativeElement;
+    const shelf = el.querySelector<HTMLDivElement>('.shelf-scroll')!;
+    shelf.scrollLeft = 400;
+    const filter = el.querySelector<HTMLSelectElement>('#reading-filter')!;
+    filter.value = 'IN_PROGRESS';
+    filter.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    expect(shelf.scrollLeft).toBe(0);
+    expect(el.querySelectorAll('.book-shelf-room .book-spine')).toHaveLength(1);
+    expect(el.querySelector('.book-shelf-room .book-spine')?.getAttribute('href')).toBe(
+      '/books/second',
+    );
+  });
   it('allows retry after a network failure', async () => {
     const { fixture, getMyBooks } = await setup({ entries: [], unavailableCount: 0 });
     getMyBooks.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 0 })));
@@ -112,7 +160,7 @@ describe('Personal bookshelf screen', () => {
     pending.next({ ...entry.reading, status: 'FINISHED' });
     pending.complete();
     fixture.detectChanges();
-    expect(component.shelves()).toEqual([]);
+    expect(component.filteredBooks()).toEqual([]);
     component.filter.set('FINISHED');
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('.book-spine')).toHaveLength(1);
