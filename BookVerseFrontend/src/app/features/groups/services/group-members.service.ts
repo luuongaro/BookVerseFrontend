@@ -6,7 +6,7 @@ import { API_URL } from '../../../core/api/api.config';
 import { GroupMember } from '../models/group-member.model';
 
 interface AddGroupMemberRequest {
-  userId: string;
+  email: string;
 }
 
 @Service()
