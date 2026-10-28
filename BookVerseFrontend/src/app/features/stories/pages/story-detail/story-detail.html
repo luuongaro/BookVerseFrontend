@@ -1,184 +1,93 @@
-<section class="story-detail">
-
+<main>
+  <a routerLink="/stories">← Historias</a>
   @if (isLoading()) {
-
-    <div
-      class="story-state"
-      role="status"
-    >
-      Cargando historia...
-    </div>
-
+    <p class="state" role="status">Cargando historia…</p>
   } @else if (errorMessage()) {
-
-    <div
-      class="story-state error"
-      role="alert"
-    >
-      {{ errorMessage() }}
+    <div class="state error" role="alert">
+      {{ errorMessage() }} <button (click)="load()">Reintentar</button>
     </div>
-
+  } @else if (deleted()) {
+    <p role="status">Historia eliminada.</p>
   } @else if (story(); as currentStory) {
-
-    <a
-      class="back-link"
-      routerLink="/stories"
-    >
-      ← Volver a historias
-    </a>
-
-    <header class="story-header">
-
-      <span class="eyebrow">
-        HISTORIA ORIGINAL
-      </span>
-
-      <h1>
-        {{ currentStory.title }}
-      </h1>
-
-      <p class="story-description">
-        {{ currentStory.description }}
-      </p>
-
-      <div class="story-metadata">
-
-        <span>
-          {{ currentStory.chaptersCount }}
-          capítulos
-        </span>
-
-        <span
-          class="badge"
-          [class.premium]="
-            currentStory.accessType === 'PREMIUM'
-          "
+    <h1>{{ currentStory.title }}</h1>
+    <p>
+      {{ currentStory.accessType === 'PREMIUM' ? 'Premium' : 'Gratuita' }} ·
+      {{ currentStory.chaptersCount }} capítulos disponibles
+    </p>
+    <div class="prose" [innerHTML]="currentStory.description"></div>
+    <div class="actions">
+      <a class="button secondary" [routerLink]="['/stories', currentStory.idExternal, 'chapters']"
+        >Ver capítulos</a
+      >
+      <a routerLink="/reviews" [queryParams]="{ storyId: currentStory.idExternal }">Ver reseñas</a>
+      @if (canManage()) {
+        <a class="button" [routerLink]="['/stories', currentStory.idExternal, 'edit']"
+          >Editar historia</a
         >
-          {{
-            currentStory.accessType === 'PREMIUM'
-              ? 'PREMIUM'
-              : 'GRATUITA'
-          }}
-        </span>
-
-      </div>
-
-    </header>
-
-    <section class="story-chapters">
-
-      <div class="section-heading">
-
-        <div>
-          <span class="eyebrow">
-            EL MANUSCRITO
-          </span>
-
-          <h2>
-            Capítulos
-          </h2>
-        </div>
-
-        @if (currentStory.chapters.length > 0) {
-
-          <a
-            class="button secondary"
-            [routerLink]="[
-              '/stories',
-              currentStory.idExternal,
-              'chapters'
-            ]"
-          >
-            Ver todos los capítulos
-          </a>
-
-        }
-
-      </div>
-
-      <div class="chapters-list">
-
-        @for (
-          chapter of currentStory.chapters;
-          track chapter.idExternal
-        ) {
-
-          <article class="chapter-card">
-
-            <span class="chapter-number">
-              {{
-                chapter.chapterNumber
-                  .toString()
-                  .padStart(2, '0')
-              }}
-            </span>
-
-            <div class="chapter-info">
-
-              <small>
-                CAPÍTULO
-                {{ chapter.chapterNumber }}
-              </small>
-
-              <h3>
-                {{ chapter.title }}
-              </h3>
-
-              @if (chapter.published) {
-
-                <span class="chapter-status published">
-                  Publicado
-                </span>
-
-              } @else {
-
-                <span class="chapter-status draft">
-                  Borrador
-                </span>
-
-              }
-
-            </div>
-
-            @if (chapter.published) {
-
+        <a class="button" [routerLink]="['/stories', currentStory.idExternal, 'chapters', 'new']"
+          >Nuevo capítulo</a
+        >
+        <button type="button" class="danger" (click)="confirmDelete()">Eliminar historia</button>
+      }
+    </div>
+    <h2>Capítulos</h2>
+    <div class="chapters-list">
+      @for (chapter of currentStory.chapters; track chapter.idExternal) {
+        <article class="panel chapter-row">
+          <div>
+            <h3>{{ chapter.chapterNumber }}. {{ chapter.title }}</h3>
+            <p>{{ chapter.published ? 'Publicado' : 'Borrador' }}</p>
+          </div>
+          <div class="actions">
+            @if (chapter.published || canManage()) {
               <a
-                class="chapter-open"
+                [routerLink]="['/stories', currentStory.idExternal, 'chapters', chapter.idExternal]"
+                >{{ chapter.published ? 'Leer capítulo' : 'Ver borrador' }}</a
+              >
+            }
+            @if (canManage()) {
+              <a
                 [routerLink]="[
                   '/stories',
                   currentStory.idExternal,
                   'chapters',
-                  chapter.idExternal
+                  chapter.idExternal,
+                  'edit',
                 ]"
-                [attr.aria-label]="
-                  'Leer capítulo ' + chapter.chapterNumber
-                "
+                >Editar capítulo</a
               >
-                →
-              </a>
-
             }
-
-          </article>
-
-        } @empty {
-
-          <div class="empty-chapters">
-
-            <span>✧</span>
-
-            <p>
-              Esta historia todavía no tiene capítulos disponibles.
-            </p>
-
           </div>
-
-        }
-
-      </div>
-
-    </section>
-
+        </article>
+      } @empty {
+        <p class="state">Esta historia todavía no tiene capítulos disponibles.</p>
+      }
+    </div>
   }
-
-</section>
+</main>
+<dialog
+  #deleteDialog
+  class="confirm-dialog"
+  aria-labelledby="delete-story-heading"
+  (cancel)="deleting() && $event.preventDefault()"
+>
+  <h2 id="delete-story-heading">¿Eliminar esta historia?</h2>
+  <p>La historia y sus capítulos dejarán de estar disponibles.</p>
+  @if (deleteError()) {
+    <p class="validation" role="alert">{{ deleteError() }}</p>
+  }
+  <div class="actions">
+    <button type="button" class="danger" [disabled]="deleting()" (click)="deleteStory()">
+      {{ deleting() ? 'Eliminando…' : 'Eliminar historia' }}
+    </button>
+    <button
+      type="button"
+      class="secondary"
+      [disabled]="deleting()"
+      (click)="cancelDelete()"
+      autofocus
+    >
+      Cancelar
+    </button>
+  </div>
+</dialog>
