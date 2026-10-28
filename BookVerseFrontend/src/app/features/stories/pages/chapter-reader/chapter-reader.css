@@ -40,7 +40,7 @@
 
 .reader-page {
   min-height: 100vh;
-  margin-left: 240px;
+  margin-left: 0;
   padding: 0 55px 45px;
 }
 
@@ -498,3 +498,4 @@
     margin-top: 40px;
   }
 }
+.chapter-body { white-space: pre-wrap; overflow-wrap: anywhere; }
