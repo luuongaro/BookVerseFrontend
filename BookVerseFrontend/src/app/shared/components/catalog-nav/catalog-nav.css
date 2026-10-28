@@ -39,21 +39,12 @@
   white-space: nowrap;
 }
 .brand-symbol {
-  display: grid;
+  display: block;
   width: 30px;
-  height: 32px;
+  height: 30px;
   flex: 0 0 auto;
   margin-right: 1px;
-  place-items: center;
-  border-radius: 10px 10px 10px 2px;
-  background: var(--lavender);
-  color: #fff;
-  transform: rotate(-4deg);
-}
-.brand-symbol svg {
-  width: 20px;
-  height: 20px;
-  transform: rotate(4deg);
+  object-fit: contain;
 }
 .brand-wordmark > span {
   color: var(--lavender);
