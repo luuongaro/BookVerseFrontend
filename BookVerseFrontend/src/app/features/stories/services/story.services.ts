@@ -8,6 +8,11 @@ import { StoryRequest } from '../models/story-request';
 import { StoryResponse } from '../models/story-response';
 import { StoryDetailResponse } from '../models/story-detail-response';
 
+export interface StoryPageResponse {
+  content: StoryResponse[];
+  totalElements: number;
+}
+
 @Service()
 export class StoryService {
 
@@ -31,9 +36,9 @@ export class StoryService {
 
   getByAuthor(
     authorId: string
-  ): Observable<StoryResponse[]> {
-    return this.http.get<StoryResponse[]>(
-      `${this.url}/author/${authorId}`
+  ): Observable<StoryPageResponse> {
+    return this.http.get<StoryPageResponse>(
+      `${this.url}/author/${encodeURIComponent(authorId)}?page=0&size=1`,
     );
   }
 

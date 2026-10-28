@@ -121,82 +121,86 @@
           }
         </div>
 
-        <span class="membership">{{ profile.membershipType }}</span>
+        <div class="identity-badges">
+          <span class="membership active-state">
+            {{ profile.accountStatus }}
+          </span>
+          <span class="membership role-state">
+            {{ roleLabel }}
+          </span>
+        </div>
       </section>
 
-      <section class="profile-details">
-        <div class="bio">
-          <p class="eyebrow">UN POCO SOBRE MÍ</p>
-
-          <h2>
-            Siempre entre<br />
-            <em>dos capítulos.</em>
-          </h2>
-
-          <p class="bio-text">{{ profile.biography }}</p>
-
-          <div class="interest-list" aria-label="Mis intereses">
-            @for (interest of profile.interests; track interest) {
-              <span>{{ interest }}</span>
-            }
+      <section class="activity-section" aria-label="Actividad lectora">
+        <div class="activity-heading">
+          <div>
+            <p class="eyebrow">TU ACTIVIDAD EN BOOKVERSE</p>
+            <h2>Tu recorrido lector.</h2>
           </div>
+          <p class="activity-note">
+            Un resumen de tus lecturas e historias.
+          </p>
         </div>
 
-        <div class="stats" aria-label="Actividad en BookVerse">
-          @for (stat of statistics; track stat.description) {
-            <article class="stat-card">
-              <strong>{{ stat.value }}</strong>
-              <span>{{ stat.description }}</span>
+        <div class="reading-cards" aria-label="Estados de lectura">
+          <article class="reading-card want-card">
+            <span class="metric-overline">EN TU ESTANTERÍA</span>
+            <strong class="metric-value">
+              {{ readingCounts().wantToRead }}
+            </strong>
+            <h3>Quiero leer</h3>
+            <p>Libros e historias que guardaste.</p>
+          </article>
 
-              <span class="stat-icon" aria-hidden="true">
-                @if (stat.icon === 'book') {
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path
-                      d="M12 5C8 2 4 3 2 4v15c3-1 6-1 10 2 4-3 7-3 10-2V4c-2-1-6-2-10 1Zm0 0v16"
-                    />
-                  </svg>
-                }
+          <article class="reading-card progress-card">
+            <span class="metric-overline">AHORA</span>
+            <strong class="metric-value">
+              {{ readingCounts().inProgress }}
+            </strong>
+            <h3>En curso</h3>
+            <p>Lecturas que estás disfrutando.</p>
+          </article>
 
-                @if (stat.icon === 'feather') {
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path
-                      d="M4 20 17 7M8 16C-1 5 16 0 22 2c0 13-5 20-14 14Zm4-4h8"
-                    />
-                  </svg>
-                }
+          <article class="reading-card finished-card">
+            <span class="metric-overline">RECORRIDO</span>
+            <strong class="metric-value">
+              {{ readingCounts().finished }}
+            </strong>
+            <h3>Finalizadas</h3>
+            <p>Historias que ya completaste.</p>
+          </article>
+        </div>
 
-                @if (stat.icon === 'people') {
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <circle cx="9" cy="8" r="3" />
-                    <path
-                      d="M2 21v-3a7 7 0 0 1 14 0v3m0-16a3 3 0 0 1 0 6m3 10v-3a8 8 0 0 0-2-5"
-                    />
-                  </svg>
-                }
-              </span>
-            </article>
-          }
+        <div class="extra-heading">
+          <span class="eyebrow">TAMBIÉN EN TU UNIVERSO</span>
+          <span class="extra-note">Actividad de tu cuenta</span>
+        </div>
+
+        <div class="secondary-cards">
+          <article class="secondary-card">
+            <span class="secondary-icon" aria-hidden="true">✧</span>
+            <div>
+              <span class="secondary-overline">TU AUTORÍA</span>
+              <h3>Historias creadas</h3>
+              <p>Relatos que empezaron con vos.</p>
+            </div>
+            <strong>{{ createdStoriesCount() }}</strong>
+          </article>
+
+          <article class="secondary-card groups-card">
+            <span class="secondary-icon" aria-hidden="true">♧</span>
+            <div>
+              <span class="secondary-overline">LECTURA EN COMUNIDAD</span>
+              <h3>Grupos activos</h3>
+              <p>Círculos de lectura a los que pertenecés.</p>
+            </div>
+            <strong>{{ activeGroupsCount() }}</strong>
+          </article>
+        </div>
+
+        <div class="reading-scope">
+          <span aria-hidden="true">✦</span>
+          <span>El resumen incluye libros e historias.</span>
         </div>
       </section>
 

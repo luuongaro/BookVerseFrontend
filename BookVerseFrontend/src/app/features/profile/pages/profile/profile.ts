@@ -1,6 +1,9 @@
-import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { GroupMembersService } from '../../../groups/services/group-members.service';
+import { ReadingStatusResponse } from '../../../stories/models/reading-status-response';
+import { ReadingStatusService } from '../../../stories/services/reading-status.service';
+import { StoryService } from '../../../stories/services/story.services';
 import { UserService } from '../../services/user.service';
 
 @Component({
@@ -12,6 +15,17 @@ import { UserService } from '../../services/user.service';
 export class Profile implements OnInit {
   private readonly userService = inject(UserService);
   private readonly groupMembersService = inject(GroupMembersService);
+  private readonly readingStatusService = inject(ReadingStatusService);
+  private readonly storyService = inject(StoryService);
+
+  readonly readingCounts = signal({
+    wantToRead: '…',
+    inProgress: '…',
+    finished: '…',
+  });
+
+  readonly createdStoriesCount = signal('…');
+  readonly activeGroupsCount = signal('…');
 
   @ViewChild('coverPicker')
   coverPicker!: ElementRef<HTMLDialogElement>;
@@ -22,14 +36,38 @@ export class Profile implements OnInit {
 
     return {
       name: username,
-      initials: username.slice(0, 2).toUpperCase(),
+      initials: username
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((part) => part[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase(),
       username: `@${username}`,
       email: user?.email ?? '',
-      membershipType: 'Cuenta BookVerse',
+      accountStatus: user?.status === 'ACTIVE' ? 'ACTIVA' : 'INACTIVA',
       biography:
         'Colecciono frases bonitas, ideas nocturnas y libros para los que siempre tengo lugar.',
       interests: ['Fantasía', 'Ficción literaria', 'Un poco de magia'],
     };
+  }
+
+  get roleLabel(): string {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return 'USUARIO';
+
+      const encoded = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const padded = encoded.padEnd(Math.ceil(encoded.length / 4) * 4, '=');
+      const claims: { roles?: string[] } = JSON.parse(atob(padded));
+
+      if (claims.roles?.includes('ROLE_ADMIN')) return 'ADMIN';
+      if (claims.roles?.includes('ROLE_MODERATOR')) return 'MODERADOR';
+    } catch {
+      return 'USUARIO';
+    }
+
+    return 'USUARIO';
   }
 
   logout(): void {
@@ -77,17 +115,34 @@ export class Profile implements OnInit {
 
   selectedCoverIndex = 0;
 
-  statistics = [
-  { value: '12', description: 'Historias en mi estantería', icon: 'book' },
-  { value: '2', description: 'Historias en proceso', icon: 'feather' },
-  { value: '…', description: 'Círculos de lectura', icon: 'people' },
-];
-
   ngOnInit(): void {
+    this.userService.loadCurrentUser().subscribe({
+      next: (user) => {
+        if (user) {
+          this.selectedCoverIndex = this.readSavedCoverIndex(user.idExternal);
+        }
+      },
+      error: () => undefined,
+    });
+
+    this.readingStatusService.getMine().subscribe({
+      next: (statuses) => {
+        this.readingCounts.set(this.countStatuses(statuses));
+      },
+      error: () => {
+        this.readingCounts.set({
+          wantToRead: '—',
+          inProgress: '—',
+          finished: '—',
+        });
+      },
+    });
+
     const userId = localStorage.getItem('userId');
 
     if (!userId) {
       this.updateGroupCount('—');
+      this.createdStoriesCount.set('—');
       return;
     }
 
@@ -99,14 +154,46 @@ export class Profile implements OnInit {
         this.updateGroupCount('—');
       },
     });
+
+    this.storyService.getByAuthor(userId).subscribe({
+      next: (page) => {
+        this.createdStoriesCount.set(String(page.totalElements));
+      },
+      error: () => {
+        this.createdStoriesCount.set('—');
+      },
+    });
+  }
+
+  private readSavedCoverIndex(userId: string): number {
+    const saved = Number(localStorage.getItem(`profile-cover:${userId}`));
+
+    return Number.isInteger(saved) &&
+      saved >= 0 &&
+      saved < this.covers.length
+      ? saved
+      : 0;
+  }
+
+  private countStatuses(statuses: ReadingStatusResponse[]) {
+    return {
+      wantToRead: String(
+        statuses.filter((item) => item.status === 'WANT_TO_READ').length,
+      ),
+      inProgress: String(
+        statuses.filter(
+          (item) =>
+            item.status === 'IN_PROGRESS' || item.status === 'RE_READING',
+        ).length,
+      ),
+      finished: String(
+        statuses.filter((item) => item.status === 'FINISHED').length,
+      ),
+    };
   }
 
   private updateGroupCount(value: string): void {
-    this.statistics = this.statistics.map((stat) =>
-      stat.description === 'Círculos de lectura'
-        ? { ...stat, value }
-        : stat,
-    );
+    this.activeGroupsCount.set(value);
   }
 
   get currentCover() {
@@ -129,5 +216,10 @@ export class Profile implements OnInit {
 
   selectCover(index: number): void {
     this.selectedCoverIndex = index;
+
+    const userId = this.userService.currentUser()?.idExternal;
+    if (userId) {
+      localStorage.setItem(`profile-cover:${userId}`, String(index));
+    }
   }
 }
