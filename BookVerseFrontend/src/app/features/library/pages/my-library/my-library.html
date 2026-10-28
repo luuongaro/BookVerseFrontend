@@ -26,7 +26,7 @@
           id="reading-filter"
           #readingFilter
           [value]="filter()"
-          (change)="filter.set(readingFilter.value)"
+          (change)="setFilter(readingFilter.value)"
         >
           <option value="all">Todas mis lecturas</option>
           <option value="WANT_TO_READ">Quiero leer</option>
@@ -50,59 +50,69 @@
     }
     <section class="library-section" aria-labelledby="library-books-heading">
       <h2 id="library-books-heading">Libros</h2>
-      <section class="shelf-room" aria-label="Mi estantería de libros guardados">
+      <section class="shelf-room book-shelf-room" aria-label="Mi estantería de libros guardados">
         <div class="shelf-crown" aria-hidden="true"></div>
-        @for (shelf of shelves(); track $index) {
+        @if (filteredBooks().length) {
           <section class="shelf-section">
-            <div class="books-row">
-              @for (entry of shelf; track entry.reading.idExternal; let i = $index) {
-                <div class="shelf-book">
-                  <a
-                    class="book-spine"
-                    [routerLink]="['/books', entry.book.idExternal]"
-                    [style.background-color]="colors[i % colors.length]"
-                    [style.color]="inkColors[i % inkColors.length]"
-                    [style.height.px]="240 + (i % 3) * 12"
-                    [attr.aria-label]="
-                      entry.book.title +
-                      ', ' +
-                      (entry.book.authors?.join(', ') || 'Autor desconocido') +
-                      '. ' +
-                      statusLabel(entry.reading.status) +
-                      (readingPercentage(entry.reading) === null
-                        ? ''
-                        : '. ' + readingPercentage(entry.reading) + '% leído')
-                    "
-                    [title]="entry.book.title + ' · ' + statusLabel(entry.reading.status)"
-                    ><span class="spine-mark" aria-hidden="true">✦</span
-                    ><strong>{{ entry.book.title }}</strong
-                    ><span class="spine-status"
-                      >{{ statusLabel(entry.reading.status) }}
-                      @if (readingPercentage(entry.reading) !== null) {
-                        · {{ readingPercentage(entry.reading) }}%
-                      }
-                    </span>
-                    @if (readingPercentage(entry.reading); as percentage) {
-                      <span class="spine-progress" aria-hidden="true"
-                        ><span [style.width.%]="percentage"></span
-                      ></span>
-                    }
-                  </a>
-                  <button
-                    type="button"
-                    class="edit-status"
-                    (click)="editStatus(entry)"
-                    [attr.aria-label]="'Cambiar estado de ' + entry.book.title"
-                    title="Cambiar estado"
-                  >
-                    <span aria-hidden="true">✎</span>
-                  </button>
+            <div
+              #bookShelf
+              class="shelf-scroll"
+              role="region"
+              tabindex="0"
+              aria-label="Libros guardados, desplazamiento horizontal"
+            >
+              <div class="shelf-track">
+                <div class="books-row">
+                  @for (entry of filteredBooks(); track entry.reading.idExternal; let i = $index) {
+                    <div class="shelf-book">
+                      <a
+                        class="book-spine"
+                        [routerLink]="['/books', entry.book.idExternal]"
+                        [style.background-color]="colors[i % colors.length]"
+                        [style.color]="inkColors[i % inkColors.length]"
+                        [style.height.px]="240 + (i % 3) * 12"
+                        [attr.aria-label]="
+                          entry.book.title +
+                          ', ' +
+                          (entry.book.authors?.join(', ') || 'Autor desconocido') +
+                          '. ' +
+                          statusLabel(entry.reading.status) +
+                          (readingPercentage(entry.reading) === null
+                            ? ''
+                            : '. ' + readingPercentage(entry.reading) + '% leído')
+                        "
+                        [title]="entry.book.title + ' · ' + statusLabel(entry.reading.status)"
+                        ><span class="spine-mark" aria-hidden="true">✦</span
+                        ><strong>{{ entry.book.title }}</strong
+                        ><span class="spine-status"
+                          >{{ statusLabel(entry.reading.status) }}
+                          @if (readingPercentage(entry.reading) !== null) {
+                            · {{ readingPercentage(entry.reading) }}%
+                          }
+                        </span>
+                        @if (readingPercentage(entry.reading); as percentage) {
+                          <span class="spine-progress" aria-hidden="true"
+                            ><span [style.width.%]="percentage"></span
+                          ></span>
+                        }
+                      </a>
+                      <button
+                        type="button"
+                        class="edit-status"
+                        (click)="editStatus(entry)"
+                        [attr.aria-label]="'Cambiar estado de ' + entry.book.title"
+                        title="Cambiar estado"
+                      >
+                        <span aria-hidden="true">✎</span>
+                      </button>
+                    </div>
+                  }
                 </div>
-              }
+              </div>
+              <div class="wood-shelf" aria-hidden="true"></div>
             </div>
-            <div class="wood-shelf" aria-hidden="true"></div>
           </section>
-        } @empty {
+        } @else {
           <section class="shelf-section">
             <div class="empty-shelf">
               <span aria-hidden="true">✧</span>
