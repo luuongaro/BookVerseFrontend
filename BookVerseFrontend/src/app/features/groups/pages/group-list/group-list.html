@@ -29,7 +29,7 @@
         </div>
 
         <a class="primary-button" routerLink="/groups/new">
-          Crear un círculo de lectura
+          Crear un grupo de lectura
           <span aria-hidden="true">＋</span>
         </a>
       </section>
@@ -69,11 +69,11 @@
         </div>
       </section>
 
-      <section class="circles">
-        <div class="circles-heading">
+      <section class="reading-groups">
+        <div class="reading-groups-heading">
           <div>
             <h2>
-              Mis círculos de lectura
+              Mis grupos de lectura
               <small>{{ filteredGroups.length }}</small>
             </h2>
             <p>Grupos a los que pertenecés.</p>
@@ -92,7 +92,7 @@
 
         @if (isLoading) {
           <p class="state-message" role="status">
-            Cargando círculos de lectura…
+            Cargando grupos de lectura…
           </p>
         } @else if (errorMessage) {
           <p class="state-message state-error" role="alert">
@@ -103,13 +103,13 @@
             <span class="empty-sparkle" aria-hidden="true">✧</span>
 
             @if (searchTerm) {
-              <h3>No encontramos ese círculo.</h3>
+              <h3>No encontramos ese grupo.</h3>
               <p>Probá buscar con otro nombre.</p>
             } @else {
-              <h3>Tu primer círculo te espera.</h3>
+              <h3>Tu primer grupo te espera.</h3>
               <p>Creá un grupo para compartir tu próxima lectura.</p>
               <a class="primary-button" routerLink="/groups/new">
-                Crear un círculo <span aria-hidden="true">→</span>
+                Crear un grupo <span aria-hidden="true">→</span>
               </a>
             }
           </div>
@@ -158,8 +158,8 @@
                   <span>
                     {{
                       group.storyId
-                        ? 'CÍRCULO DE HISTORIA'
-                        : 'CÍRCULO DE LIBRO'
+                        ? 'GRUPO DE LECTURA DE HISTORIA'
+                        : 'GRUPO DE LECTURA DE LIBRO'
                     }}
                   </span>
                 </div>
@@ -181,7 +181,7 @@
 
                   <div class="card-divider"></div>
 
-                  <p class="card-meta-label">CÍRCULO CREADO</p>
+                  <p class="card-meta-label">GRUPO CREADO</p>
                   <p class="card-date">
                     {{ group.createdAt | date: 'd MMM yyyy' }}
                   </p>

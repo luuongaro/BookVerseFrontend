@@ -8,7 +8,7 @@
         <span aria-hidden="true">/</span>
         <a routerLink="/groups">Grupos de lectura</a>
         <span aria-hidden="true">/</span>
-        <strong>{{ isEditing ? 'Editar círculo' : 'Crear círculo' }}</strong>
+        <strong>{{ isEditing ? 'Editar grupo' : 'Crear grupo' }}</strong>
       </div>
 
       <div class="topbar-note">
@@ -26,25 +26,25 @@
           <p class="eyebrow">UNA HISTORIA SE DISFRUTA MÁS EN COMPAÑÍA</p>
 
           <h1>
-            {{ isEditing ? 'Dale forma a tu' : 'Empezá un círculo' }}<br />
-            <em>{{ isEditing ? 'círculo de lectura.' : 'de lectura.' }}</em>
+            {{ isEditing ? 'Editá tu' : 'Empezá un' }}<br />
+            <em>grupo de lectura.</em>
           </h1>
 
           <p>
             {{
               isEditing
-                ? 'Actualizá el nombre del círculo. La obra vinculada no se puede cambiar.'
+                ? 'Actualizá el nombre del grupo. La obra vinculada no se puede cambiar.'
                 : 'Reuní lectores alrededor de un libro o una historia que quieras compartir.'
             }}
           </p>
         </div>
 
         @if (isLoading) {
-          <p class="field-hint" role="status">Cargando círculo…</p>
+          <p class="field-hint" role="status">Cargando grupo…</p>
         } @else {
           <form [formGroup]="groupForm" (ngSubmit)="onSubmit()">
             <div class="field">
-              <label for="name">Nombre del círculo</label>
+              <label for="name">Nombre del grupo</label>
               <input
                 id="name"
                 type="text"
@@ -58,7 +58,7 @@
                 groupForm.controls.name.hasError('required')
               ) {
                 <small class="field-error">
-                  Ingresá un nombre para el círculo.
+                  Ingresá un nombre para el grupo.
                 </small>
               }
 
@@ -136,8 +136,8 @@
               >
                 {{
                   isSaving
-                    ? (isEditing ? 'Guardando…' : 'Creando círculo…')
-                    : (isEditing ? 'Guardar cambios' : 'Crear mi círculo')
+                    ? (isEditing ? 'Guardando…' : 'Creando grupo…')
+                    : (isEditing ? 'Guardar cambios' : 'Crear mi grupo')
                 }}
                 <span aria-hidden="true">→</span>
               </button>

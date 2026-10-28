@@ -21,7 +21,7 @@
 
     <main class="detail-main">
       @if (isLoading) {
-        <p class="state-message" role="status">Cargando el círculo…</p>
+        <p class="state-message" role="status">Cargando el grupo…</p>
       } @else if (errorMessage) {
         <p class="state-message state-error" role="alert">{{ errorMessage }}</p>
       } @else if (group) {
@@ -34,7 +34,7 @@
                 ? 'Portada de ' + linkedBook.title
                 : linkedStory
                   ? 'Portada de ' + linkedStory.title
-                  : 'Contenido del círculo'
+                  : 'Contenido del grupo'
             "
           >
             @if (linkedBook; as book) {
@@ -65,7 +65,7 @@
 
             <div class="group-meta">
               <span>
-                {{ group.storyId ? 'Círculo de historia' : 'Círculo de libro' }}
+                {{ group.storyId ? 'Grupo de lectura de una historia' : 'Grupo de lectura de un libro' }}
               </span>
               <span class="status-badge">
                 <span></span>
@@ -94,7 +94,7 @@
                 />
               </svg>
               <div>
-                <strong>Lectura vinculada al círculo</strong>
+                <strong>Lectura elegida por el grupo</strong>
                 @if (linkedBook; as book) {
                   <small>{{ book.title }}</small>
                 } @else if (linkedStory; as story) {
@@ -114,7 +114,7 @@
               [routerLink]="['/groups', group.idExternal, 'edit']"
             >
               <span aria-hidden="true">✎</span>
-              Editar círculo
+              Editar grupo
             </a>
           </div>
         </section>
@@ -285,7 +285,7 @@
               </p>
             } @else if (members.length === 0) {
               <p class="member-state">
-                Este círculo todavía no tiene miembros.
+                Este grupo todavía no tiene miembros.
               </p>
             } @else {
               <div class="member-avatars" aria-label="Miembros del grupo">
