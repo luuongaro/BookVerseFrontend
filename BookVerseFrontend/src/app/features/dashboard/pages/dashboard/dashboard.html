@@ -49,58 +49,135 @@
         </a>
       </section>
 
-      <section class="space-bottom">
-        <div class="continue-section">
-          <div class="section-heading">
-            <h2>Continuar leyendo</h2>
-            <a routerLink="/library">Mi biblioteca <span>→</span></a>
-          </div>
+      <section class="reading-groups" aria-label="Grupos de lectura">
+        <article class="groups-card">
+          <svg
+            class="groups-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path
+              d="M9 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7 13v-3a7 7 0 0 0-14 0v3Zm1-16a3 3 0 0 1 0 6m2 10v-3a7 7 0 0 0-2-5"
+            />
+          </svg>
+          <p class="eyebrow">TUS GRUPOS DE LECTURA</p>
 
-          <a class="continue-card" routerLink="/library">
-            <div
-              class="book-cover"
-              role="img"
-              aria-label="Portada de La biblioteca de la medianoche"
-            >
-              <span>LA BIBLIOTECA</span>
-              <strong>DE LA<br />MEDIANOCHE</strong>
-              <small>MATT HAIG</small>
-            </div>
+          @if (isLoadingGroups) {
+            <h2>Cargando tus grupos...</h2>
+          } @else if (groupsError) {
+            <p role="alert">{{ groupsError }}</p>
+          } @else {
+            <h2>
+              Participás en {{ groupCount }}
+              {{ groupCount === 1 ? 'grupo' : 'grupos' }}.
+            </h2>
 
-            <div class="continue-info">
-              <span class="reading-badge">LEYENDO ACTUALMENTE</span>
-              <h3>La biblioteca de la medianoche</h3>
-              <p>Matt Haig</p>
+            @if (featuredGroup; as group) {
+              <div class="current-group">
+                @if (groupBook; as book) {
+                  <div
+                    class="reading-cover reading-cover--book"
+                    role="img"
+                    [attr.aria-label]="'Portada de ' + book.title"
+                  >
+                    <span class="reading-cover-symbol" aria-hidden="true">✧</span>
+                    <h3>{{ book.title }}</h3>
+                    <small>Lectura compartida</small>
+                  </div>
+
+                  <p>
+                    En <strong>{{ group.name }}</strong> están leyendo
+                    <strong>{{ book.title }}</strong>.
+                  </p>
+                } @else if (groupStory; as story) {
+                  <div
+                    class="reading-cover reading-cover--story"
+                    role="img"
+                    [attr.aria-label]="'Portada de ' + story.title"
+                  >
+                    <span class="reading-cover-symbol" aria-hidden="true">✧</span>
+                    <h3>{{ story.title }}</h3>
+                    <small>Historia original</small>
+                  </div>
+
+                  <p>
+                    En <strong>{{ group.name }}</strong> están leyendo
+                    <strong>{{ story.title }}</strong>.
+                  </p>
+                }
+              </div>
+
+              <div class="groups-card-footer">
+                <a routerLink="/groups">
+                  Ver todos Mis Grupos <span aria-hidden="true">→</span>
+                </a>
+              </div>
+            } @else {
+              <div class="current-group">
+                <p>Todavía no participás en grupos de lectura.</p>
+              </div>
+
+              <div class="groups-card-footer">
+                <span></span>
+                <a routerLink="/groups">
+                  Explorar grupos <span aria-hidden="true">→</span>
+                </a>
+              </div>
+            }
+          }
+        </article>
+
+        @if (featuredGroup; as group) {
+          <article class="shared-reading-card">
+            <span class="groups-icon" aria-hidden="true">✧</span>
+            <p class="eyebrow">LECTURA COMPARTIDA</p>
+
+            @if (isLoadingGroupData) {
+              <h2>Cargando el progreso del grupo...</h2>
+            } @else if (activeGoal && groupProgress) {
+              <h2>Así avanza {{ group.name }} hacia su meta.</h2>
 
               <div
-                class="progress-bar"
+                class="group-progress"
                 role="progressbar"
-                aria-label="Progreso de lectura"
+                aria-label="Meta grupal completada"
                 aria-valuemin="0"
                 aria-valuemax="100"
-                aria-valuenow="64"
+                [attr.aria-valuenow]="goalCompletionPercent"
               >
-                <span></span>
+                <span [style.width.%]="goalCompletionPercent"></span>
               </div>
 
-              <div class="progress-caption">
-                <span>64% leído</span>
-                <span>Continuar →</span>
+              <div class="group-progress-caption">
+                <span>
+                  {{
+                    groupProgress.achieved
+                      ? 'Meta grupal completada'
+                      : 'Progreso hacia la meta'
+                  }}
+                </span>
+                <strong>{{ goalCompletionPercent | number: '1.0-0' }} %</strong>
               </div>
+
+              <p class="group-deadline">
+                Fecha objetivo: {{ activeGoal.targetDate | date: 'dd/MM/yyyy' }}
+              </p>
+            } @else {
+              <h2>No hay datos de progreso disponibles para este grupo.</h2>
+            }
+
+            <div class="groups-card-footer">
+              <a [routerLink]="['/groups', group.idExternal]">
+                Ver Grupo <span aria-hidden="true">→</span>
+              </a>
             </div>
-          </a>
-        </div>
-
-        <aside class="circle-note">
-          <span class="eyebrow">MEJOR, EN COMPAÑÍA</span>
-          <h3>¿Un capítulo más?</h3>
-          <p>
-            Tu grupo de lectura está explorando<br />
-            La biblioteca de la medianoche esta semana.
-          </p>
-          <a routerLink="/groups"> Ponerte al día con Los Búhos Nocturnos → </a>
-          <div class="member-count">Vos y otras 9 personas lectoras</div>
-        </aside>
+          </article>
+        }
       </section>
     </main>
 
