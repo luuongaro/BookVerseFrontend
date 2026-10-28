@@ -54,8 +54,8 @@ export class GroupDetail implements OnInit {
   targetDate = '';
   commentContent = '';
   commentProgress = 0;
-  inviteUserId = '';
-  showInviteForm = false;
+  readerEmail = '';
+  showAddMemberForm = false;
 
   isLoading = true;
   isLoadingMembers = true;
@@ -141,8 +141,10 @@ export class GroupDetail implements OnInit {
     );
   }
 
-  inviteMember(): void {
-    if (!this.group || this.isUpdatingMembers || !this.inviteUserId.trim()) {
+  addMember(): void {
+    const email = this.readerEmail.trim();
+
+    if (!this.group || this.isUpdatingMembers || !email) {
       return;
     }
 
@@ -150,21 +152,19 @@ export class GroupDetail implements OnInit {
     this.isUpdatingMembers = true;
 
     this.groupMembersService
-      .addMember(this.group.idExternal, {
-        userId: this.inviteUserId.trim(),
-      })
+      .addMember(this.group.idExternal, { email })
       .subscribe({
         next: () => {
-          this.inviteUserId = '';
-          this.showInviteForm = false;
+          this.readerEmail = '';
+          this.showAddMemberForm = false;
           this.isUpdatingMembers = false;
           this.loadMembers(this.group!.idExternal);
           this.changeDetector.markForCheck();
         },
         error: (error: unknown) => {
-          console.error('Error inviting group member:', error);
+          console.error('Error adding group member:', error);
           this.memberActionMessage =
-            'No se pudo agregar al lector. Revisá el UUID, que no sea miembro activo y que tengas permisos.';
+            'No se pudo agregar al lector. Verificá el correo, que la cuenta esté activa y que tengas permisos para administrar el grupo.';
           this.isUpdatingMembers = false;
           this.changeDetector.markForCheck();
         },

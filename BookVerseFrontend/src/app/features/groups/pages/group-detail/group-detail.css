@@ -586,7 +586,7 @@
 
 .goal-actions,
 .member-management,
-.invite-form {
+.add-member-form {
   margin-top: 11px;
   display: flex;
   flex-wrap: wrap;
@@ -698,7 +698,7 @@
   margin-top: 14px;
 }
 
-.invite-form input {
+.add-member-form input {
   min-width: 0;
   min-height: 38px;
   flex: 1 1 170px;
