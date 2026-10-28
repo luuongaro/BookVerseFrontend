@@ -2,13 +2,12 @@
   <div class="dashboard-body">
     <header class="topbar">
       <div class="breadcrumb">
-        <span>Mi universo</span>
+        <span>BookVerse</span>
         <span aria-hidden="true">/</span>
         <strong>Mi espacio</strong>
       </div>
 
       <div class="topbar-right">
-        <span>☾ &nbsp; Un buen día para un nuevo capítulo</span>
         <span class="avatar">{{ initials }}</span>
       </div>
     </header>
@@ -16,24 +15,21 @@
     <main class="workspace">
       <section class="page-heading">
         <div>
-          <p class="eyebrow">TU PEQUEÑO RINCÓN DEL UNIVERSO</p>
-          <h1>Qué bueno verte, <em>{{ userName }}.</em></h1>
-          <p>Algunos días pasás las páginas. Otros, las escribís.</p>
+          <h1>
+            Hola, <em>{{ userName }}.</em>
+          </h1>
         </div>
       </section>
 
       <section class="room-choices" aria-label="Accesos principales">
         <a class="room-card library-room" routerLink="/library">
           <img src="/assets/library.jpg" alt="" />
-          <span class="room-kicker">PARA EL LECTOR QUE HAY EN VOS</span>
 
           <div class="room-description">
             <span class="room-icon" aria-hidden="true">▱</span>
-            <h2>Perdete en una historia.</h2>
-            <p>Tus estantes están llenos de posibilidades.</p>
-            <span class="room-cta">
-              Entrar a mi biblioteca <span aria-hidden="true">→</span>
-            </span>
+            <h2>Mi biblioteca</h2>
+            <p>Los libros e historias que guardaste.</p>
+            <span class="room-cta"> Abrir biblioteca <span aria-hidden="true">→</span> </span>
           </div>
 
           <span class="room-number">01 / LEER</span>
@@ -41,15 +37,12 @@
 
         <a class="room-card desk-room" routerLink="/writer">
           <img src="/assets/writers-desk-v2.png" alt="" />
-          <span class="room-kicker">PARA LOS MUNDOS QUE LLEVÁS DENTRO</span>
 
           <div class="room-description">
             <span class="room-icon" aria-hidden="true">✎</span>
-            <h2>Dale vida a una historia.</h2>
-            <p>Una página en blanco. Un universo propio.</p>
-            <span class="room-cta">
-              Ir a mi escritorio de escritura <span aria-hidden="true">→</span>
-            </span>
+            <h2>Mis historias</h2>
+            <p>Escribí y gestioná tus capítulos.</p>
+            <span class="room-cta"> Abrir escritorio <span aria-hidden="true">→</span> </span>
           </div>
 
           <span class="room-number">02 / ESCRIBIR</span>
@@ -59,7 +52,7 @@
       <section class="space-bottom">
         <div class="continue-section">
           <div class="section-heading">
-            <h2>Justo donde lo dejaste</h2>
+            <h2>Continuar leyendo</h2>
             <a routerLink="/library">Mi biblioteca <span>→</span></a>
           </div>
 
@@ -91,7 +84,7 @@
               </div>
 
               <div class="progress-caption">
-                <span>64% del camino hacia otro mundo</span>
+                <span>64% leído</span>
                 <span>Continuar →</span>
               </div>
             </div>
@@ -105,16 +98,13 @@
             Tu grupo de lectura está explorando<br />
             La biblioteca de la medianoche esta semana.
           </p>
-          <a routerLink="/groups">
-            Ponerte al día con Los Búhos Nocturnos →
-          </a>
+          <a routerLink="/groups"> Ponerte al día con Los Búhos Nocturnos → </a>
           <div class="member-count">Vos y otras 9 personas lectoras</div>
         </aside>
       </section>
     </main>
 
     <footer class="app-footer">
-      <span>Un pequeño mundo propio.</span>
       <span>BOOKVERSE ✦</span>
     </footer>
   </div>

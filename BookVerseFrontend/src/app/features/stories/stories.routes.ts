@@ -1,6 +1,5 @@
 import { Routes } from '@angular/router';
 
-import { MyStories } from './pages/my-stories/my-stories';
 import { StoryDetail } from './pages/story-detail/story-detail';
 import { StoryForm } from './pages/story-form/story-form';
 import { StoryList } from './pages/story-list/story-list';
@@ -12,17 +11,17 @@ export const storiesRoutes: Routes = [
   { path: '', component: StoryList },
 
   { path: 'new', component: StoryForm },
-  { path: 'mine', component: MyStories },
+  { path: 'mine', redirectTo: '/writer', pathMatch: 'full' },
 
   { path: ':id/edit', component: StoryForm },
-  
-  {path: ':id/chapters/new',component: ChapterForm},
 
-  {path: ':id/chapters/:chapterId/edit',component: ChapterForm},
-  
-  {path: ':id/chapters/:chapterId',component: ChapterReader},
+  { path: ':id/chapters/new', component: ChapterForm },
 
-  {path: ':id/chapters',component: ChapterList},
+  { path: ':id/chapters/:chapterId/edit', component: ChapterForm },
 
-  { path: ':id', component: StoryDetail }
+  { path: ':id/chapters/:chapterId', component: ChapterReader },
+
+  { path: ':id/chapters', component: ChapterList },
+
+  { path: ':id', component: StoryDetail },
 ];
