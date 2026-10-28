@@ -16,14 +16,15 @@
       {{ error() }} <button (click)="load(result()?.number ?? 0)">Reintentar</button>
     </div>
   } @else if (result(); as page) {
-    <p>{{ page.totalElements }} {{ page.totalElements === 1 ? 'historia' : 'historias' }}</p>
+    <p class="stories-count" role="status">
+      {{ page.totalElements }} {{ page.totalElements === 1 ? 'historia' : 'historias' }}
+    </p>
     <section class="stories-grid" aria-label="Listado de historias">
       @for (story of page.content; track story.idExternal) {
         <article class="story-card">
           <div class="story-cover" aria-hidden="true">
             <span class="cover-symbol">✧</span>
             <h3>{{ story.title }}</h3>
-            <small>Historia original</small>
           </div>
           <div class="story-content">
             <span class="story-badge" [class.premium]="story.accessType === 'PREMIUM'">{{
@@ -41,7 +42,7 @@
       }
     </section>
     @if (page.totalPages > 1) {
-      <nav class="view-tabs" aria-label="Páginas de historias">
+      <nav class="story-pagination" aria-label="Páginas de historias">
         <button [disabled]="page.first" (click)="load(page.number - 1)">Anterior</button>
         <span>Página {{ page.number + 1 }} de {{ page.totalPages }}</span>
         <button [disabled]="page.last" (click)="load(page.number + 1)">Siguiente</button>
