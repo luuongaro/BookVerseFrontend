@@ -3,6 +3,8 @@ import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
+import { Book } from '../../../books/models/book.model';
+import { BooksService } from '../../../books/services/books.service';
 import { GroupComment } from '../../models/group-comment.model';
 import { GroupGoal } from '../../models/group-goal.model';
 import { GroupMember } from '../../models/group-member.model';
@@ -15,6 +17,8 @@ import { GroupMembersService } from '../../services/group-members.service';
 import { GroupProgressService } from '../../services/group-progress.service';
 import { ReadingGroupsService } from '../../services/reading-groups.service';
 import { UserService } from '../../../profile/services/user.service';
+import { StoryDetailResponse } from '../../../stories/models/story-detail-response';
+import { StoryService } from '../../../stories/services/story.services';
 
 @Component({
   selector: 'app-group-detail',
@@ -31,6 +35,8 @@ export class GroupDetail implements OnInit {
   private readonly groupGoalsService = inject(GroupGoalsService);
   private readonly groupCommentsService = inject(GroupCommentsService);
   private readonly groupProgressService = inject(GroupProgressService);
+  private readonly booksService = inject(BooksService);
+  private readonly storyService = inject(StoryService);
   private readonly userService = inject(UserService);
 
   group: ReadingGroup | null = null;
@@ -39,6 +45,9 @@ export class GroupDetail implements OnInit {
   activeGoal: GroupGoal | null = null;
   progress: GroupProgress | null = null;
   comments: GroupComment[] = [];
+  linkedBook: Book | null = null;
+  linkedStory: StoryDetailResponse | null = null;
+  isLoadingLinkedContent = false;
 
   goalType: 'CHAPTER' | 'PERCENTAGE' = 'PERCENTAGE';
   targetProgress = 1;
@@ -62,6 +71,7 @@ export class GroupDetail implements OnInit {
   goalsErrorMessage = '';
   progressErrorMessage = '';
   commentsErrorMessage = '';
+  linkedContentError = '';
   goalActionMessage = '';
   commentActionMessage = '';
   memberActionMessage = '';
@@ -298,6 +308,7 @@ export class GroupDetail implements OnInit {
     this.readingGroupsService.getById(groupId).subscribe({
       next: (group) => {
         this.group = group;
+        this.loadLinkedContent(group);
 
         if (group.bookId) {
           this.loadComments(groupId);
@@ -315,6 +326,55 @@ export class GroupDetail implements OnInit {
         this.changeDetector.markForCheck();
       },
     });
+  }
+
+  private loadLinkedContent(group: ReadingGroup): void {
+    this.linkedBook = null;
+    this.linkedStory = null;
+    this.linkedContentError = '';
+
+    if (group.bookId) {
+      this.isLoadingLinkedContent = true;
+
+      this.booksService.getById(group.bookId).subscribe({
+        next: (book) => {
+          this.linkedBook = book;
+          this.isLoadingLinkedContent = false;
+          this.changeDetector.markForCheck();
+        },
+        error: (error: unknown) => {
+          console.error('Error al cargar el libro del grupo:', error);
+          this.linkedContentError = 'No se pudo cargar el libro del grupo.';
+          this.isLoadingLinkedContent = false;
+          this.changeDetector.markForCheck();
+        },
+      });
+
+      return;
+    }
+
+    if (group.storyId) {
+      this.isLoadingLinkedContent = true;
+
+      this.storyService.getById(group.storyId).subscribe({
+        next: (story) => {
+          this.linkedStory = story;
+          this.isLoadingLinkedContent = false;
+          this.changeDetector.markForCheck();
+        },
+        error: (error: unknown) => {
+          console.error('Error al cargar la historia del grupo:', error);
+          this.linkedContentError = 'No se pudo cargar la historia del grupo.';
+          this.isLoadingLinkedContent = false;
+          this.changeDetector.markForCheck();
+        },
+      });
+
+      return;
+    }
+
+    this.linkedContentError =
+      'Este grupo no tiene un libro o una historia asociados.';
   }
 
   private loadMembers(groupId: string): void {
