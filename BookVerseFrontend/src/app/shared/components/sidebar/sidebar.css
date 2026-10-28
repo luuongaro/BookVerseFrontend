@@ -42,22 +42,13 @@
 }
 
 .brand-symbol {
-  display: grid;
+  display: block;
   width: 34px;
-  height: 36px;
+  height: 34px;
   flex: 0 0 auto;
-  place-items: center;
-  border-radius: 11px 11px 11px 3px;
-  background: var(--lavender);
-  color: #fff;
-  transform: rotate(-4deg);
+  object-fit: contain;
 }
 
-.brand-symbol svg {
-  width: 22px;
-  height: 22px;
-  transform: rotate(4deg);
-}
 
 .brand-wordmark > span,
 .brand-wordmark sup {
@@ -254,7 +245,7 @@
 
   .brand-symbol {
     width: 30px;
-    height: 32px;
+    height: 30px;
   }
 
   .sidebar-label,
