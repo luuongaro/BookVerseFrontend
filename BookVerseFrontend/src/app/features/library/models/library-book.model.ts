@@ -1,4 +1,5 @@
 import { Book } from '../../books/models/book.model';
+import { StoryDetailResponse } from '../../stories/models/story-detail-response';
 export type ReadingState = 'WANT_TO_READ' | 'IN_PROGRESS' | 'FINISHED' | 'ABANDONED' | 'RE_READING';
 export interface ReadingStatus {
   idExternal: string;
@@ -18,5 +19,11 @@ export interface LibraryBook {
 }
 export interface LibraryResult {
   entries: LibraryBook[];
+  stories?: LibraryStory[];
   unavailableCount: number;
+  restrictedCount?: number;
+}
+export interface LibraryStory {
+  story: StoryDetailResponse;
+  reading: ReadingStatus;
 }

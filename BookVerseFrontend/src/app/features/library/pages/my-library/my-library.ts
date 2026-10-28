@@ -10,9 +10,13 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { apiError } from '../../../../core/api/api.config';
-import { LibraryService, LibrarySessionError } from '../../services/library.service';
-import { LibraryBook, ReadingState, ReadingStatus } from '../../models/library-book.model';
+import { LibraryService, libraryError } from '../../services/library.service';
+import {
+  LibraryBook,
+  LibraryStory,
+  ReadingState,
+  ReadingStatus,
+} from '../../models/library-book.model';
 @Component({
   selector: 'app-my-library',
   imports: [RouterLink],
@@ -23,6 +27,8 @@ export class MyLibrary implements OnInit {
   private readonly service = inject(LibraryService);
   private readonly destroyRef = inject(DestroyRef);
   entries = signal<LibraryBook[]>([]);
+  stories = signal<LibraryStory[]>([]);
+  restrictedCount = signal(0);
   loading = signal(false);
   error = signal('');
   unavailableCount = signal(0);
@@ -35,12 +41,15 @@ export class MyLibrary implements OnInit {
     'RE_READING',
     'ABANDONED',
   ];
-  editing = signal<LibraryBook | null>(null);
+  editing = signal<LibraryBook | LibraryStory | null>(null);
   draftStatus = signal<ReadingState>('WANT_TO_READ');
   draftPercentage = signal('');
   progressTouched = signal(false);
   progressInputValid = signal(true);
-  readonly canEditPercentage = computed(() => this.allowsPercentage(this.draftStatus()));
+  readonly canEditPercentage = computed(() => {
+    const entry = this.editing();
+    return !!entry && 'book' in entry && this.allowsPercentage(this.draftStatus());
+  });
   readonly progressError = computed(() => {
     if (!this.canEditPercentage()) return '';
     const value = this.draftPercentage().trim();
@@ -68,7 +77,10 @@ export class MyLibrary implements OnInit {
   saving = signal(false);
   saveError = signal('');
   confirmation = signal('');
-  editStatus(entry: LibraryBook): void {
+  titleOf(entry: LibraryBook | LibraryStory): string {
+    return 'book' in entry ? entry.book.title : entry.story.title;
+  }
+  editStatus(entry: LibraryBook | LibraryStory): void {
     if (this.saving()) return;
     this.editing.set(entry);
     this.draftStatus.set(entry.reading.status);
@@ -124,17 +136,20 @@ export class MyLibrary implements OnInit {
               item.reading.idExternal === entry.reading.idExternal ? { ...item, reading } : item,
             ),
           );
+          this.stories.update((stories) =>
+            stories.map((item) =>
+              item.reading.idExternal === entry.reading.idExternal ? { ...item, reading } : item,
+            ),
+          );
           this.saving.set(false);
           const percentage = this.readingPercentage(reading);
           this.confirmation.set(
-            `${entry.book.title}: ${this.statusLabel(reading.status)}${percentage === null ? '' : ` · ${percentage}%`}.`,
+            `${this.titleOf(entry)}: ${this.statusLabel(reading.status)}${percentage === null ? '' : ` · ${percentage}%`}.`,
           );
           this.statusDialog().nativeElement.close();
         },
         error: (error) => {
-          this.saveError.set(
-            error instanceof LibrarySessionError ? error.message : apiError(error),
-          );
+          this.saveError.set(libraryError(error));
           this.saving.set(false);
         },
       });
@@ -149,6 +164,14 @@ export class MyLibrary implements OnInit {
     for (let i = 0; i < entries.length; i += 9) rows.push(entries.slice(i, i + 9));
     return rows;
   });
+  readonly storyShelves = computed(() => {
+    const stories = this.stories().filter(
+      (entry) => this.filter() === 'all' || entry.reading.status === this.filter(),
+    );
+    const rows: LibraryStory[][] = [];
+    for (let i = 0; i < stories.length; i += 9) rows.push(stories.slice(i, i + 9));
+    return rows;
+  });
   ngOnInit(): void {
     this.load();
   }
@@ -157,16 +180,18 @@ export class MyLibrary implements OnInit {
     this.loading.set(true);
     this.error.set('');
     this.service
-      .getMyBooks()
+      .getMyLibrary()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (result) => {
           this.entries.set(result.entries);
+          this.stories.set(result.stories ?? []);
+          this.restrictedCount.set(result.restrictedCount ?? 0);
           this.unavailableCount.set(result.unavailableCount);
           this.loading.set(false);
         },
         error: (error) => {
-          this.error.set(error instanceof LibrarySessionError ? error.message : apiError(error));
+          this.error.set(libraryError(error));
           this.loading.set(false);
         },
       });
