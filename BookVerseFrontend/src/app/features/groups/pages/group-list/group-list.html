@@ -83,7 +83,8 @@
             <span class="visually-hidden">Buscar grupo</span>
             <input
               type="search"
-              [(ngModel)]="searchTerm"
+              [ngModel]="searchTerm"
+              (ngModelChange)="onSearchChange($event)"
               placeholder="Buscar por nombre…"
             />
           </label>
@@ -115,7 +116,7 @@
         } @else {
           <div class="cards">
             @for (
-              group of filteredGroups;
+              group of paginatedGroups;
               track group.idExternal;
               let i = $index
             ) {
@@ -196,6 +197,36 @@
               </a>
             }
           </div>
+
+          <nav class="pagination" aria-label="Paginación de grupos">
+            <button
+              type="button"
+              [disabled]="currentPage === 0"
+              (click)="goToPage(currentPage - 1)"
+            >
+              Anterior
+            </button>
+
+            @for (page of pageNumbers; track page) {
+              <button
+                type="button"
+                [class.active]="currentPage === page"
+                [attr.aria-current]="currentPage === page ? 'page' : null"
+                [attr.aria-label]="'Ir a la página ' + (page + 1)"
+                (click)="goToPage(page)"
+              >
+                {{ page + 1 }}
+              </button>
+            }
+
+            <button
+              type="button"
+              [disabled]="currentPage >= totalPages - 1"
+              (click)="goToPage(currentPage + 1)"
+            >
+              Siguiente
+            </button>
+          </nav>
         }
       </section>
 
