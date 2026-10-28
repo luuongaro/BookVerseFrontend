@@ -18,6 +18,7 @@ import { TokenService } from '../../core/services/token.service';
 import { authInterceptor } from '../../core/interceptors/auth.interceptor';
 import { UserService } from '../profile/services/user.service';
 import { ReadingStatusService } from './services/reading-status.service';
+import { ReadingStatusResponse } from './models/reading-status-response';
 
 const chapter: ChapterResponse = {
   idExternal: 'chapter',
@@ -101,6 +102,10 @@ async function setup(mode: 'list' | 'create' | 'edit' | 'reader', allowed = true
   const create = vi.fn();
   const update = vi.fn();
   const remove = vi.fn();
+  const currentUser = vi.fn((): { idExternal: string } | null => null);
+  const getStatuses = vi.fn(() => of([] as ReadingStatusResponse[]));
+  const createStatus = vi.fn();
+  const updateStatus = vi.fn();
   TestBed.configureTestingModule({
     providers: [
       provideRouter([
@@ -117,9 +122,12 @@ async function setup(mode: 'list' | 'create' | 'edit' | 'reader', allowed = true
       { provide: StoryPermissions, useValue: { canManage: () => allowed } },
       {
         provide: UserService,
-        useValue: { loadCurrentUser: () => of(null), currentUser: () => null },
+        useValue: { loadCurrentUser: () => of(null), currentUser },
       },
-      { provide: ReadingStatusService, useValue: {} },
+      {
+        provide: ReadingStatusService,
+        useValue: { getByUser: getStatuses, create: createStatus, update: updateStatus },
+      },
     ],
   });
   const harness = await RouterTestingHarness.create();
@@ -135,7 +143,21 @@ async function setup(mode: 'list' | 'create' | 'edit' | 'reader', allowed = true
   const component = harness.routeDebugElement!.componentInstance as
     ChapterForm | ChapterList | ChapterReader;
   const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
-  return { harness, component, getStory, getById, getByStory, create, update, remove, navigate };
+  return {
+    harness,
+    component,
+    getStory,
+    getById,
+    getByStory,
+    create,
+    update,
+    remove,
+    navigate,
+    currentUser,
+    getStatuses,
+    createStatus,
+    updateStatus,
+  };
 }
 
 describe('Chapter management form', () => {
@@ -285,6 +307,69 @@ describe('Chapter list and deletion', () => {
 });
 
 describe('Chapter detail loading', () => {
+  it.each([false, true])(
+    'explains a plan restriction without hiding the chapter when updating existing progress=%s',
+    async (existing) => {
+      const { component, harness, currentUser, getStatuses, createStatus, updateStatus } =
+        await setup('reader');
+      const reader = component as ChapterReader;
+      currentUser.mockReturnValue({ idExternal: 'reader' });
+      if (existing) {
+        getStatuses.mockReturnValueOnce(
+          of([
+            {
+              idExternal: 'reading',
+              userId: 'reader',
+              bookId: null,
+              storyId: 'story',
+              status: 'IN_PROGRESS',
+              progressType: 'CHAPTER',
+              progressValue: 1,
+              startedAt: null,
+              finishedAt: null,
+              updatedAt: '',
+            },
+          ]),
+        );
+      }
+      const operation = existing ? updateStatus : createStatus;
+      operation.mockReturnValueOnce(
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 403,
+              error: {
+                message: 'Free users can only create or update reading statuses for free stories',
+              },
+            }),
+        ),
+      );
+
+      reader.retry();
+      harness.detectChanges();
+
+      expect(operation).toHaveBeenCalledTimes(1);
+      expect(reader.chapter()?.content).toBe(chapter.content);
+      expect(reader.errorMessage()).toBeNull();
+      expect(reader.isSavingProgress()).toBe(false);
+      expect(reader.progressMessage()).toBeNull();
+      expect(harness.routeNativeElement!.textContent).toContain(
+        'Tu plan actual no permite guardar el progreso de historias Premium.',
+      );
+    },
+  );
+  it('keeps other progress failures distinct from a subscription restriction', async () => {
+    const { component, currentUser, createStatus } = await setup('reader');
+    const reader = component as ChapterReader;
+    currentUser.mockReturnValue({ idExternal: 'reader' });
+    createStatus.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 403 })));
+
+    reader.retry();
+
+    expect(reader.progressError()).toBe('El capítulo cargó, pero no pudimos guardar tu progreso.');
+    expect(reader.chapter()?.content).toBe(chapter.content);
+    expect(reader.isSavingProgress()).toBe(false);
+  });
   it('blocks a chapter belonging to a different story', async () => {
     const { component, getById, harness } = await setup('reader');
     const reader = component as ChapterReader;

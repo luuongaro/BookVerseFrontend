@@ -3,7 +3,8 @@ import { provideRouter } from '@angular/router';
 import { of, throwError, Subject } from 'rxjs';
 import { MyLibrary } from './my-library';
 import { LibraryService } from '../../services/library.service';
-import { LibraryResult } from '../../models/library-book.model';
+import { LibraryResult, LibraryStory } from '../../models/library-book.model';
+import { StoryAccessType } from '../../../stories/models/story-access-type';
 import { HttpErrorResponse } from '@angular/common/http';
 function savedEntry(): LibraryResult['entries'][number] {
   return {
@@ -45,7 +46,7 @@ describe('Personal bookshelf screen', () => {
       imports: [MyLibrary],
       providers: [
         provideRouter([]),
-        { provide: LibraryService, useValue: { getMyBooks, updateStatus } },
+        { provide: LibraryService, useValue: { getMyLibrary: getMyBooks, updateStatus } },
       ],
     });
     const fixture = TestBed.createComponent(MyLibrary);
@@ -308,5 +309,59 @@ describe('Personal bookshelf screen', () => {
     expect(updateStatus).toHaveBeenCalledWith(entry.reading, 'FINISHED', undefined);
     expect(fixture.nativeElement.querySelector('.spine-status').textContent).not.toContain('%');
     expect(fixture.nativeElement.querySelector('.spine-progress')).toBeNull();
+  });
+  it('separates stories into the lighter shelf with story links and applies the status filter', async () => {
+    const saved = savedEntry();
+    const story: LibraryStory = {
+      story: {
+        idExternal: 'story-id',
+        authorId: 'author',
+        title: 'Historia guardada',
+        description: 'Descripción',
+        accessType: StoryAccessType.FREE,
+        hidden: false,
+        deleted: false,
+        createdAt: '',
+        updatedAt: '',
+        chaptersCount: 4,
+        chapters: [],
+      },
+      reading: {
+        ...saved.reading,
+        idExternal: 'story-reading',
+        bookId: null,
+        storyId: 'story-id',
+        status: 'IN_PROGRESS',
+        progressType: 'CHAPTER',
+        progressValue: 2,
+      },
+    };
+    const { fixture, updateStatus } = await setup({
+      entries: [saved],
+      stories: [story],
+      unavailableCount: 0,
+    });
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.story-shelf-room .story-spine')?.getAttribute('href')).toBe(
+      '/stories/story-id',
+    );
+    expect(el.querySelectorAll('.story-shelf-room .story-spine')).toHaveLength(1);
+    expect(
+      el.querySelector('.shelf-room:not(.story-shelf-room) .book-spine')?.getAttribute('href'),
+    ).toBe('/books/saved');
+    fixture.componentInstance.filter.set('FINISHED');
+    fixture.detectChanges();
+    expect(el.querySelectorAll('.story-spine')).toHaveLength(0);
+    fixture.componentInstance.filter.set('all');
+    fixture.componentInstance.editStatus(story);
+    fixture.detectChanges();
+    expect(el.querySelector('.selected-title')?.textContent).toBe('Historia guardada');
+    expect(el.querySelector('#book-reading-percentage')).toBeNull();
+    fixture.componentInstance.chooseStatus('FINISHED');
+    updateStatus.mockReturnValueOnce(of({ ...story.reading, status: 'FINISHED' }));
+    fixture.componentInstance.saveStatus();
+    expect(updateStatus).toHaveBeenCalledWith(story.reading, 'FINISHED', undefined);
+    expect(fixture.componentInstance.stories()[0].reading.progressValue).toBe(2);
+    expect(fixture.componentInstance.entries()[0].reading.status).toBe('WANT_TO_READ');
   });
 });

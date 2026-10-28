@@ -16,6 +16,16 @@
     </p>
     <div class="prose" [innerHTML]="currentStory.description"></div>
     <div class="actions">
+      <button type="button" [disabled]="saving() || saved()" (click)="saveToLibrary()">
+        {{
+          saving()
+            ? 'Guardando…'
+            : saved()
+              ? 'Guardada en mi biblioteca'
+              : 'Guardar en mi biblioteca'
+        }}
+      </button>
+      <a routerLink="/library">Mi biblioteca</a>
       <a class="button secondary" [routerLink]="['/stories', currentStory.idExternal, 'chapters']"
         >Ver capítulos</a
       >
@@ -30,6 +40,12 @@
         <button type="button" class="danger" (click)="confirmDelete()">Eliminar historia</button>
       }
     </div>
+    @if (saveError()) {
+      <p class="validation" role="alert">{{ saveError() }}</p>
+    }
+    @if (saved()) {
+      <p role="status">Historia guardada en tu biblioteca.</p>
+    }
     <h2>Capítulos</h2>
     <div class="chapters-list">
       @for (chapter of currentStory.chapters; track chapter.idExternal) {

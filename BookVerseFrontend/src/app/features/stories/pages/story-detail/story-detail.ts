@@ -15,6 +15,7 @@ import { StoryService } from '../../services/story.services';
 import { StoryPermissions } from '../../services/story-permissions.service';
 import { StoryDetailResponse } from '../../models/story-detail-response';
 import { apiError } from '../../../../core/api/api.config';
+import { LibraryService, libraryError } from '../../../library/services/library.service';
 
 @Component({
   selector: 'app-story-detail',
@@ -28,6 +29,10 @@ export class StoryDetail implements OnInit {
   private readonly service = inject(StoryService);
   private readonly permissions = inject(StoryPermissions);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly library = inject(LibraryService);
+  readonly saving = signal(false);
+  readonly saved = signal(false);
+  readonly saveError = signal('');
   readonly story = signal<StoryDetailResponse | null>(null);
   readonly isLoading = signal(false);
   readonly errorMessage = signal('');
@@ -44,6 +49,8 @@ export class StoryDetail implements OnInit {
     const id = this.route.snapshot.paramMap.get('id');
     this.request?.unsubscribe();
     this.story.set(null);
+    this.saved.set(false);
+    this.saveError.set('');
     this.errorMessage.set('');
     this.deleted.set(false);
     if (!id) {
@@ -69,6 +76,25 @@ export class StoryDetail implements OnInit {
     if (!this.canManage() || this.deleting() || this.deleted()) return;
     this.deleteError.set('');
     this.deleteDialog().nativeElement.showModal();
+  }
+  saveToLibrary(): void {
+    const story = this.story();
+    if (!story || this.saving() || this.saved()) return;
+    this.saving.set(true);
+    this.saveError.set('');
+    this.library
+      .saveStory(story.idExternal)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.saved.set(true);
+        },
+        error: (error) => {
+          this.saving.set(false);
+          this.saveError.set(libraryError(error));
+        },
+      });
   }
   cancelDelete(): void {
     if (!this.deleting()) this.deleteDialog().nativeElement.close();

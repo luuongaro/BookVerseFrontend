@@ -1,7 +1,7 @@
 import { authInterceptor } from '../../../core/interceptors/auth.interceptor';
 import { TokenService } from '../../../core/services/token.service';
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LibraryService, LibrarySessionError } from './library.service';
 import { LibraryResult, ReadingStatus } from '../models/library-book.model';
@@ -205,4 +205,92 @@ describe('Personal library API', () => {
       http.expectNone(() => true);
     },
   );
+  it('loads only personal saved books and stories and keeps them separate', () => {
+    let result: LibraryResult | undefined;
+    service.getMyLibrary().subscribe((value) => (result = value));
+    http.expectOne('http://localhost:8080/api/reading-statuses/user/' + userId).flush([
+      status,
+      {
+        ...status,
+        idExternal: 'story-reading',
+        bookId: null,
+        storyId: 'story-id',
+        progressType: 'CHAPTER',
+        progressValue: 3,
+      },
+      { ...status, userId: 'other', bookId: null, storyId: 'private-story' },
+    ]);
+    http
+      .expectOne('http://localhost:8080/api/books/saved-book')
+      .flush({ idExternal: 'saved-book', title: 'Libro' });
+    http
+      .expectOne('http://localhost:8080/api/stories/story-id')
+      .flush({ idExternal: 'story-id', title: 'Historia' });
+    http.expectNone('http://localhost:8080/api/stories/private-story');
+    http.expectNone('http://localhost:8080/api/stories');
+    expect(result?.entries.map((entry) => entry.book.title)).toEqual(['Libro']);
+    expect(result?.stories?.map((entry) => entry.story.title)).toEqual(['Historia']);
+    expect(result?.stories?.[0].reading.progressValue).toBe(3);
+  });
+  it('keeps available books visible when a saved story is unavailable or restricted', () => {
+    let result: LibraryResult | undefined;
+    service.getMyLibrary().subscribe((value) => (result = value));
+    http
+      .expectOne('http://localhost:8080/api/reading-statuses/user/' + userId)
+      .flush([
+        status,
+        { ...status, bookId: null, storyId: 'removed' },
+        { ...status, bookId: null, storyId: 'premium' },
+      ]);
+    http
+      .expectOne('http://localhost:8080/api/books/saved-book')
+      .flush({ idExternal: 'saved-book', title: 'Libro' });
+    http
+      .expectOne('http://localhost:8080/api/stories/removed')
+      .flush({}, { status: 404, statusText: 'Not Found' });
+    http
+      .expectOne('http://localhost:8080/api/stories/premium')
+      .flush({}, { status: 403, statusText: 'Forbidden' });
+    expect(result?.entries).toHaveLength(1);
+    expect(result?.stories).toEqual([]);
+    expect(result?.unavailableCount).toBe(1);
+    expect(result?.restrictedCount).toBe(1);
+  });
+  it.each([401, 500])('does not hide a story request failure with status %s', (code) => {
+    let error: HttpErrorResponse | undefined;
+    service.getMyLibrary().subscribe({ error: (value) => (error = value) });
+    http
+      .expectOne('http://localhost:8080/api/reading-statuses/user/' + userId)
+      .flush([{ ...status, bookId: null, storyId: 'story' }]);
+    http
+      .expectOne('http://localhost:8080/api/stories/story')
+      .flush({}, { status: code, statusText: 'Error' });
+    expect(error?.status).toBe(code);
+  });
+  it('saves a story without inventing progress and preserves an existing reading record', () => {
+    service.saveStory('new-story').subscribe();
+    http.expectOne('http://localhost:8080/api/reading-statuses/user/' + userId).flush([]);
+    const request = http.expectOne('http://localhost:8080/api/reading-statuses');
+    expect(request.request.body).toEqual({
+      bookId: null,
+      storyId: 'new-story',
+      status: 'WANT_TO_READ',
+      startedAt: null,
+      finishedAt: null,
+      progressType: null,
+      progressValue: null,
+    });
+    request.flush({ ...status, bookId: null, storyId: 'new-story' });
+    service.saveStory('new-story').subscribe((reading) => expect(reading.progressValue).toBe(4));
+    http.expectOne('http://localhost:8080/api/reading-statuses/user/' + userId).flush([
+      {
+        ...status,
+        bookId: null,
+        storyId: 'new-story',
+        progressType: 'CHAPTER',
+        progressValue: 4,
+      },
+    ]);
+    http.expectNone((request) => request.method === 'POST' || request.method === 'PUT');
+  });
 });

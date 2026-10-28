@@ -5,6 +5,7 @@ import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { of, Subject, throwError } from 'rxjs';
 import { StoryService } from './services/story.services';
+import { LibraryService } from '../library/services/library.service';
 import { StoryPermissions } from './services/story-permissions.service';
 import { StoryList } from './pages/story-list/story-list';
 import { StoryForm } from './pages/story-form/story-form';
@@ -148,6 +149,7 @@ describe('Story form and details', () => {
     const update = vi.fn();
     const create = vi.fn();
     const remove = vi.fn();
+    const saveStory = vi.fn(() => of({ idExternal: 'saved' }));
     TestBed.configureTestingModule({
       providers: [
         provideRouter([
@@ -157,6 +159,7 @@ describe('Story form and details', () => {
         ]),
         { provide: StoryService, useValue: { getById, update, create, delete: remove } },
         { provide: StoryPermissions, useValue: { canManage: () => role } },
+        { provide: LibraryService, useValue: { saveStory } },
       ],
     });
     const harness = await RouterTestingHarness.create();
@@ -165,7 +168,7 @@ describe('Story form and details', () => {
       component,
     );
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
-    return { harness, instance, getById, update, create, remove, navigate };
+    return { harness, instance, getById, update, create, remove, navigate, saveStory };
   }
   it('sanitizes stored description markup and preserves the original author for an administrator edit', async () => {
     const { harness, instance, update } = await setup(
@@ -277,5 +280,41 @@ describe('Story form and details', () => {
     await harness.navigateByUrl('/stories/second', StoryDetail);
     old.next(story);
     expect(detail.story()?.title).toBe('Segunda historia');
+  });
+  it('saves the opened story once and allows retry when personal saving fails', async () => {
+    const { instance, saveStory } = await setup(StoryDetail);
+    const detail = instance as StoryDetail;
+    saveStory.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 403 })));
+    detail.saveToLibrary();
+    expect(detail.saved()).toBe(false);
+    expect(detail.saveError()).toContain('permiso');
+    detail.saveToLibrary();
+    detail.saveToLibrary();
+    expect(saveStory).toHaveBeenCalledTimes(2);
+    expect(saveStory).toHaveBeenLastCalledWith('story');
+    expect(detail.saved()).toBe(true);
+  });
+  it('explains the subscription restriction when a Free user saves a Premium story', async () => {
+    const { instance, saveStory } = await setup(StoryDetail);
+    const detail = instance as StoryDetail;
+    saveStory.mockReturnValueOnce(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 403,
+            error: {
+              message: 'Free users can only create or update reading statuses for free stories',
+            },
+          }),
+      ),
+    );
+
+    detail.saveToLibrary();
+
+    expect(detail.saved()).toBe(false);
+    expect(detail.saving()).toBe(false);
+    expect(detail.saveError()).toBe(
+      'Esta historia es Premium. Tu plan actual solo permite guardar historias gratuitas.',
+    );
   });
 });

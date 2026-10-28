@@ -365,3 +365,49 @@ h1 em {
 .status-dialog .actions {
   margin-bottom: 0;
 }
+
+.library-section {
+  margin-top: 36px;
+}
+.library-section > h2 {
+  margin: 0 0 18px;
+}
+.story-shelf-room {
+  background:
+    radial-gradient(ellipse at 50% 16%, #f0e4d2, #d6bd9e 74%) padding-box,
+    var(--grain) border-box,
+    linear-gradient(90deg, #b78960, #e4c69c 5%, #d1aa7e 48%, #ebd2ae 97%, #b88f67) border-box;
+  box-shadow:
+    inset 0 8px 18px #72513335,
+    0 2px 0 #f3e5cf,
+    0 20px 40px #62432920,
+    0 0 0 1px #b08d68;
+}
+.story-shelf-room:before {
+  opacity: 0.4;
+}
+.story-shelf-room .shelf-crown {
+  background: var(--grain), linear-gradient(#ead4b2, #bd926b);
+}
+.story-shelf-room .wood-shelf {
+  border-top-color: #f8e7cf;
+  background:
+    var(--grain), linear-gradient(#f0d9b8, #d7b28b 24%, #b48a64 29%, #dfbd96 64%, #a77c56);
+}
+.story-spine {
+  border-left: 4px double #fff8;
+  border-radius: 8px 3px 2px 8px;
+}
+.story-spine:before {
+  top: 0;
+  bottom: 0;
+  left: 5px;
+  right: auto;
+  border-top: 0;
+  border-left: 2px dashed currentColor;
+  opacity: 0.35;
+}
+.story-shelf-room .empty-shelf h2,
+.story-shelf-room .empty-shelf a {
+  color: #614d40;
+}

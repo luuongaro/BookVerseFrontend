@@ -23,6 +23,7 @@ import { UserService } from '../../../profile/services/user.service';
 import { ReadingStatusRequest } from '../../models/reading-status-request';
 import { ReadingStatusResponse } from '../../models/reading-status-response';
 import { ReadingStatusService } from '../../services/reading-status.service';
+import { isPremiumStoryPlanError } from '../../services/reading-status-errors';
 
 @Component({
   selector: 'app-chapter-reader',
@@ -340,9 +341,11 @@ private saveReadingProgress(
         );
       },
 
-      error: () => {
+      error: error => {
         this.progressError.set(
-          'El capítulo cargó, pero no pudimos guardar tu progreso.'
+          isPremiumStoryPlanError(error)
+            ? 'Tu plan actual no permite guardar el progreso de historias Premium.'
+            : 'El capítulo cargó, pero no pudimos guardar tu progreso.'
         );
       }
 
