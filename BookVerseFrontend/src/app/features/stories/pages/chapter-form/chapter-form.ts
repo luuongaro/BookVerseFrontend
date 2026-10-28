@@ -1,5 +1,16 @@
-import { CommonModule } from '@angular/common';
-import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { CommonModule, DOCUMENT } from '@angular/common';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  ElementRef,
+  inject,
+  OnInit,
+  SecurityContext,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { DomSanitizer } from '@angular/platform-browser';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin, of, Subscription } from 'rxjs';
@@ -23,7 +34,11 @@ export class ChapterForm implements OnInit {
   private readonly service = inject(ChapterService);
   private readonly stories = inject(StoryService);
   private readonly permissions = inject(StoryPermissions);
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly document = inject(DOCUMENT);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly contentEditor = viewChild<ElementRef<HTMLDivElement>>('contentEditor');
+  readonly initialContent = signal('');
   readonly storyId = signal<string | null>(null);
   readonly chapterId = signal<string | null>(null);
   readonly story = signal<StoryDetailResponse | null>(null);
@@ -38,7 +53,17 @@ export class ChapterForm implements OnInit {
   private request?: Subscription;
   readonly form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(150)]],
-    content: ['', [Validators.required, Validators.pattern(/\S/)]],
+    content: [
+      '',
+      [
+        Validators.required,
+        (control) => {
+          const element = this.document.createElement('div');
+          element.innerHTML = this.sanitizeContent(String(control.value));
+          return element.textContent?.trim() ? null : { required: true };
+        },
+      ],
+    ],
     published: [false],
   });
   ngOnInit(): void {
@@ -51,6 +76,7 @@ export class ChapterForm implements OnInit {
   load(): void {
     this.request?.unsubscribe();
     this.form.reset({ title: '', content: '', published: false });
+    this.initialContent.set('');
     this.form.disable();
     this.story.set(null);
     this.loadFailed.set(false);
@@ -85,12 +111,15 @@ export class ChapterForm implements OnInit {
             );
             return;
           }
-          if (chapter)
+          if (chapter) {
+            const content = this.sanitizeContent(chapter.content);
             this.form.patchValue({
               title: chapter.title,
-              content: chapter.content,
+              content,
               published: chapter.published,
             });
+            this.initialContent.set(content);
+          }
           this.form.markAsPristine();
           this.form.enable();
         },
@@ -110,10 +139,39 @@ export class ChapterForm implements OnInit {
   cancel(): void {
     if (!this.isSaving()) void this.router.navigate(['/stories', this.storyId(), 'chapters']);
   }
+  updateContent(): void {
+    const editor = this.contentEditor()?.nativeElement;
+    if (!editor || this.form.controls.content.disabled) return;
+    this.form.controls.content.setValue(this.sanitizeContent(editor.innerHTML));
+    this.form.controls.content.markAsDirty();
+  }
+  markContentTouched(): void {
+    this.form.controls.content.markAsTouched();
+  }
+  applyFormat(command: string, value?: string): void {
+    const editor = this.contentEditor()?.nativeElement;
+    if (!editor || this.form.controls.content.disabled) return;
+    editor.focus();
+    this.document.execCommand(command, false, value);
+    this.updateContent();
+  }
+  onPaste(event: ClipboardEvent): void {
+    event.preventDefault();
+    this.applyFormat('insertText', event.clipboardData?.getData('text/plain') ?? '');
+  }
+  private sanitizeContent(content: string): string {
+    const element = this.document.createElement('div');
+    element.innerHTML = this.sanitizer.sanitize(SecurityContext.HTML, content.trim()) ?? '';
+    return element.innerHTML;
+  }
   private submitForm(published: boolean): void {
     if (this.isLoading() || this.isSaving() || this.loadFailed() || !this.canManage()) return;
     const raw = this.form.getRawValue();
-    this.form.patchValue({ title: raw.title.trim(), content: raw.content.trim(), published });
+    this.form.patchValue({
+      title: raw.title.trim(),
+      content: this.sanitizeContent(raw.content),
+      published,
+    });
     this.form.markAllAsTouched();
     if (this.form.invalid) return;
     const value = this.form.getRawValue();

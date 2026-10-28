@@ -161,6 +161,66 @@ async function setup(mode: 'list' | 'create' | 'edit' | 'reader', allowed = true
 }
 
 describe('Chapter management form', () => {
+  it('keeps the same formatting tools and formatted content when moving from create to edit', async () => {
+    const { component, harness, getById, create, update } = await setup('create');
+    const form = component as ChapterForm;
+    const tools = () =>
+      Array.from(harness.routeNativeElement!.querySelectorAll('.format-toolbar button'), (button) =>
+        button.getAttribute('aria-label'),
+      );
+    const createTools = tools();
+    expect(createTools).toEqual([
+      'Negrita',
+      'Cursiva',
+      'Subrayado',
+      'Alinear a la izquierda',
+      'Lista',
+      'Cita',
+    ]);
+    const html =
+      '<p>Un <b>capítulo</b> con <i>formato</i>.</p><ul><li>Un detalle</li></ul><blockquote>Una cita</blockquote>';
+    const editor = harness.routeNativeElement!.querySelector<HTMLElement>('#chapter-content')!;
+    editor.innerHTML = html;
+    editor.dispatchEvent(new Event('input'));
+    form.form.controls.title.setValue('Capítulo con formato');
+    create.mockReturnValue(of(chapter));
+    form.saveDraft();
+    expect(create.mock.calls[0][0].content).toBe(html);
+
+    getById.mockReturnValueOnce(of({ ...chapter, content: html }));
+    await harness.navigateByUrl('/stories/story/chapters/chapter/edit');
+    const edit = harness.routeDebugElement!.componentInstance as ChapterForm;
+    expect(tools()).toEqual(createTools);
+    expect(harness.routeNativeElement!.querySelector('#chapter-content')!.innerHTML).toBe(html);
+    update.mockReturnValue(of(chapter));
+    edit.publish();
+    expect(update.mock.calls[0][1].content).toBe(html);
+  });
+  it('loads safe markup, rejects visually empty content and preserves edits after a failed save', async () => {
+    const { component, harness, getById, update } = await setup('edit');
+    const form = component as ChapterForm;
+    getById.mockReturnValueOnce(
+      of({ ...chapter, content: '<p>Texto</p><img src="x" onerror="alert(1)">' }),
+    );
+    form.load();
+    harness.detectChanges();
+    expect(harness.routeNativeElement!.querySelector('[onerror]')).toBeNull();
+    const editor = harness.routeNativeElement!.querySelector<HTMLElement>('#chapter-content')!;
+    editor.innerHTML = '<p><br></p><p>&nbsp;</p>';
+    editor.dispatchEvent(new Event('input'));
+    form.publish();
+    expect(update).not.toHaveBeenCalled();
+    expect(form.form.controls.content.invalid).toBe(true);
+
+    editor.innerHTML = '<p>Texto <b>editado</b></p>';
+    editor.dispatchEvent(new Event('input'));
+    update.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+    form.publish();
+    harness.detectChanges();
+    expect(editor.innerHTML).toBe('<p>Texto <b>editado</b></p>');
+    expect(form.form.controls.content.value).toBe(editor.innerHTML);
+    expect(editor.getAttribute('contenteditable')).toBe('true');
+  });
   it.each([false, true])(
     'creates a trimmed chapter with published=%s and blocks duplicate submits',
     async (published) => {
@@ -211,11 +271,21 @@ describe('Chapter management form', () => {
     expect(form.errorMessage()).toContain('permiso');
   });
   it('keeps failed and unauthorized loads disabled', async () => {
-    const { component, getById, update } = await setup('edit', false);
+    const { component, harness, getById, update } = await setup('edit', false);
     const form = component as ChapterForm;
     form.publish();
     expect(update).not.toHaveBeenCalled();
     expect(form.form.disabled).toBe(true);
+    expect(
+      harness
+        .routeNativeElement!.querySelector('#chapter-content')!
+        .getAttribute('contenteditable'),
+    ).toBe('false');
+    expect(
+      Array.from(
+        harness.routeNativeElement!.querySelectorAll<HTMLButtonElement>('.format-toolbar button'),
+      ).every((button) => button.disabled),
+    ).toBe(true);
     getById.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 404 })));
     form.load();
     form.saveDraft();

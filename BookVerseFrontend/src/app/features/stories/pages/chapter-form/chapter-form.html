@@ -154,22 +154,102 @@
             <div class="paper-divider" aria-hidden="true">☾</div>
 
             <div class="field-group content-group">
-              <label for="chapter-content"> Contenido </label>
+              <label id="chapter-content-label"> Contenido </label>
 
-              <textarea
+              <div class="format-toolbar" role="group" aria-label="Formato del capítulo">
+                <button
+                  type="button"
+                  aria-label="Negrita"
+                  title="Negrita"
+                  [disabled]="form.controls.content.disabled"
+                  (mousedown)="$event.preventDefault()"
+                  (click)="applyFormat('bold')"
+                >
+                  <strong>B</strong>
+                </button>
+                <button
+                  type="button"
+                  aria-label="Cursiva"
+                  title="Cursiva"
+                  [disabled]="form.controls.content.disabled"
+                  (mousedown)="$event.preventDefault()"
+                  (click)="applyFormat('italic')"
+                >
+                  <em>I</em>
+                </button>
+                <button
+                  type="button"
+                  aria-label="Subrayado"
+                  title="Subrayado"
+                  [disabled]="form.controls.content.disabled"
+                  (mousedown)="$event.preventDefault()"
+                  (click)="applyFormat('underline')"
+                >
+                  <u>U</u>
+                </button>
+                <span class="toolbar-divider" aria-hidden="true"></span>
+                <button
+                  type="button"
+                  aria-label="Alinear a la izquierda"
+                  title="Alinear a la izquierda"
+                  [disabled]="form.controls.content.disabled"
+                  (mousedown)="$event.preventDefault()"
+                  (click)="applyFormat('justifyLeft')"
+                >
+                  ≡
+                </button>
+                <button
+                  type="button"
+                  aria-label="Lista"
+                  title="Lista"
+                  [disabled]="form.controls.content.disabled"
+                  (mousedown)="$event.preventDefault()"
+                  (click)="applyFormat('insertUnorderedList')"
+                >
+                  ☷
+                </button>
+                <button
+                  type="button"
+                  aria-label="Cita"
+                  title="Cita"
+                  [disabled]="form.controls.content.disabled"
+                  (mousedown)="$event.preventDefault()"
+                  (click)="applyFormat('formatBlock', 'blockquote')"
+                >
+                  “ ”
+                </button>
+              </div>
+
+              <div
+                #contentEditor
                 id="chapter-content"
                 class="chapter-content-input"
-                formControlName="content"
-                placeholder="Contenido del capítulo"
-                rows="18"
-              ></textarea>
+                role="textbox"
+                aria-labelledby="chapter-content-label"
+                aria-multiline="true"
+                [attr.contenteditable]="!form.controls.content.disabled"
+                [attr.aria-disabled]="form.controls.content.disabled"
+                [attr.aria-invalid]="form.controls.content.touched && form.controls.content.invalid"
+                [attr.aria-describedby]="
+                  form.controls.content.touched && form.controls.content.invalid
+                    ? 'chapter-content-error'
+                    : null
+                "
+                [innerHTML]="initialContent()"
+                data-placeholder="Contenido del capítulo"
+                (input)="updateContent()"
+                (blur)="markContentTouched()"
+                (paste)="onPaste($event)"
+              ></div>
 
               @if (
                 form.controls.content.touched &&
                 (form.controls.content.hasError('required') ||
                   form.controls.content.hasError('pattern'))
               ) {
-                <small class="field-error"> El contenido del capítulo es obligatorio. </small>
+                <small id="chapter-content-error" class="field-error">
+                  El contenido del capítulo es obligatorio.
+                </small>
               }
             </div>
 

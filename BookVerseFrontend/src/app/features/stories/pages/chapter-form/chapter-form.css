@@ -496,7 +496,8 @@ textarea {
   width: 100%;
   min-height: 350px;
 
-  resize: vertical;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 
   padding: 10px 4px;
 
@@ -515,8 +516,60 @@ textarea {
   scrollbar-color: #d5c6df transparent;
 }
 
-.chapter-content-input::placeholder {
+.chapter-content-input:empty::before {
+  content: attr(data-placeholder);
   color: #b5a9ba;
+  font-style: italic;
+  pointer-events: none;
+}
+
+.chapter-content-input:focus-visible {
+  outline: 2px solid var(--lavender);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.format-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  border-block: 1px solid var(--line);
+}
+
+.format-toolbar button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #74677e;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.format-toolbar button:hover:not(:disabled) {
+  background: #f0eaf6;
+  color: var(--lavender);
+}
+
+.format-toolbar button:focus-visible {
+  outline: 2px solid var(--lavender);
+}
+
+.format-toolbar button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+:host ::ng-deep .chapter-content-input blockquote {
+  margin: 1rem 0;
+  padding-left: 1rem;
+  border-left: 3px solid #cbbbd7;
   font-style: italic;
 }
 
