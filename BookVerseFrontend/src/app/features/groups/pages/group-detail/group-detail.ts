@@ -321,7 +321,7 @@ export class GroupDetail implements OnInit {
       },
       error: (error: unknown) => {
         console.error('Error loading reading group:', error);
-        this.errorMessage = 'No se pudo cargar el círculo de lectura.';
+        this.errorMessage = 'No se pudo cargar el grupo de lectura.';
         this.isLoading = false;
         this.changeDetector.markForCheck();
       },

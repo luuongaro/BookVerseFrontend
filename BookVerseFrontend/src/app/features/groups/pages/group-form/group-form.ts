@@ -97,7 +97,7 @@ export class GroupForm implements OnInit {
         },
         error: (error: unknown) => {
           console.error('Error loading reading group for edit:', error);
-          this.errorMessage = 'No se pudo cargar el círculo para editarlo.';
+          this.errorMessage = 'No se pudo cargar el grupo para editarlo.';
           this.cdr.markForCheck();
         },
       });
@@ -135,7 +135,7 @@ export class GroupForm implements OnInit {
           error: (error: unknown) => {
             console.error('Error updating reading group:', error);
             this.errorMessage =
-              'No se pudo actualizar el círculo. Revisá los permisos e intentá nuevamente.';
+              'No se pudo actualizar el grupo. Revisá los permisos e intentá nuevamente.';
             this.isSaving = false;
             this.cdr.markForCheck();
           },
@@ -157,7 +157,7 @@ export class GroupForm implements OnInit {
         error: (error: unknown) => {
           console.error('Error creating reading group:', error);
           this.errorMessage =
-            'No se pudo crear el círculo. Revisá los datos e intentá nuevamente.';
+            'No se pudo crear el grupo. Revisá los datos e intentá nuevamente.';
           this.isSaving = false;
           this.cdr.markForCheck();
         },

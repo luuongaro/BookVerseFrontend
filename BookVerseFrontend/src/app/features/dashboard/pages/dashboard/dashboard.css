@@ -585,7 +585,7 @@
   color: var(--lavender);
 }
 
-.circle-note {
+.reading-group-note {
   position: relative;
   padding: 22px 24px;
   border: 1px solid #e9dff2;
@@ -593,13 +593,13 @@
   background: #f0eaf7;
 }
 
-.circle-note .eyebrow {
+.reading-group-note .eyebrow {
   margin-bottom: 10px;
   font-size: 10px;
   letter-spacing: 1.6px;
 }
 
-.circle-note h3 {
+.reading-group-note h3 {
   margin: 0;
   color: var(--ink);
   font-family: var(--serif);
@@ -607,14 +607,14 @@
   font-weight: 400;
 }
 
-.circle-note > p {
+.reading-group-note > p {
   margin: 8px 0 12px;
   color: var(--muted);
   font-size: 12px;
   line-height: 1.8;
 }
 
-.circle-note > a {
+.reading-group-note > a {
   display: inline-block;
   color: var(--violet);
   font-size: 11px;
@@ -1032,7 +1032,7 @@
     font-size: 9px;
   }
 
-  .circle-note {
+  .reading-group-note {
     padding: 20px;
   }
 }
