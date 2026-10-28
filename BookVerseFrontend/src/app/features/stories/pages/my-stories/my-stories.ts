@@ -1,10 +1,9 @@
 import { Component } from '@angular/core';
-
+import { StoryList } from '../story-list/story-list';
 @Component({
-  imports: [],
   selector: 'app-my-stories',
-  styleUrl: './my-stories.css',
+  imports: [StoryList],
   templateUrl: './my-stories.html',
+  styleUrl: './my-stories.css',
 })
-export class MyStories {
-}
+export class MyStories {}
