@@ -1,21 +1,12 @@
 <section class="story-editor">
-
   <header class="editor-header">
-
-    <a
-      class="back-link"
-      routerLink="/stories/mine">
-
-      <span aria-hidden="true">
-        ←
-      </span>
+    <a class="back-link" routerLink="/stories/mine">
+      <span aria-hidden="true"> ← </span>
 
       Volver a tu escritorio
-
     </a>
 
     <span class="muted editor-subtitle">
-
       <svg
         class="icon"
         viewBox="0 0 24 24"
@@ -24,110 +15,49 @@
         stroke-width="1.5"
         stroke-linecap="round"
         stroke-linejoin="round"
-        aria-hidden="true">
-
+        aria-hidden="true"
+      >
         <path d="M4 20 17 7M8 16C-1 5 16 0 22 2c0 13-5 20-14 14Zm4-4h8" />
-
       </svg>
 
       Tu historia, tomando forma
-
     </span>
-
-    <button
-      class="button secondary small"
-      type="button">
-
-      Vista previa
-
-      <svg
-        class="icon"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true">
-
-        <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z" />
-        <circle cx="12" cy="12" r="3" />
-
-      </svg>
-
-    </button>
-
   </header>
 
   @if (errorMessage()) {
-
-    <div
-      class="form-message error"
-      role="alert">
-
+    <div class="form-message error" role="alert">
       {{ errorMessage() }}
-
+      @if (loadFailed()) {
+        <button type="button" (click)="load()">Reintentar</button>
+      }
     </div>
-
   }
 
   @if (isLoading()) {
-
-    <div
-      class="editor-loading"
-      role="status">
-
-      Cargando historia...
-
-    </div>
-
+    <div class="editor-loading" role="status">Cargando historia...</div>
   } @else {
-
     <div class="editor-layout">
-
-      <aside
-        class="chapter-list"
-        aria-label="Secciones del manuscrito">
-
-        <span class="eyebrow">
-          TU MANUSCRITO
-        </span>
+      <aside class="chapter-list" aria-label="Secciones del manuscrito">
+        <span class="eyebrow"> TU MANUSCRITO </span>
 
         <h2>
-
           {{
             form.controls.title.value ||
-            (isEditMode()
-              ? 'Historia sin título'
-              : 'Tu nueva historia')
+              (isEditMode() ? 'Historia sin título' : 'Tu nueva historia')
           }}
-
         </h2>
 
         <span class="badge lavender-badge">
-
-          {{
-            form.controls.accessType.value === 'PREMIUM'
-              ? 'PREMIUM'
-              : 'GRATUITA'
-          }}
-
+          {{ form.controls.accessType.value === 'PREMIUM' ? 'PREMIUM' : 'GRATUITA' }}
         </span>
 
-        <div
-          class="chapter-item selected"
-          aria-current="step">
-
+        <div class="chapter-item selected" aria-current="step">
           <span>01</span>
 
           <div>
-
             Datos principales
 
-            <small>
-              En edición
-            </small>
-
+            <small> En edición </small>
           </div>
 
           <svg
@@ -138,75 +68,48 @@
             stroke-width="1.5"
             stroke-linecap="round"
             stroke-linejoin="round"
-            aria-hidden="true">
-
+            aria-hidden="true"
+          >
             <path d="m4 12 5 5L20 6" />
-
           </svg>
-
         </div>
 
         <div class="chapter-item">
-
           <span>02</span>
 
           <div>
-
             Descripción
 
-            <small>
-              La idea de tu historia
-            </small>
-
+            <small> La idea de tu historia </small>
           </div>
-
         </div>
 
         <div class="chapter-item">
-
           <span>03</span>
 
           <div>
-
             Tipo de acceso
 
-            <small>
-              Gratuita o Premium
-            </small>
-
+            <small> Gratuita o Premium </small>
           </div>
-
         </div>
 
         <span class="chapter-add">
-
-          <span aria-hidden="true">
-            ＋
-          </span>
+          <span aria-hidden="true"> ＋ </span>
 
           Tu primer capítulo
-
         </span>
 
         <div class="chapter-foot">
-
           Cada mundo comienza
-          <br>
+          <br />
           con una sola palabra. ✧
-
         </div>
-
       </aside>
 
-      <section
-        class="manuscript"
-        aria-label="Formulario para crear una historia">
-
+      <section class="manuscript" aria-label="Formulario para crear una historia">
         <div class="format-toolbar">
-
-          <span>
-            Texto principal
-          </span>
+          <span> Texto principal </span>
 
           <i></i>
 
@@ -216,10 +119,9 @@
             aria-label="Negrita"
             title="Negrita"
             (mousedown)="$event.preventDefault()"
-            (click)="applyFormat('bold')">
-
+            (click)="applyFormat('bold')"
+          >
             <strong>B</strong>
-
           </button>
 
           <button
@@ -228,10 +130,9 @@
             aria-label="Cursiva"
             title="Cursiva"
             (mousedown)="$event.preventDefault()"
-            (click)="applyFormat('italic')">
-
+            (click)="applyFormat('italic')"
+          >
             <em>I</em>
-
           </button>
 
           <button
@@ -240,10 +141,9 @@
             aria-label="Subrayado"
             title="Subrayado"
             (mousedown)="$event.preventDefault()"
-            (click)="applyFormat('underline')">
-
+            (click)="applyFormat('underline')"
+          >
             <u>U</u>
-
           </button>
 
           <i></i>
@@ -253,10 +153,9 @@
             class="format-button"
             aria-label="Alinear a la izquierda"
             title="Alinear a la izquierda"
-            (click)="applyFormat('justifyLeft')">
-
+            (click)="applyFormat('justifyLeft')"
+          >
             ≡
-
           </button>
 
           <button
@@ -264,10 +163,9 @@
             class="format-button"
             aria-label="Lista"
             title="Lista"
-            (click)="applyFormat('insertUnorderedList')">
-
+            (click)="applyFormat('insertUnorderedList')"
+          >
             ☷
-
           </button>
 
           <button
@@ -275,40 +173,20 @@
             class="format-button"
             aria-label="Cita"
             title="Cita"
-            (click)="applyBlockquote()">
-
+            (click)="applyBlockquote()"
+          >
             “ ”
-
           </button>
 
           <small>
-
-            {{
-              isEditMode()
-                ? 'EDITANDO HISTORIA'
-                : 'NUEVA HISTORIA'
-            }}
-
+            {{ isEditMode() ? 'EDITANDO HISTORIA' : 'NUEVA HISTORIA' }}
           </small>
-
         </div>
 
-        <form
-          class="paper"
-          [formGroup]="form"
-          (ngSubmit)="onSubmit()">
+        <form class="paper" [formGroup]="form" (ngSubmit)="onSubmit()">
+          <span class="eyebrow"> EL COMIENZO DE TODO </span>
 
-          <span class="eyebrow">
-            EL COMIENZO DE TODO
-          </span>
-
-          <label
-            class="visually-hidden"
-            for="story-title">
-
-            Título
-
-          </label>
+          <label class="visually-hidden" for="story-title"> Título </label>
 
           <input
             id="story-title"
@@ -320,125 +198,59 @@
             required
           />
 
-          @if (
-            form.controls.title.touched &&
-            form.controls.title.invalid
-          ) {
-
-            <small class="field-error">
-              El título es obligatorio.
-            </small>
-
+          @if (form.controls.title.touched && form.controls.title.invalid) {
+            <small class="field-error"> El título es obligatorio. </small>
           }
 
-          <div
-            class="paper-divider"
-            aria-hidden="true">
+          <div class="paper-divider" aria-hidden="true">✦</div>
 
-            ✦
-
-          </div>
-
-          <label
-            class="visually-hidden"
-            for="story-description">
-
-            Descripción
-
-          </label>
+          <label class="visually-hidden" for="story-description"> Descripción </label>
 
           <div
             #descriptionEditor
             id="story-description"
             class="manuscript-description-input rich-text-editor"
-            contenteditable="true"
+            [attr.contenteditable]="!allowed() || isSaving() ? 'false' : 'true'"
+            [innerHTML]="initialDescription()"
+            aria-label="Descripción"
+            [attr.aria-disabled]="!allowed() || isSaving()"
+            (paste)="onPaste($event)"
             role="textbox"
             aria-multiline="true"
-            data-placeholder="Contanos de qué trata tu historia. ¿Quién vive en sus páginas? ¿Qué aventura está por comenzar?"
-            (input)="updateDescription()">
-          </div>
+            data-placeholder="Descripción de la historia"
+            (input)="updateDescription()"
+          ></div>
 
-          @if (
-            form.controls.description.touched &&
-            form.controls.description.invalid
-          ) {
-
-            <small class="field-error">
-              La descripción es obligatoria.
-            </small>
-
+          @if (form.controls.description.touched && form.controls.description.invalid) {
+            <small class="field-error"> La descripción es obligatoria. </small>
           }
 
           <div class="description-footer">
-
-            <div class="description-counter">
-
-              {{
-                form.controls.description.value.length
-              }}/1000
-
-            </div>
-
+            <div class="description-counter">{{ form.controls.description.value.length }}/1000</div>
           </div>
 
           <div class="access-section">
+            <label class="form-label" for="story-access-type"> Tipo de acceso </label>
 
-            <label
-              class="form-label"
-              for="story-access-type">
+            <select id="story-access-type" class="access-select" formControlName="accessType">
+              <option value="FREE">Gratuita para leer</option>
 
-              Tipo de acceso
-
-            </label>
-
-            <select
-              id="story-access-type"
-              class="access-select"
-              formControlName="accessType">
-
-              <option value="FREE">
-                Gratuita para leer
-              </option>
-
-              <option value="PREMIUM">
-                Premium
-              </option>
-
+              <option value="PREMIUM">Premium</option>
             </select>
-
           </div>
 
           <div class="paper-actions">
-
-            <a
-              class="button cancel-button"
-              routerLink="/stories/mine">
-
-              Cancelar
-
-            </a>
+            <a class="button cancel-button" routerLink="/stories/mine"> Cancelar </a>
 
             <button
               class="button primary"
               type="submit"
-              [disabled]="
-                form.invalid ||
-                isSaving() ||
-                isLoading()
-              ">
-
+              [disabled]="form.invalid || isSaving() || isLoading() || !allowed() || loadFailed()"
+            >
               @if (isSaving()) {
-
                 Guardando...
-
               } @else {
-
-                {{
-                  isEditMode()
-                    ? 'Guardar cambios'
-                    : 'Guardar historia'
-                }}
-
+                {{ isEditMode() ? 'Guardar cambios' : 'Guardar historia' }}
               }
 
               <svg
@@ -449,40 +261,22 @@
                 stroke-width="1.5"
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                aria-hidden="true">
-
+                aria-hidden="true"
+              >
                 <path d="M4 12h16m-6-6 6 6-6 6" />
-
               </svg>
-
             </button>
-
           </div>
-
         </form>
 
         <div class="editor-bottom">
-
-          <span>
-            Una historia en progreso
-          </span>
+          <span> Una historia en progreso </span>
 
           <span class="badge">
-
-            {{
-              isEditMode()
-                ? 'EDITANDO'
-                : 'BORRADOR'
-            }}
-
+            {{ isEditMode() ? 'EDITANDO' : 'BORRADOR' }}
           </span>
-
         </div>
-
       </section>
-
     </div>
-
   }
-
 </section>

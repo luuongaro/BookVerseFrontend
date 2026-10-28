@@ -1,81 +1,97 @@
-import { CommonModule } from '@angular/common';
-
-import {Component,inject,OnInit,signal} from '@angular/core';
-
-import {ActivatedRoute,RouterModule} from '@angular/router';
-
-import { finalize } from 'rxjs';
-
-import { StoryDetailResponse } from '../../models/story-detail-response';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  ElementRef,
+  inject,
+  OnInit,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { StoryService } from '../../services/story.services';
+import { StoryPermissions } from '../../services/story-permissions.service';
+import { StoryDetailResponse } from '../../models/story-detail-response';
+import { apiError } from '../../../../core/api/api.config';
 
 @Component({
   selector: 'app-story-detail',
-  standalone: true,
-  imports: [CommonModule,RouterModule],
+  imports: [RouterLink],
   templateUrl: './story-detail.html',
-  styleUrl: './story-detail.css'
+  styleUrl: './story-detail.css',
 })
 export class StoryDetail implements OnInit {
-
   private readonly route = inject(ActivatedRoute);
-  private readonly storyService = inject(StoryService);
-
-  readonly story =
-    signal<StoryDetailResponse | null>(null);
-
-  readonly isLoading =
-    signal(false);
-
-  readonly errorMessage =
-    signal<string | null>(null);
-
+  private readonly router = inject(Router);
+  private readonly service = inject(StoryService);
+  private readonly permissions = inject(StoryPermissions);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly story = signal<StoryDetailResponse | null>(null);
+  readonly isLoading = signal(false);
+  readonly errorMessage = signal('');
+  readonly canManage = computed(() => !!this.story() && this.permissions.canManage(this.story()!));
+  readonly deleting = signal(false);
+  readonly deleteError = signal('');
+  readonly deleted = signal(false);
+  readonly deleteDialog = viewChild.required<ElementRef<HTMLDialogElement>>('deleteDialog');
+  private request?: Subscription;
   ngOnInit(): void {
-
-    const id =
-      this.route.snapshot.paramMap.get('id');
-
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.load());
+  }
+  load(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    this.request?.unsubscribe();
+    this.story.set(null);
+    this.errorMessage.set('');
+    this.deleted.set(false);
     if (!id) {
-      this.errorMessage.set(
-        'No pudimos identificar la historia.'
-      );
-
+      this.errorMessage.set('No se pudo identificar la historia.');
       return;
     }
-
-    this.loadStory(id);
-  }
-
-  private loadStory(
-    idExternal: string
-  ): void {
-
     this.isLoading.set(true);
-    this.errorMessage.set(null);
-
-    this.storyService
-      .getById(idExternal)
-      .pipe(
-        finalize(() => {
-          this.isLoading.set(false);
-        })
-      )
+    this.request = this.service
+      .getById(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-
-        next: story => {
-
+        next: (story) => {
           this.story.set(story);
-
+          this.isLoading.set(false);
         },
-
-        error: () => {
-
-          this.errorMessage.set(
-            'No pudimos cargar la historia.'
-          );
-
-        }
-
+        error: (error) => {
+          this.errorMessage.set(apiError(error));
+          this.isLoading.set(false);
+        },
+      });
+  }
+  confirmDelete(): void {
+    if (!this.canManage() || this.deleting() || this.deleted()) return;
+    this.deleteError.set('');
+    this.deleteDialog().nativeElement.showModal();
+  }
+  cancelDelete(): void {
+    if (!this.deleting()) this.deleteDialog().nativeElement.close();
+  }
+  deleteStory(): void {
+    const story = this.story();
+    if (!story || !this.canManage() || this.deleting() || this.deleted()) return;
+    this.deleting.set(true);
+    this.deleteError.set('');
+    this.service
+      .delete(story.idExternal)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.deleting.set(false);
+          this.deleted.set(true);
+          this.deleteDialog().nativeElement.close();
+          void this.router.navigate(['/stories/mine']);
+        },
+        error: (error) => {
+          this.deleting.set(false);
+          this.deleteError.set(apiError(error));
+        },
       });
   }
 }

@@ -1,0 +1,25 @@
+@import '../../../../shared/styles/catalog.css';
+.chapter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.danger {
+  background: #933c4a;
+}
+.confirm-dialog {
+  width: min(460px, calc(100% - 32px));
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  border: 1px solid #e8e2ef;
+  border-radius: 14px;
+  padding: 28px;
+  color: #302b43;
+  background: #fbf9fd;
+}
+.confirm-dialog::backdrop {
+  background: #302b4370;
+}
