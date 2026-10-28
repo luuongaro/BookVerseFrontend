@@ -15,6 +15,7 @@
   font-family: var(--sans);
 }
 
+
 * {
   box-sizing: border-box;
 }
@@ -785,5 +786,301 @@
   .page-footer {
     gap: 12px;
     font-size: 10px;
+  }
+}
+.activity-section {
+  padding: 25px 30px 28px;
+}
+
+.activity-heading {
+  margin-bottom: 19px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.activity-heading .eyebrow {
+  margin-bottom: 8px;
+}
+
+.activity-heading h2 {
+  margin: 0;
+  font: 42px/1.1 var(--serif);
+}
+
+.activity-note {
+  max-width: 360px;
+  margin: 0 0 3px;
+  color: var(--muted);
+  font: italic 14px/1.6 var(--serif);
+  text-align: right;
+}
+
+.reading-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.reading-card {
+  position: relative;
+  min-height: 174px;
+  padding: 19px 20px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #fff;
+}
+
+.reading-card::after {
+  position: absolute;
+  right: -42px;
+  bottom: -57px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: #f4eff8;
+  content: '';
+}
+
+.want-card {
+  background: linear-gradient(140deg, #fbf9fd, #fff);
+}
+
+.progress-card {
+  background: linear-gradient(140deg, #f5f0fa, #fff);
+}
+
+.finished-card {
+  background: linear-gradient(140deg, #f4f7f4, #fff);
+}
+
+.metric-overline {
+  color: #998fa5;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+}
+
+.metric-value {
+  position: relative;
+  z-index: 1;
+  display: block;
+  margin-top: 15px;
+  color: #66558f;
+  font: 49px/.98 var(--serif);
+}
+
+.reading-card h3 {
+  position: relative;
+  z-index: 1;
+  margin: 8px 0 3px;
+  color: #40394f;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.reading-card p {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: #90899a;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.reading-scope {
+  margin-top: 14px;
+  padding-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid #eee9f2;
+  color: #a28dbb;
+  font-size: 11px;
+}
+
+.reading-scope span:first-child {
+  font-size: 15px;
+}
+
+@media (max-width: 1000px) {
+  .activity-section {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+
+  .reading-cards {
+    gap: 10px;
+  }
+
+  .reading-card {
+    padding: 16px;
+  }
+
+  .metric-value {
+    font-size: 43px;
+  }
+}
+
+@media (max-width: 760px) {
+  .activity-section {
+    padding: 21px 6px 20px;
+  }
+
+  .activity-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .activity-heading h2 {
+    font-size: 35px;
+  }
+
+  .activity-note {
+    text-align: left;
+  }
+
+  .reading-cards {
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+
+  .reading-card {
+    min-height: 137px;
+    padding: 16px 18px;
+  }
+
+  .metric-value {
+    margin-top: 7px;
+  }
+}
+
+.extra-heading {
+  margin: 25px 1px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.extra-heading .eyebrow {
+  margin: 0;
+  font-size: 10px;
+}
+
+.extra-note {
+  color: #a098a7;
+  font-size: 11px;
+}
+
+.secondary-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.secondary-card {
+  min-height: 105px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.secondary-icon {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #eee8f5;
+  color: #7665a1;
+  font-size: 19px;
+}
+
+.groups-card .secondary-icon {
+  background: #edf3ef;
+  color: #638171;
+}
+
+.secondary-card > div {
+  min-width: 0;
+}
+
+.secondary-overline {
+  color: #998fa5;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+}
+
+.secondary-card h3 {
+  margin: 3px 0 2px;
+  color: #40394f;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.secondary-card p {
+  margin: 0;
+  color: #90899a;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.secondary-card > strong {
+  margin-left: auto;
+  color: #6b5a94;
+  font: 39px/1 var(--serif);
+}
+
+@media (max-width: 760px) {
+  .extra-heading {
+    margin-top: 19px;
+  }
+
+  .secondary-cards {
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+
+  .secondary-card {
+    min-height: 93px;
+    padding: 13px 15px;
+  }
+
+  .secondary-card > strong {
+    font-size: 36px;
+  }
+}
+
+.identity-badges {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.membership.active-state {
+  background: #edf3ef;
+  color: #638171;
+}
+
+@media (max-width: 760px) {
+  .identity-badges {
+    gap: 4px;
+  }
+
+  /* La regla mobile original oculta .membership; aquí las mostramos. */
+  .identity-badges .membership {
+    display: inline-flex;
   }
 }

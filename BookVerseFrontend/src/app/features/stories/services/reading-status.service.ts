@@ -24,6 +24,11 @@ export class ReadingStatusService {
     );
   }
 
+  getMine(): Observable<ReadingStatusResponse[]> {
+
+    return this.http.get<ReadingStatusResponse[]>(`${this.url}/me`);
+  }
+
   create(
     request: ReadingStatusRequest
   ): Observable<ReadingStatusResponse> {
