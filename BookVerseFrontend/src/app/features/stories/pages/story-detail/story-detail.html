@@ -10,34 +10,59 @@
     <p role="status">Historia eliminada.</p>
   } @else if (story(); as currentStory) {
     <h1>{{ currentStory.title }}</h1>
-    <p>
-      {{ currentStory.accessType === 'PREMIUM' ? 'Premium' : 'Gratuita' }} ·
-      {{ currentStory.chaptersCount }} capítulos disponibles
-    </p>
+    <div class="story-meta">
+      <span class="access-badge" [class.premium]="currentStory.accessType === 'PREMIUM'">
+        {{ currentStory.accessType === 'PREMIUM' ? 'Premium' : 'Gratuita' }}
+      </span>
+      <span>{{ currentStory.chaptersCount }} capítulos disponibles</span>
+    </div>
     <div class="prose" [innerHTML]="currentStory.description"></div>
-    <div class="actions">
-      <button type="button" [disabled]="saving() || saved()" (click)="saveToLibrary()">
-        {{
-          saving()
-            ? 'Guardando…'
-            : saved()
-              ? 'Guardada en mi biblioteca'
-              : 'Guardar en mi biblioteca'
-        }}
-      </button>
-      <a routerLink="/library">Mi biblioteca</a>
-      <a class="button secondary" [routerLink]="['/stories', currentStory.idExternal, 'chapters']"
-        >Ver capítulos</a
-      >
-      <a routerLink="/reviews" [queryParams]="{ storyId: currentStory.idExternal }">Ver reseñas</a>
+    <div class="story-actions">
+      <div class="reading-actions">
+        <a
+          class="button read-button"
+          [routerLink]="['/stories', currentStory.idExternal, 'chapters']"
+          >Ver capítulos</a
+        >
+        <button
+          class="button secondary save-button"
+          type="button"
+          [disabled]="saving() || saved()"
+          (click)="saveToLibrary()"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M6 4h12v17l-6-4-6 4z" />
+          </svg>
+          {{ saving() ? 'Guardando…' : saved() ? 'En tu biblioteca' : 'Guardar en biblioteca' }}
+        </button>
+        <div class="related-links">
+          <a routerLink="/reviews" [queryParams]="{ storyId: currentStory.idExternal }"
+            >Ver reseñas</a
+          >
+          <a routerLink="/library">Mi biblioteca</a>
+        </div>
+      </div>
       @if (canManage()) {
-        <a class="button" [routerLink]="['/stories', currentStory.idExternal, 'edit']"
-          >Editar historia</a
-        >
-        <a class="button" [routerLink]="['/stories', currentStory.idExternal, 'chapters', 'new']"
-          >Nuevo capítulo</a
-        >
-        <button type="button" class="danger" (click)="confirmDelete()">Eliminar historia</button>
+        <details class="manage-story">
+          <summary>Gestionar historia</summary>
+          <div class="manage-options">
+            <a [routerLink]="['/stories', currentStory.idExternal, 'edit']">Editar historia</a>
+            <a [routerLink]="['/stories', currentStory.idExternal, 'chapters', 'new']"
+              >Nuevo capítulo</a
+            >
+            <button type="button" class="delete-option" (click)="confirmDelete()">
+              Eliminar historia
+            </button>
+          </div>
+        </details>
       }
     </div>
     @if (saveError()) {
@@ -54,15 +79,17 @@
             <h3>{{ chapter.chapterNumber }}. {{ chapter.title }}</h3>
             <p>{{ chapter.published ? 'Publicado' : 'Borrador' }}</p>
           </div>
-          <div class="actions">
+          <div class="chapter-actions">
             @if (chapter.published || canManage()) {
               <a
+                class="chapter-read"
                 [routerLink]="['/stories', currentStory.idExternal, 'chapters', chapter.idExternal]"
                 >{{ chapter.published ? 'Leer capítulo' : 'Ver borrador' }}</a
               >
             }
             @if (canManage()) {
               <a
+                class="chapter-edit"
                 [routerLink]="[
                   '/stories',
                   currentStory.idExternal,
@@ -70,6 +97,16 @@
                   chapter.idExternal,
                   'edit',
                 ]"
+                ><svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15z" /></svg
                 >Editar capítulo</a
               >
             }
