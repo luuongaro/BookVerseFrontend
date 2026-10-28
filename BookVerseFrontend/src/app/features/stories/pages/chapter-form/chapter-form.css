@@ -9,21 +9,11 @@
   --line: #e8e2ef;
   --sidebar-paper: #f2edf7;
 
-  --serif:
-    'Libre Caslon Display',
-    Georgia,
-    'Times New Roman',
-    serif;
+  --serif: 'Libre Caslon Display', Georgia, 'Times New Roman', serif;
 
-  --sans:
-    'DM Sans',
-    Arial,
-    sans-serif;
+  --sans: 'DM Sans', Arial, sans-serif;
 
-  --story:
-    Georgia,
-    'Times New Roman',
-    serif;
+  --story: Georgia, 'Times New Roman', serif;
 
   display: block;
   min-height: 100vh;
@@ -50,7 +40,7 @@ textarea {
 
 .chapter-form-page {
   min-height: 100vh;
-  margin-left: 240px;
+  margin-left: 0;
   padding: 0 45px 50px;
 }
 
@@ -139,9 +129,7 @@ textarea {
 
   color: var(--ink);
 
-  font:
-    400 clamp(40px, 4vw, 55px) / 1.08
-    var(--serif);
+  font: 400 clamp(40px, 4vw, 55px) / 1.08 var(--serif);
 
   letter-spacing: -1.5px;
 }
@@ -171,8 +159,7 @@ textarea {
 
   background: #fff;
 
-  box-shadow:
-    0 18px 45px rgb(78 53 110 / 7%);
+  box-shadow: 0 18px 45px rgb(78 53 110 / 7%);
 }
 
 /* SIDEBAR DEL MANUSCRITO */
@@ -187,12 +174,7 @@ textarea {
 
   border-right: 1px solid var(--line);
 
-  background:
-    linear-gradient(
-      180deg,
-      #f3eef8 0%,
-      #efe8f6 100%
-    );
+  background: linear-gradient(180deg, #f3eef8 0%, #efe8f6 100%);
 }
 
 .manuscript-sidebar > .eyebrow {
@@ -205,9 +187,7 @@ textarea {
 
   color: var(--ink);
 
-  font:
-    400 29px / 1.08
-    var(--serif);
+  font: 400 29px / 1.08 var(--serif);
 }
 
 .story-access {
@@ -292,8 +272,7 @@ textarea {
 
   color: #ad99b9;
 
-  font: 18px / 1
-    var(--serif);
+  font: 18px / 1 var(--serif);
 }
 
 .context-info {
@@ -369,9 +348,7 @@ textarea {
 
   color: #9d89ab;
 
-  font:
-    italic 19px / 1.4
-    var(--serif);
+  font: italic 19px / 1.4 var(--serif);
 }
 
 /* MANUSCRITO / EDITOR */
@@ -482,9 +459,7 @@ textarea {
   background: transparent;
   color: var(--ink);
 
-  font:
-    400 clamp(36px, 4vw, 50px) / 1.12
-    var(--serif);
+  font: 400 clamp(36px, 4vw, 50px) / 1.12 var(--serif);
 
   text-align: center;
 
@@ -533,15 +508,11 @@ textarea {
 
   color: #74677e;
 
-  font:
-    17px / 1.95
-    var(--story);
+  font: 17px / 1.95 var(--story);
 
   caret-color: var(--lavender);
 
-  scrollbar-color:
-    #d5c6df
-    transparent;
+  scrollbar-color: #d5c6df transparent;
 }
 
 .chapter-content-input::placeholder {
@@ -621,9 +592,7 @@ textarea {
 .button:hover:not(:disabled) {
   transform: translateY(-1px);
 
-  box-shadow:
-    0 5px 13px
-    rgb(80 60 104 / 12%);
+  box-shadow: 0 5px 13px rgb(80 60 104 / 12%);
 }
 
 .button:disabled {
@@ -761,11 +730,7 @@ textarea {
 
   .context-chapters {
     display: grid;
-    grid-template-columns:
-      repeat(
-        2,
-        minmax(0, 1fr)
-      );
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .sidebar-quote {

@@ -1,56 +1,28 @@
 <div class="chapter-layout">
-
-  <app-sidebar />
-
   <main class="chapter-page">
-
     @if (isLoading()) {
-
-      <div
-        class="page-state"
-        role="status"
-      >
+      <div class="page-state" role="status">
         <span class="state-mark">✦</span>
         Cargando capítulos...
       </div>
-
     } @else if (errorMessage()) {
-
-      <div
-        class="page-state error"
-        role="alert"
-      >
+      <div class="page-state error" role="alert">
         {{ errorMessage() }}
+        <button type="button" (click)="load(result()?.number ?? 0)">Reintentar</button>
       </div>
-
     } @else if (story(); as currentStory) {
-
       <header class="chapter-topbar">
-
-        <a
-          class="back-link"
-          [routerLink]="[
-            '/stories',
-            currentStory.idExternal
-          ]"
-        >
+        <a class="back-link" [routerLink]="['/stories', currentStory.idExternal]">
           <span aria-hidden="true">←</span>
           Volver a la historia
         </a>
 
-        <span class="topbar-caption">
-          Tu historia, capítulo a capítulo
-        </span>
-
+        <span class="topbar-caption"> Tu historia, capítulo a capítulo </span>
       </header>
 
       <section class="chapter-hero">
-
         <div>
-
-          <span class="eyebrow">
-            EL MANUSCRITO
-          </span>
+          <span class="eyebrow"> EL MANUSCRITO </span>
 
           <h1>
             {{ currentStory.title }}
@@ -59,219 +31,158 @@
           <p>
             {{ currentStory.description }}
           </p>
-
         </div>
 
         <div class="hero-meta">
-
-          <span
-            class="access-badge"
-            [class.premium]="
-              currentStory.accessType === 'PREMIUM'
-            "
-          >
-            {{
-              currentStory.accessType === 'PREMIUM'
-                ? 'PREMIUM'
-                : 'GRATUITA'
-            }}
+          <span class="access-badge" [class.premium]="currentStory.accessType === 'PREMIUM'">
+            {{ currentStory.accessType === 'PREMIUM' ? 'PREMIUM' : 'GRATUITA' }}
           </span>
 
           <span class="chapter-count">
-            {{ chapters().length }}
+            {{ result()?.totalElements ?? 0 }}
             capítulos
           </span>
-
         </div>
-
       </section>
 
-      <div class="ornament" aria-hidden="true">
-        ✦
-      </div>
+      <div class="ornament" aria-hidden="true">✦</div>
 
-      <section
-        class="manuscript-section"
-        aria-labelledby="chapters-title"
-      >
-
+      <section class="manuscript-section" aria-labelledby="chapters-title">
         <div class="section-heading">
-
           <div>
+            <span class="eyebrow"> ENTRE SUS PÁGINAS </span>
 
-            <span class="eyebrow">
-              ENTRE SUS PÁGINAS
-            </span>
-
-            <h2 id="chapters-title">
-              Capítulos
-            </h2>
-
+            <h2 id="chapters-title">Capítulos</h2>
           </div>
 
-          @if (isOwner()) {
-
+          @if (canManage()) {
             <a
-                class="new-chapter-button"
-                [routerLink]="[
-                '/stories',
-                currentStory.idExternal,
-                'chapters',
-                'new'
-                ]"
+              class="new-chapter-button"
+              [routerLink]="['/stories', currentStory.idExternal, 'chapters', 'new']"
             >
-                <span aria-hidden="true">＋</span>
-                Nuevo capítulo
+              <span aria-hidden="true">＋</span>
+              Nuevo capítulo
             </a>
-
-            }
-
+          }
         </div>
 
         <div class="chapter-list">
-
-          @for (
-            chapter of chapters();
-            track chapter.idExternal
-          ) {
-
-            <article
-              class="chapter-card"
-              [class.draft]="!chapter.published"
-            >
-
+          @for (chapter of chapters(); track chapter.idExternal) {
+            <article class="chapter-card" [class.draft]="!chapter.published">
               <div class="chapter-number">
-
-                {{
-                  chapter.chapterNumber
-                    .toString()
-                    .padStart(2, '0')
-                }}
-
+                {{ chapter.chapterNumber.toString().padStart(2, '0') }}
               </div>
 
               <div class="chapter-content">
-
-                <span class="chapter-kicker">
-                  CAPÍTULO {{ chapter.chapterNumber }}
-                </span>
+                <span class="chapter-kicker"> CAPÍTULO {{ chapter.chapterNumber }} </span>
 
                 <h3>
                   {{ chapter.title }}
                 </h3>
 
                 <div class="chapter-meta">
-
                   @if (chapter.published) {
-
                     <span class="status published">
-                      <span
-                        class="status-dot"
-                        aria-hidden="true"
-                      ></span>
+                      <span class="status-dot" aria-hidden="true"></span>
 
                       PUBLICADO
                     </span>
-
                   } @else {
-
-                    <span class="status draft-status">
-                      BORRADOR
-                    </span>
-
+                    <span class="status draft-status"> BORRADOR </span>
                   }
-
                 </div>
-
               </div>
 
               <div class="chapter-actions">
+                @if (chapter.published || canManage()) {
+                  <a
+                    class="chapter-action read"
+                    [routerLink]="[
+                      '/stories',
+                      currentStory.idExternal,
+                      'chapters',
+                      chapter.idExternal,
+                    ]"
+                  >
+                    <span>{{ chapter.published ? 'Leer capítulo' : 'Ver borrador' }}</span>
+                    <span aria-hidden="true">→</span>
+                  </a>
+                }
 
-  @if (chapter.published) {
-
-    <a
-      class="chapter-action read"
-      [routerLink]="[
-        '/stories',
-        currentStory.idExternal,
-        'chapters',
-        chapter.idExternal
-      ]"
-    >
-      <span>Leer capítulo</span>
-      <span aria-hidden="true">→</span>
-    </a>
-
-  }
-
-  @if (isOwner()) {
-
-    <a
-      class="chapter-action edit"
-      [routerLink]="[
-        '/stories',
-        currentStory.idExternal,
-        'chapters',
-        chapter.idExternal,
-        'edit'
-      ]"
-    >
-      <span aria-hidden="true">✎</span>
-      <span>Editar</span>
-    </a>
-
-  } @else if (!chapter.published) {
-
-    <div class="draft-mark">
-      <span aria-hidden="true">✧</span>
-      En edición
-    </div>
-
-  }
-
-</div>
-
+                @if (canManage()) {
+                  <a
+                    class="chapter-action edit"
+                    [routerLink]="[
+                      '/stories',
+                      currentStory.idExternal,
+                      'chapters',
+                      chapter.idExternal,
+                      'edit',
+                    ]"
+                  >
+                    <span aria-hidden="true">✎</span>
+                    <span>Editar</span>
+                  </a>
+                  <button
+                    type="button"
+                    class="chapter-action delete"
+                    (click)="confirmDelete(chapter)"
+                  >
+                    Eliminar
+                  </button>
+                } @else if (!chapter.published) {
+                  <div class="draft-mark">
+                    <span aria-hidden="true">✧</span>
+                    En edición
+                  </div>
+                }
+              </div>
             </article>
-
           } @empty {
-
             <div class="empty-state">
+              <span aria-hidden="true"> ✦ </span>
 
-              <span aria-hidden="true">
-                ✦
-              </span>
+              <h2>Las páginas todavía están en blanco</h2>
 
-              <h2>
-                Las páginas todavía están en blanco
-              </h2>
-
-              <p>
-                Esta historia aún no tiene capítulos
-                disponibles.
-              </p>
-
+              <p>Esta historia aún no tiene capítulos disponibles.</p>
             </div>
-
           }
-
         </div>
-
       </section>
 
+      @if (result(); as page) {
+        @if (page.totalPages > 1) {
+          <nav class="chapter-pagination" aria-label="Páginas de capítulos">
+            <button [disabled]="page.first" (click)="load(page.number - 1)">Anterior</button>
+            <span>Página {{ page.number + 1 }} de {{ page.totalPages }}</span>
+            <button [disabled]="page.last" (click)="load(page.number + 1)">Siguiente</button>
+          </nav>
+        }
+      }
       <footer class="chapter-footer">
+        <span> Cada mundo comienza con una sola palabra. </span>
 
-        <span>
-          Cada mundo comienza con una sola palabra.
-        </span>
-
-        <span>
-          BOOKVERSE ✦
-        </span>
-
+        <span> BOOKVERSE ✦ </span>
       </footer>
-
     }
-
   </main>
-
 </div>
+<dialog
+  #deleteDialog
+  class="confirm-dialog"
+  aria-labelledby="delete-chapter-heading"
+  (cancel)="deleting() && $event.preventDefault()"
+>
+  <h2 id="delete-chapter-heading">¿Eliminar este capítulo?</h2>
+  <p>{{ selectedChapter()?.title }}</p>
+  @if (deleteError()) {
+    <p role="alert">{{ deleteError() }}</p>
+  }
+  <div class="chapter-pagination">
+    <button type="button" [disabled]="deleting()" (click)="deleteChapter()">
+      {{ deleting() ? 'Eliminando…' : 'Eliminar capítulo' }}</button
+    ><button type="button" [disabled]="deleting()" (click)="cancelDelete()" autofocus>
+      Cancelar
+    </button>
+  </div>
+</dialog>
