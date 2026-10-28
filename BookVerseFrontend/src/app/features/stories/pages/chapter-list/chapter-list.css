@@ -26,7 +26,7 @@
 
 .chapter-page {
   min-height: 100vh;
-  margin-left: 240px;
+  margin-left: 0;
   padding: 0 54px 45px;
 }
 
@@ -342,9 +342,7 @@
 
   transform: translateY(-1px);
 
-  box-shadow:
-    0 5px 14px
-    rgb(80 60 104 / 14%);
+  box-shadow: 0 5px 14px rgb(80 60 104 / 14%);
 }
 
 .new-chapter-button span {
@@ -379,9 +377,7 @@
   color: var(--violet);
 }
 
-
 @media (max-width: 900px) {
-
   .chapter-page {
     padding-right: 28px;
     padding-left: 28px;
@@ -409,7 +405,6 @@
 }
 
 @media (max-width: 760px) {
-
   .chapter-page {
     margin-left: 0;
     padding: 0 20px 35px;
@@ -451,9 +446,8 @@
     gap: 8px;
   }
 }
-  
-@media (max-width: 600px) {
 
+@media (max-width: 600px) {
   .section-heading {
     align-items: flex-start;
     flex-direction: column;
@@ -466,4 +460,36 @@
   .chapter-actions {
     width: 100%;
   }
+}
+.chapter-pagination {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 24px 0;
+}
+.chapter-pagination button,
+.chapter-action.delete {
+  border: 1px solid #d9cfe5;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font: inherit;
+  cursor: pointer;
+  color: #665498;
+  background: #fbf9fd;
+}
+.chapter-pagination button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.confirm-dialog {
+  width: min(460px, calc(100% - 32px));
+  border: 1px solid #e8e2ef;
+  border-radius: 14px;
+  padding: 28px;
+  background: #fbf9fd;
+  color: #302b43;
+}
+.confirm-dialog::backdrop {
+  background: #302b4370;
 }

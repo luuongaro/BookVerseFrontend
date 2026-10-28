@@ -1,15 +1,17 @@
 import { CommonModule } from '@angular/common';
 
-import {Component,computed,inject,OnInit,signal} from '@angular/core';
+import {Component,computed,DestroyRef,inject,OnInit,signal} from '@angular/core';
 
 import {
   ActivatedRoute,
   RouterModule
 } from '@angular/router';
 
-import { finalize } from 'rxjs';
+import { finalize, Subscription } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { apiError } from '../../../../core/api/api.config';
 
-import { Sidebar } from '../../../../shared/components/sidebar/sidebar';
+
 
 import { ChapterResponse } from '../../models/chapter-response';
 import { ChapterService } from '../../services/chapter.service';
@@ -25,13 +27,16 @@ import { ReadingStatusService } from '../../services/reading-status.service';
 @Component({
   selector: 'app-chapter-reader',
   standalone: true,
-  imports: [CommonModule,RouterModule,Sidebar],
+  imports: [CommonModule,RouterModule],
   templateUrl: './chapter-reader.html',
   styleUrl: './chapter-reader.css'
 })
 export class ChapterReader implements OnInit {
 
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
+  private chapterRequest?: Subscription;
+  private storyRequest?: Subscription;
 
   private readonly chapterService = inject(ChapterService);
 
@@ -127,7 +132,13 @@ this.userService.loadCurrentUser().subscribe({
     );
   }
 });
-  this.route.paramMap.subscribe(params => {
+  this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+    this.chapterRequest?.unsubscribe();
+    this.storyRequest?.unsubscribe();
+    this.story.set(null);
+    this.chapter.set(null);
+    this.errorMessage.set(null);
+    this.isLoading.set(false);
 
     const storyId =
       params.get('id');
@@ -153,57 +164,44 @@ this.userService.loadCurrentUser().subscribe({
   });
 }
 
-  private loadChapter(
-    chapterId: string
-  ): void {
+  retry(): void {
+    const storyId = this.storyId();
+    const chapterId = this.chapterId();
+    if (storyId && chapterId) { this.loadStory(storyId); this.loadChapter(chapterId); }
+  }
 
+  private loadChapter(chapterId: string): void {
+    const storyId = this.storyId();
+    this.chapterRequest?.unsubscribe();
     this.isLoading.set(true);
     this.errorMessage.set(null);
     this.chapter.set(null);
-
-    this.chapterService
-      .getById(chapterId)
-      .pipe(
-        finalize(() => {
-          this.isLoading.set(false);
-        })
-      )
-      .subscribe({
-
+    this.chapterRequest = this.chapterService.getById(chapterId)
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: chapter => {
-  this.chapter.set(chapter);
-  this.registerReadingProgress(chapter);
-},
-
-        error: () => {
-          this.errorMessage.set(
-            'No pudimos cargar el capítulo.'
-          );
+          this.isLoading.set(false);
+          if (chapter.storyId !== storyId) {
+            this.errorMessage.set('El capítulo no pertenece a esta historia.');
+            return;
+          }
+          this.chapter.set(chapter);
+          this.registerReadingProgress(chapter);
+        },
+        error: error => {
+          this.isLoading.set(false);
+          this.errorMessage.set(apiError(error));
         }
-
       });
   }
 
-  private loadStory(
-  storyId: string
-): void {
-
-  this.storyService
-    .getById(storyId)
-    .subscribe({
-
-      next: story => {
-        this.story.set(story);
-      },
-
-      error: () => {
-        this.errorMessage.set(
-          'No pudimos cargar la historia.'
-        );
-      }
-
-    });
-}
+  private loadStory(storyId: string): void {
+    this.storyRequest?.unsubscribe();
+    this.storyRequest = this.storyService.getById(storyId)
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: story => { this.story.set(story); },
+        error: error => { this.errorMessage.set(apiError(error)); }
+      });
+  }
 
   toggleBookmark(): void {
     this.bookmarked.update(

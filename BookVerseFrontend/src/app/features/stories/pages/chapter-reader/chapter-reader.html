@@ -1,6 +1,6 @@
 <div class="reader-layout">
 
-  <app-sidebar />
+
 
   <main class="reader-page">
 
@@ -24,6 +24,8 @@
         <p>
           {{ errorMessage() }}
         </p>
+
+        <button type="button" class="text-button" (click)="retry()">Reintentar</button>
 
         @if (storyId()) {
 
