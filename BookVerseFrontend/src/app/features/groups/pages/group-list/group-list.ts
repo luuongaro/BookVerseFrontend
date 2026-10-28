@@ -28,6 +28,8 @@ export class GroupList implements OnInit {
 
   groups: ReadingGroup[] = [];
   searchTerm = '';
+  readonly pageSize = 6;
+  currentPage = 0;
   isLoading = true;
   errorMessage = '';
 
@@ -109,5 +111,28 @@ export class GroupList implements OnInit {
     return this.groups.filter((group) =>
       group.name.toLowerCase().includes(query),
     );
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredGroups.length / this.pageSize);
+  }
+
+  get pageNumbers(): number[] {
+    return Array.from({ length: this.totalPages }, (_, index) => index);
+  }
+
+  get paginatedGroups(): ReadingGroup[] {
+    const start = this.currentPage * this.pageSize;
+    return this.filteredGroups.slice(start, start + this.pageSize);
+  }
+
+  onSearchChange(searchTerm: string): void {
+    this.searchTerm = searchTerm;
+    this.currentPage = 0;
+  }
+
+  goToPage(page: number): void {
+    const lastPage = Math.max(this.totalPages - 1, 0);
+    this.currentPage = Math.min(Math.max(page, 0), lastPage);
   }
 }
