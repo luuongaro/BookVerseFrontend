@@ -171,7 +171,7 @@ export class StoryForm implements OnInit {
       next: (story) => {
         this.isSaving.set(false);
         this.form.markAsPristine();
-        void this.router.navigate(['/stories', story.idExternal]);
+        void this.router.navigate(['/writer', story.idExternal]);
       },
       error: (error) => {
         this.isSaving.set(false);

@@ -1,14 +1,7 @@
 <div class="stories-page">
   <section class="page-heading">
-    <h1>{{ mine() ? 'Mis historias' : 'Historias' }}</h1>
-    <a routerLink="/stories/new" class="new-story-btn"
-      >Nueva historia <span aria-hidden="true">＋</span></a
-    >
+    <h1>Historias</h1>
   </section>
-  <nav class="view-tabs" aria-label="Historias">
-    <a routerLink="/stories" [attr.aria-current]="!mine() ? 'page' : null">Explorar historias</a>
-    <a routerLink="/stories/mine" [attr.aria-current]="mine() ? 'page' : null">Mis historias</a>
-  </nav>
   @if (loading()) {
     <p class="story-state" role="status">Cargando historias…</p>
   } @else if (error()) {
@@ -32,13 +25,11 @@
             }}</span>
             <h2>{{ story.title }}</h2>
             <div class="story-description" [innerHTML]="story.description"></div>
-            <a class="story-link" [routerLink]="['/stories', story.idExternal]">Ver historia →</a>
+            <a class="story-link" [routerLink]="['/stories', story.idExternal]">Ver historia</a>
           </div>
         </article>
       } @empty {
-        <p class="story-state">
-          {{ mine() ? 'Todavía no creaste historias.' : 'Todavía no hay historias disponibles.' }}
-        </p>
+        <p class="story-state">Todavía no hay historias de otros autores disponibles.</p>
       }
     </section>
     @if (page.totalPages > 1) {

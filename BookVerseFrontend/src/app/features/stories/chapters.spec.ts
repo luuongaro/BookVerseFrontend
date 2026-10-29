@@ -77,6 +77,10 @@ describe('Chapter API contracts', () => {
     expect(list.request.params.get('size')).toBe('20');
     expect(list.request.headers.get('Authorization')).toBe('Bearer token');
     list.flush(page([chapter], 1));
+    service.getByStory('story', 0, true).subscribe();
+    const published = http.expectOne((r) => r.url.endsWith('/story/story'));
+    expect(published.request.params.get('publishedOnly')).toBe('true');
+    published.flush(page([]));
     const content = { title: 'Título', content: 'Contenido', published: false };
     service.create({ ...content, storyId: 'story' }).subscribe();
     const create = http.expectOne('http://localhost:8080/api/chapters');
@@ -97,7 +101,7 @@ describe('Chapter API contracts', () => {
 
 async function setup(mode: 'list' | 'create' | 'edit' | 'reader', allowed = true) {
   const getStory = vi.fn(() => of(story));
-  const getById = vi.fn(() => of(chapter));
+  const getById = vi.fn(() => of(mode === 'reader' ? { ...chapter, published: true } : chapter));
   const getByStory = vi.fn(() => of(page([chapter])));
   const create = vi.fn();
   const update = vi.fn();
@@ -109,10 +113,16 @@ async function setup(mode: 'list' | 'create' | 'edit' | 'reader', allowed = true
   TestBed.configureTestingModule({
     providers: [
       provideRouter([
-        { path: 'stories/:id/chapters/new', component: ChapterForm },
-        { path: 'stories/:id/chapters/:chapterId/edit', component: ChapterForm },
+        { path: 'writer/:id/chapters/new', component: ChapterForm },
+        { path: 'writer/:id/chapters/:chapterId/edit', component: ChapterForm },
         { path: 'stories/:id/chapters/:chapterId', component: ChapterReader },
+        { path: 'writer/:id/chapters', component: ChapterList, data: { writing: true } },
         { path: 'stories/:id/chapters', component: ChapterList },
+        {
+          path: 'writer/:id/chapters/:chapterId',
+          component: ChapterReader,
+          data: { writing: true },
+        },
       ]),
       {
         provide: ChapterService,
@@ -133,11 +143,11 @@ async function setup(mode: 'list' | 'create' | 'edit' | 'reader', allowed = true
   const harness = await RouterTestingHarness.create();
   const url =
     mode === 'list'
-      ? '/stories/story/chapters'
+      ? '/writer/story/chapters'
       : mode === 'create'
-        ? '/stories/story/chapters/new'
+        ? '/writer/story/chapters/new'
         : mode === 'edit'
-          ? '/stories/story/chapters/chapter/edit'
+          ? '/writer/story/chapters/chapter/edit'
           : '/stories/story/chapters/chapter';
   await harness.navigateByUrl(url);
   const component = harness.routeDebugElement!.componentInstance as
@@ -188,7 +198,7 @@ describe('Chapter management form', () => {
     expect(create.mock.calls[0][0].content).toBe(html);
 
     getById.mockReturnValueOnce(of({ ...chapter, content: html }));
-    await harness.navigateByUrl('/stories/story/chapters/chapter/edit');
+    await harness.navigateByUrl('/writer/story/chapters/chapter/edit');
     const edit = harness.routeDebugElement!.componentInstance as ChapterForm;
     expect(tools()).toEqual(createTools);
     expect(harness.routeNativeElement!.querySelector('#chapter-content')!.innerHTML).toBe(html);
@@ -242,7 +252,7 @@ describe('Chapter management form', () => {
       expect(form.form.controls.published.value).toBe(published);
       pending.next({ ...chapter, published });
       pending.complete();
-      expect(navigate).toHaveBeenCalledWith(['/stories', 'story', 'chapters']);
+      expect(navigate).toHaveBeenCalledWith(['/writer', 'story', 'chapters']);
     },
   );
   it('updates without changing story association or chapter number', async () => {
@@ -312,7 +322,7 @@ describe('Chapter management form', () => {
     getById.mockReturnValueOnce(
       of({ ...chapter, idExternal: 'second', title: 'Segundo capítulo' }),
     );
-    await harness.navigateByUrl('/stories/story/chapters/second/edit');
+    await harness.navigateByUrl('/writer/story/chapters/second/edit');
     old.next(chapter);
     expect(form.chapterId()).toBe('second');
     expect(form.form.controls.title.value).toBe('Segundo capítulo');
@@ -320,12 +330,25 @@ describe('Chapter management form', () => {
 });
 
 describe('Chapter list and deletion', () => {
+  it('requests published chapters and hides writing controls in the reading section, even for a manager', async () => {
+    const { harness, getByStory } = await setup('list');
+    getByStory.mockReturnValueOnce(of(page([{ ...chapter, published: true }])));
+    const list = await harness.navigateByUrl('/stories/story/chapters', ChapterList);
+    expect(getByStory).toHaveBeenLastCalledWith('story', 0, true);
+    expect(list.canManage()).toBe(false);
+    expect(harness.routeNativeElement!.querySelector('.chapter-action.edit')).toBeNull();
+    expect(harness.routeNativeElement!.querySelector('.chapter-action.delete')).toBeNull();
+    expect(harness.routeNativeElement!.querySelector('.new-chapter-button')).toBeNull();
+    expect(harness.routeNativeElement!.querySelector('.back-link')?.getAttribute('href')).toBe(
+      '/stories/story',
+    );
+  });
   it('shows total chapter count, requests later pages and previews drafts for managers', async () => {
     const { component, harness, getByStory } = await setup('list');
     const list = component as ChapterList;
     expect(harness.routeNativeElement!.querySelectorAll('app-sidebar')).toHaveLength(0);
     expect(harness.routeNativeElement!.textContent).toContain('21');
-    expect(harness.routeNativeElement!.textContent).toContain('Ver borrador');
+    expect(harness.routeNativeElement!.textContent).toContain('Vista previa');
     list.load(1);
     expect(getByStory).toHaveBeenLastCalledWith('story', 1);
   });
@@ -377,6 +400,29 @@ describe('Chapter list and deletion', () => {
 });
 
 describe('Chapter detail loading', () => {
+  it('keeps drafts out of the reading route while allowing a writing preview', async () => {
+    const { harness, component, getById } = await setup('reader');
+    getById.mockReturnValue(of(chapter));
+    const reader = component as ChapterReader;
+    reader.retry();
+    expect(reader.chapter()).toBeNull();
+    expect(reader.errorMessage()).toContain('todavía no está publicado');
+    const preview = await harness.navigateByUrl('/writer/story/chapters/chapter', ChapterReader);
+    expect(preview.chapter()?.content).toBe(chapter.content);
+  });
+  it('does not save reading progress while previewing a chapter in the writing workspace', async () => {
+    const { harness, currentUser, getStatuses, createStatus, updateStatus } = await setup('reader');
+    currentUser.mockReturnValue({ idExternal: 'reader' });
+    getStatuses.mockClear();
+    await harness.navigateByUrl('/writer/story/chapters/chapter', ChapterReader);
+    expect(getStatuses).not.toHaveBeenCalled();
+    expect(createStatus).not.toHaveBeenCalled();
+    expect(updateStatus).not.toHaveBeenCalled();
+    expect(harness.routeNativeElement!.textContent).toContain('Vista previa');
+    expect(harness.routeNativeElement!.querySelector('.back-link')?.getAttribute('href')).toBe(
+      '/writer/story',
+    );
+  });
   it.each([false, true])(
     'explains a plan restriction without hiding the chapter when updating existing progress=%s',
     async (existing) => {
@@ -457,7 +503,7 @@ describe('Chapter detail loading', () => {
     getById.mockReturnValueOnce(old);
     reader.retry();
     getById.mockReturnValueOnce(
-      of({ ...chapter, idExternal: 'next', title: 'Capítulo siguiente' }),
+      of({ ...chapter, idExternal: 'next', title: 'Capítulo siguiente', published: true }),
     );
     await harness.navigateByUrl('/stories/story/chapters/next');
     old.next(chapter);

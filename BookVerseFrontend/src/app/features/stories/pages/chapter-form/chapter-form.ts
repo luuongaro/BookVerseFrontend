@@ -137,7 +137,7 @@ export class ChapterForm implements OnInit {
     this.submitForm(true);
   }
   cancel(): void {
-    if (!this.isSaving()) void this.router.navigate(['/stories', this.storyId(), 'chapters']);
+    if (!this.isSaving()) void this.router.navigate(['/writer', this.storyId(), 'chapters']);
   }
   updateContent(): void {
     const editor = this.contentEditor()?.nativeElement;
@@ -187,7 +187,7 @@ export class ChapterForm implements OnInit {
       next: () => {
         this.isSaving.set(false);
         this.form.markAsPristine();
-        void this.router.navigate(['/stories', this.storyId(), 'chapters']);
+        void this.router.navigate(['/writer', this.storyId(), 'chapters']);
       },
       error: (error) => {
         this.isSaving.set(false);

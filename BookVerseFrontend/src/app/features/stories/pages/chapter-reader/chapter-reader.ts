@@ -35,6 +35,8 @@ import { isPremiumStoryPlanError } from '../../services/reading-status-errors';
 export class ChapterReader implements OnInit {
 
   private readonly route = inject(ActivatedRoute);
+  readonly writing = this.route.snapshot.data['writing'] === true;
+  readonly section = this.writing ? '/writer' : '/stories';
   private readonly destroyRef = inject(DestroyRef);
   private chapterRequest?: Subscription;
   private storyRequest?: Subscription;
@@ -185,8 +187,12 @@ this.userService.loadCurrentUser().subscribe({
             this.errorMessage.set('El capítulo no pertenece a esta historia.');
             return;
           }
+          if (!this.writing && !chapter.published) {
+            this.errorMessage.set('Este capítulo todavía no está publicado.');
+            return;
+          }
           this.chapter.set(chapter);
-          this.registerReadingProgress(chapter);
+          if (!this.writing) this.registerReadingProgress(chapter);
         },
         error: error => {
           this.isLoading.set(false);
@@ -199,7 +205,11 @@ this.userService.loadCurrentUser().subscribe({
     this.storyRequest?.unsubscribe();
     this.storyRequest = this.storyService.getById(storyId)
       .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-        next: story => { this.story.set(story); },
+        next: story => { this.story.set(this.writing ? story : {
+          ...story,
+          chapters: story.chapters.filter(chapter => chapter.published),
+          chaptersCount: story.chapters.filter(chapter => chapter.published).length,
+        }); },
         error: error => { this.errorMessage.set(apiError(error)); }
       });
   }

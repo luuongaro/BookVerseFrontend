@@ -1,5 +1,5 @@
 <main>
-  <a routerLink="/stories">← Historias</a>
+  <a [routerLink]="section">{{ writing ? '← Escritorio' : '← Historias' }}</a>
   @if (isLoading()) {
     <p class="state" role="status">Cargando historia…</p>
   } @else if (errorMessage()) {
@@ -14,48 +14,50 @@
       <span class="access-badge" [class.premium]="currentStory.accessType === 'PREMIUM'">
         {{ currentStory.accessType === 'PREMIUM' ? 'Premium' : 'Gratuita' }}
       </span>
-      <span>{{ currentStory.chaptersCount }} capítulos disponibles</span>
+      <span>{{ visibleChapters().length }} capítulos{{ writing ? '' : ' disponibles' }}</span>
     </div>
     <div class="prose" [innerHTML]="currentStory.description"></div>
     <div class="story-actions">
       <div class="reading-actions">
         <a
           class="button read-button"
-          [routerLink]="['/stories', currentStory.idExternal, 'chapters']"
-          >Ver capítulos</a
+          [routerLink]="[section, currentStory.idExternal, 'chapters']"
+          >{{ writing ? 'Gestionar capítulos' : 'Ver capítulos' }}</a
         >
-        <button
-          class="button secondary save-button"
-          type="button"
-          [disabled]="saving() || saved()"
-          (click)="saveToLibrary()"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
+        @if (!writing) {
+          <button
+            class="button secondary save-button"
+            type="button"
+            [disabled]="saving() || saved()"
+            (click)="saveToLibrary()"
           >
-            <path d="M6 4h12v17l-6-4-6 4z" />
-          </svg>
-          {{ saving() ? 'Guardando…' : saved() ? 'En tu biblioteca' : 'Guardar en biblioteca' }}
-        </button>
-        <div class="related-links">
-          <a routerLink="/reviews" [queryParams]="{ storyId: currentStory.idExternal }"
-            >Ver reseñas</a
-          >
-          <a routerLink="/library">Mi biblioteca</a>
-        </div>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M6 4h12v17l-6-4-6 4z" />
+            </svg>
+            {{ saving() ? 'Guardando…' : saved() ? 'En tu biblioteca' : 'Guardar en biblioteca' }}
+          </button>
+          <div class="related-links">
+            <a routerLink="/reviews" [queryParams]="{ storyId: currentStory.idExternal }"
+              >Ver reseñas</a
+            >
+            <a routerLink="/library">Mi biblioteca</a>
+          </div>
+        }
       </div>
       @if (canManage()) {
         <details class="manage-story">
           <summary>Gestionar historia</summary>
           <div class="manage-options">
-            <a [routerLink]="['/stories', currentStory.idExternal, 'edit']">Editar historia</a>
-            <a [routerLink]="['/stories', currentStory.idExternal, 'chapters', 'new']"
+            <a [routerLink]="['/writer', currentStory.idExternal, 'edit']">Editar historia</a>
+            <a [routerLink]="['/writer', currentStory.idExternal, 'chapters', 'new']"
               >Nuevo capítulo</a
             >
             <button type="button" class="delete-option" (click)="confirmDelete()">
@@ -73,7 +75,7 @@
     }
     <h2>Capítulos</h2>
     <div class="chapters-list">
-      @for (chapter of currentStory.chapters; track chapter.idExternal) {
+      @for (chapter of visibleChapters(); track chapter.idExternal) {
         <article class="panel chapter-row">
           <div>
             <h3>{{ chapter.chapterNumber }}. {{ chapter.title }}</h3>
@@ -83,15 +85,15 @@
             @if (chapter.published || canManage()) {
               <a
                 class="chapter-read"
-                [routerLink]="['/stories', currentStory.idExternal, 'chapters', chapter.idExternal]"
-                >{{ chapter.published ? 'Leer capítulo' : 'Ver borrador' }}</a
+                [routerLink]="[section, currentStory.idExternal, 'chapters', chapter.idExternal]"
+                >{{ writing ? 'Vista previa' : 'Leer capítulo' }}</a
               >
             }
             @if (canManage()) {
               <a
                 class="chapter-edit"
                 [routerLink]="[
-                  '/stories',
+                  '/writer',
                   currentStory.idExternal,
                   'chapters',
                   chapter.idExternal,

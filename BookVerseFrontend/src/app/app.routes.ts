@@ -31,8 +31,7 @@ export const routes: Routes = [
       { path: 'library', component: MyLibrary },
       {
         path: 'writer',
-        loadComponent: () =>
-          import('./features/stories/pages/writer-desk/writer-desk').then((m) => m.WriterDesk),
+        loadChildren: () => import('./features/stories/writer.routes').then((m) => m.writerRoutes),
       },
       { path: 'stories', children: storiesRoutes },
       { path: 'groups', children: groupsRoutes },

@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, input, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -16,7 +16,6 @@ import { apiError } from '../../../../core/api/api.config';
 export class StoryList implements OnInit {
   private readonly service = inject(StoryService);
   private readonly destroyRef = inject(DestroyRef);
-  readonly mine = input(false);
   readonly result = signal<PageResponse<StoryResponse> | null>(null);
   readonly loading = signal(false);
   readonly error = signal('');
@@ -29,24 +28,18 @@ export class StoryList implements OnInit {
     this.request?.unsubscribe();
     this.loading.set(true);
     this.error.set('');
-    const userId = localStorage.getItem('userId');
-    if (this.mine() && !userId) {
-      this.error.set('Iniciá sesión para ver tus historias.');
-      this.loading.set(false);
-      return;
-    }
-    const request = this.mine()
-      ? this.service.getByAuthor(userId!, page)
-      : this.service.getAll(page);
-    this.request = request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (result) => {
-        this.result.set(result);
-        this.loading.set(false);
-      },
-      error: (error) => {
-        this.error.set(apiError(error));
-        this.loading.set(false);
-      },
-    });
+    this.request = this.service
+      .getToExplore(page)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (result) => {
+          this.result.set(result);
+          this.loading.set(false);
+        },
+        error: (error) => {
+          this.error.set(apiError(error));
+          this.loading.set(false);
+        },
+      });
   }
 }

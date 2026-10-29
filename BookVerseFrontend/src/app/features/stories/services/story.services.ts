@@ -13,6 +13,11 @@ export class StoryService {
   getAll(page = 0) {
     return this.http.get<PageResponse<StoryResponse>>(this.url, { params: { page, size: 12 } });
   }
+  getToExplore(page = 0) {
+    return this.http.get<PageResponse<StoryResponse>>(`${this.url}/explore`, {
+      params: { page, size: 12 },
+    });
+  }
   getById(id: string) {
     return this.http.get<StoryDetailResponse>(`${this.url}/${encodeURIComponent(id)}`);
   }

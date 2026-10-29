@@ -13,10 +13,10 @@ export class ChapterService {
   getById(id: string) {
     return this.http.get<ChapterResponse>(`${this.url}/${encodeURIComponent(id)}`);
   }
-  getByStory(storyId: string, page = 0) {
+  getByStory(storyId: string, page = 0, publishedOnly = false) {
     return this.http.get<PageResponse<ChapterResponse>>(
       `${this.url}/story/${encodeURIComponent(storyId)}`,
-      { params: { page, size: 20 } },
+      { params: { page, size: 20, ...(publishedOnly ? { publishedOnly: true } : {}) } },
     );
   }
   create(request: ChapterCreateRequest) {
