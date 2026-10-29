@@ -30,13 +30,20 @@ export class StoryDetail implements OnInit {
   private readonly permissions = inject(StoryPermissions);
   private readonly destroyRef = inject(DestroyRef);
   private readonly library = inject(LibraryService);
+  readonly writing = this.route.snapshot.data['writing'] === true;
+  readonly section = this.writing ? '/writer' : '/stories';
   readonly saving = signal(false);
   readonly saved = signal(false);
   readonly saveError = signal('');
   readonly story = signal<StoryDetailResponse | null>(null);
   readonly isLoading = signal(false);
   readonly errorMessage = signal('');
-  readonly canManage = computed(() => !!this.story() && this.permissions.canManage(this.story()!));
+  readonly canManage = computed(
+    () => this.writing && !!this.story() && this.permissions.canManage(this.story()!),
+  );
+  readonly visibleChapters = computed(
+    () => this.story()?.chapters.filter((chapter) => this.canManage() || chapter.published) ?? [],
+  );
   readonly deleting = signal(false);
   readonly deleteError = signal('');
   readonly deleted = signal(false);
@@ -79,7 +86,7 @@ export class StoryDetail implements OnInit {
   }
   saveToLibrary(): void {
     const story = this.story();
-    if (!story || this.saving() || this.saved()) return;
+    if (this.writing || !story || this.saving() || this.saved()) return;
     this.saving.set(true);
     this.saveError.set('');
     this.library
@@ -112,7 +119,7 @@ export class StoryDetail implements OnInit {
           this.deleting.set(false);
           this.deleted.set(true);
           this.deleteDialog().nativeElement.close();
-          void this.router.navigate(['/stories/mine']);
+          void this.router.navigate(['/writer']);
         },
         error: (error) => {
           this.deleting.set(false);

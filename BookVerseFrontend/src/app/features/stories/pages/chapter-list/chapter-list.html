@@ -12,7 +12,7 @@
       </div>
     } @else if (story(); as currentStory) {
       <header class="chapter-topbar">
-        <a class="back-link" [routerLink]="['/stories', currentStory.idExternal]">
+        <a class="back-link" [routerLink]="[section, currentStory.idExternal]">
           <span aria-hidden="true">←</span>
           Volver a la historia
         </a>
@@ -26,9 +26,7 @@
             {{ currentStory.title }}
           </h1>
 
-          <p>
-            {{ currentStory.description }}
-          </p>
+          <div class="prose" [innerHTML]="currentStory.description"></div>
         </div>
 
         <div class="hero-meta">
@@ -54,7 +52,7 @@
           @if (canManage()) {
             <a
               class="new-chapter-button"
-              [routerLink]="['/stories', currentStory.idExternal, 'chapters', 'new']"
+              [routerLink]="['/writer', currentStory.idExternal, 'chapters', 'new']"
             >
               <span aria-hidden="true">＋</span>
               Nuevo capítulo
@@ -94,13 +92,13 @@
                   <a
                     class="chapter-action read"
                     [routerLink]="[
-                      '/stories',
+                      section,
                       currentStory.idExternal,
                       'chapters',
                       chapter.idExternal,
                     ]"
                   >
-                    <span>{{ chapter.published ? 'Leer capítulo' : 'Ver borrador' }}</span>
+                    <span>{{ writing ? 'Vista previa' : 'Leer capítulo' }}</span>
                     <span aria-hidden="true">→</span>
                   </a>
                 }
@@ -109,7 +107,7 @@
                   <a
                     class="chapter-action edit"
                     [routerLink]="[
-                      '/stories',
+                      '/writer',
                       currentStory.idExternal,
                       'chapters',
                       chapter.idExternal,

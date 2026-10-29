@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { of, Subject, throwError } from 'rxjs';
 import { WriterDesk } from './pages/writer-desk/writer-desk';
@@ -10,7 +10,9 @@ import { StoryResponse } from './models/story-response';
 import { ChapterResponse } from './models/chapter-response';
 import { PageResponse } from './models/page-response';
 import { StoryAccessType } from './models/story-access-type';
+import { writerRoutes } from './writer.routes';
 import { storiesRoutes } from './stories.routes';
+import { StoryForm } from './pages/story-form/story-form';
 
 const story: StoryResponse = {
   idExternal: 'story',
@@ -71,10 +73,13 @@ async function setup(
   TestBed.configureTestingModule({
     providers: [
       provideRouter([
-        { path: 'writer', component: WriterDesk },
+        { path: 'writer', children: writerRoutes },
         { path: 'stories', children: storiesRoutes },
       ]),
-      { provide: StoryService, useValue: { getByAuthor } },
+      {
+        provide: StoryService,
+        useValue: { getByAuthor, getById: () => of({ ...story, chapters: [] }) },
+      },
       { provide: ChapterService, useValue: { getByStory } },
     ],
   });
@@ -92,11 +97,20 @@ describe('Writing desk', () => {
     const view = harness.routeNativeElement!;
     expect(view.textContent).toContain('Borrador');
     expect(view.textContent).toContain('Publicado');
-    expect(view.querySelector('a[href="/stories/new"]')).not.toBeNull();
-    expect(view.querySelector('a[href="/stories/story/edit"]')).not.toBeNull();
-    expect(view.querySelector('a[href="/stories/story/chapters/new"]')).not.toBeNull();
-    expect(view.querySelector('a[href="/stories/story/chapters/draft/edit"]')).not.toBeNull();
-    expect(view.querySelector('a[href="/stories/story/chapters"]')).not.toBeNull();
+    expect(view.querySelector('a[href="/writer/new"]')).not.toBeNull();
+    expect(view.querySelector('a[href="/writer/story/edit"]')).not.toBeNull();
+    expect(view.querySelector('a[href="/writer/story/chapters/new"]')).not.toBeNull();
+    expect(view.querySelector('a[href="/writer/story/chapters/draft/edit"]')).not.toBeNull();
+    expect(view.querySelector('a[href="/writer/story/chapters"]')).not.toBeNull();
+    expect(view.querySelector('a[href^="/stories"]')).toBeNull();
+  });
+
+  it('redirects existing writing links to the writing workspace routes', async () => {
+    const { harness } = await setup();
+    await harness.navigateByUrl('/stories/story/edit', StoryForm);
+    expect(TestBed.inject(Router).url).toBe('/writer/story/edit');
+    await harness.navigateByUrl('/stories/new', StoryForm);
+    expect(TestBed.inject(Router).url).toBe('/writer/new');
   });
 
   it('does not request stories or chapters when the user is missing', async () => {
@@ -111,7 +125,7 @@ describe('Writing desk', () => {
     const { harness, desk, getByStory } = await setup({ empty: true });
     expect(harness.routeNativeElement!.textContent).toContain('Todavía no creaste historias');
     expect(harness.routeNativeElement!.querySelector('.empty-desk a')?.getAttribute('href')).toBe(
-      '/stories/new',
+      '/writer/new',
     );
     expect(getByStory).not.toHaveBeenCalled();
     expect(desk.selected()).toBeNull();
@@ -170,7 +184,7 @@ describe('Writing desk', () => {
     expect(desk.error()).toContain('tus historias');
     expect(desk.selected()).toBeNull();
     expect(getByStory).not.toHaveBeenCalled();
-    expect(harness.routeNativeElement!.querySelector('a[href="/stories/story/edit"]')).toBeNull();
+    expect(harness.routeNativeElement!.querySelector('a[href="/writer/story/edit"]')).toBeNull();
   });
 
   it('rejects chapters from a different story', async () => {

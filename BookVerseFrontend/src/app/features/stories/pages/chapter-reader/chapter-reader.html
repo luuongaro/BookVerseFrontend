@@ -32,7 +32,7 @@
           <a
             class="text-button"
             [routerLink]="[
-              '/stories',
+              section,
               storyId()
             ]"
           >
@@ -53,7 +53,7 @@
         <a
           class="back-link"
           [routerLink]="[
-            '/stories',
+            section,
             storyId()
           ]"
         >
@@ -79,6 +79,7 @@
 
         </span>
 
+        @if (!writing) {
         <button
           class="bookmark-button"
           type="button"
@@ -111,6 +112,7 @@
           </svg>
 
         </button>
+        }
 
       </header>
 
@@ -131,9 +133,10 @@
         </h1>
 
         <p class="chapter-number-label">
-          Capítulo {{ currentChapter.chapterNumber }}
+          {{ writing ? 'Vista previa · ' : '' }}Capítulo {{ currentChapter.chapterNumber }}
         </p>
 
+@if (!writing) {
         <div
   class="reading-progress-state"
   aria-live="polite"
@@ -160,6 +163,7 @@
   }
 
 </div>
+}
         <div
           class="paper-divider moon"
           aria-hidden="true"
@@ -183,7 +187,7 @@
       <a
         class="chapter-nav-link previous"
         [routerLink]="[
-          '/stories',
+          section,
           storyId(),
           'chapters',
           previous.idExternal
@@ -222,7 +226,7 @@
       <a
         class="chapter-nav-link next"
         [routerLink]="[
-          '/stories',
+          section,
           storyId(),
           'chapters',
           next.idExternal
@@ -271,7 +275,7 @@
           <a
             class="return-link"
             [routerLink]="[
-              '/stories',
+              section,
               storyId()
             ]"
           >

@@ -4,7 +4,7 @@
       <h1>Escritorio</h1>
       <p>Tus historias y capítulos.</p>
     </div>
-    <a class="button primary" routerLink="/stories/new">
+    <a class="button primary" routerLink="/writer/new">
       <span aria-hidden="true">＋</span> Nueva historia
     </a>
   </header>
@@ -58,9 +58,6 @@
               </button>
             </nav>
           }
-          <a class="explore-link" routerLink="/stories"
-            >Explorar historias</a
-          >
         </section>
 
         @if (selected(); as story) {
@@ -76,10 +73,8 @@
               </div>
               <h2 id="selected-story-title">{{ story.title }}</h2>
               <div class="story-actions">
-                <a [routerLink]="['/stories', story.idExternal, 'edit']">Editar historia</a>
-                <a [routerLink]="['/stories', story.idExternal]"
-                  >Ver historia</a
-                >
+                <a [routerLink]="['/writer', story.idExternal, 'edit']">Editar historia</a>
+                <a [routerLink]="['/writer', story.idExternal]">Gestionar historia</a>
               </div>
             </header>
             <div class="chapters-heading">
@@ -91,7 +86,7 @@
               </h3>
               <a
                 class="button primary"
-                [routerLink]="['/stories', story.idExternal, 'chapters', 'new']"
+                [routerLink]="['/writer', story.idExternal, 'chapters', 'new']"
               >
                 <span aria-hidden="true">＋</span> Nuevo capítulo
               </a>
@@ -120,7 +115,7 @@
                     <a
                       class="edit-chapter"
                       [routerLink]="[
-                        '/stories',
+                        '/writer',
                         story.idExternal,
                         'chapters',
                         chapter.idExternal,
@@ -156,7 +151,7 @@
                   </button>
                 </nav>
               }
-              <a class="manage-link" [routerLink]="['/stories', story.idExternal, 'chapters']"
+              <a class="manage-link" [routerLink]="['/writer', story.idExternal, 'chapters']"
                 >Gestionar capítulos <span aria-hidden="true">→</span></a
               >
             }
@@ -168,7 +163,7 @@
         <span class="empty-icon" aria-hidden="true">✎</span>
         <h2>Todavía no creaste historias</h2>
         <p>Agregá el título y la descripción. Después podés escribir y publicar sus capítulos.</p>
-        <a class="button primary" routerLink="/stories/new">Crear historia</a>
+        <a class="button primary" routerLink="/writer/new">Crear historia</a>
       </section>
     }
   }

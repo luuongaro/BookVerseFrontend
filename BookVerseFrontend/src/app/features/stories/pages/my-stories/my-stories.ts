@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
-import { StoryList } from '../story-list/story-list';
+import { WriterDesk } from '../writer-desk/writer-desk';
 @Component({
   selector: 'app-my-stories',
-  imports: [StoryList],
+  imports: [WriterDesk],
   templateUrl: './my-stories.html',
   styleUrl: './my-stories.css',
 })

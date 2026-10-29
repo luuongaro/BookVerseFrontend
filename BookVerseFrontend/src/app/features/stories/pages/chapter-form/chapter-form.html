@@ -7,7 +7,7 @@
       </div>
     } @else {
       <header class="editor-header">
-        <a class="back-link" [routerLink]="['/stories', storyId(), 'chapters']">
+        <a class="back-link" [routerLink]="['/writer', storyId(), 'chapters']">
           <span aria-hidden="true">←</span>
           Volver a capítulos
         </a>
@@ -73,7 +73,7 @@
                   class="context-chapter"
                   [class.selected]="chapter.idExternal === chapterId()"
                   [routerLink]="[
-                    '/stories',
+                    '/writer',
                     currentStory.idExternal,
                     'chapters',
                     chapter.idExternal,
@@ -99,7 +99,7 @@
 
             <a
               class="new-chapter-link"
-              [routerLink]="['/stories', currentStory.idExternal, 'chapters', 'new']"
+              [routerLink]="['/writer', currentStory.idExternal, 'chapters', 'new']"
             >
               <span aria-hidden="true">＋</span>
               Nuevo capítulo

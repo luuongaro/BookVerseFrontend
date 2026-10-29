@@ -64,6 +64,11 @@ describe('Stories API contracts', () => {
     expect(all.request.params.get('size')).toBe('12');
     expect(all.request.headers.get('Authorization')).toBe('Bearer token');
     all.flush(page([story], 2));
+    service.getToExplore(1).subscribe();
+    const explore = http.expectOne((r) => r.url.endsWith('/stories/explore'));
+    expect(explore.request.params.get('page')).toBe('1');
+    expect(explore.request.headers.get('Authorization')).toBe('Bearer token');
+    explore.flush(page([]));
     service.getByAuthor('owner/id', 1).subscribe();
     const author = http.expectOne((r) => r.url.endsWith('/author/owner%2Fid'));
     expect(author.request.params.get('page')).toBe('1');
@@ -101,41 +106,48 @@ describe('Story management permissions', () => {
   });
 });
 
-describe('Story discovery and personal stories', () => {
-  function setup(mine = false) {
-    const getAll = vi.fn(() => of(page([story])));
+describe('Story discovery', () => {
+  function setup() {
+    const getToExplore = vi.fn(() => of(page([{ ...story, authorId: 'other-author' }])));
     const getByAuthor = vi.fn(() => of(page([story])));
     TestBed.configureTestingModule({
       imports: [StoryList],
-      providers: [provideRouter([]), { provide: StoryService, useValue: { getAll, getByAuthor } }],
+      providers: [
+        provideRouter([]),
+        { provide: StoryService, useValue: { getToExplore, getByAuthor } },
+      ],
     });
     const fixture = TestBed.createComponent(StoryList);
-    fixture.componentRef.setInput('mine', mine);
     fixture.detectChanges();
-    return { fixture, getAll, getByAuthor };
+    return { fixture, getToExplore, getByAuthor };
   }
   it('loads real pages and requests the next page instead of showing example stories', () => {
-    const { fixture, getAll } = setup();
+    const { fixture, getToExplore } = setup();
     expect(fixture.nativeElement.textContent).toContain('Historia real');
     expect(fixture.nativeElement.textContent).not.toContain('Cartas para la Luna');
     fixture.componentInstance.load(1);
-    expect(getAll).toHaveBeenLastCalledWith(1);
+    expect(getToExplore).toHaveBeenLastCalledWith(1);
   });
-  it('requests only the logged-in author for Mis historias', () => {
-    const { getAll, getByAuthor } = setup(true);
-    expect(getAll).not.toHaveBeenCalled();
-    expect(getByAuthor).toHaveBeenCalledWith('owner', 0);
+  it('uses the reading catalog without offering writing or personal-story links', () => {
+    const { fixture, getToExplore, getByAuthor } = setup();
+    expect(getToExplore).toHaveBeenCalledWith(0);
+    expect(getByAuthor).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('a[href^="/writer"]')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Nueva historia');
+    expect(fixture.nativeElement.textContent).not.toContain('Mis historias');
   });
   it('shows an empty state and lets a failed request be retried', () => {
-    const { fixture, getAll } = setup();
-    getAll.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 0 })));
+    const { fixture, getToExplore } = setup();
+    getToExplore.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 0 })));
     fixture.componentInstance.load();
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('conectar');
-    getAll.mockReturnValueOnce(of(page([])));
+    getToExplore.mockReturnValueOnce(of(page([])));
     fixture.componentInstance.load();
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Todavía no hay historias');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Todavía no hay historias de otros autores',
+    );
   });
 });
 
@@ -144,6 +156,7 @@ describe('Story form and details', () => {
     component: typeof StoryForm | typeof StoryDetail,
     role = true,
     response = of(story),
+    writing = false,
   ) {
     const getById = vi.fn(() => response);
     const update = vi.fn();
@@ -153,8 +166,9 @@ describe('Story form and details', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([
-          { path: 'stories/:id/edit', component: StoryForm },
-          { path: 'stories/new', component: StoryForm },
+          { path: 'writer/:id/edit', component: StoryForm },
+          { path: 'writer/new', component: StoryForm },
+          { path: 'writer/:id', component: StoryDetail, data: { writing: true } },
           { path: 'stories/:id', component: StoryDetail },
         ]),
         { provide: StoryService, useValue: { getById, update, create, delete: remove } },
@@ -164,7 +178,7 @@ describe('Story form and details', () => {
     });
     const harness = await RouterTestingHarness.create();
     const instance = await harness.navigateByUrl<StoryForm | StoryDetail>(
-      component === StoryForm ? '/stories/story/edit' : '/stories/story',
+      component === StoryForm ? '/writer/story/edit' : writing ? '/writer/story' : '/stories/story',
       component,
     );
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
@@ -227,7 +241,7 @@ describe('Story form and details', () => {
     expect(form.errorMessage()).toContain('permiso');
   });
   it('offers the first chapter action even when a story has no chapters and permits cancelling deletion', async () => {
-    const { instance, harness, remove, navigate } = await setup(StoryDetail);
+    const { instance, harness, remove, navigate } = await setup(StoryDetail, true, of(story), true);
     const detail = instance as StoryDetail;
     expect(harness.routeNativeElement!.textContent).toContain('Nuevo capítulo');
     const dialog = harness.routeNativeElement!.querySelector('dialog')!;
@@ -248,11 +262,11 @@ describe('Story form and details', () => {
     remove.mockReturnValueOnce(of(undefined));
     detail.deleteStory();
     expect(detail.deleted()).toBe(true);
-    expect(navigate).toHaveBeenCalledWith(['/stories/mine']);
+    expect(navigate).toHaveBeenCalledWith(['/writer']);
   });
   it('creates a story for the current user and sends trimmed data once', async () => {
     const { harness, create } = await setup(StoryForm);
-    const form = await harness.navigateByUrl('/stories/new', StoryForm);
+    const form = await harness.navigateByUrl('/writer/new', StoryForm);
     const pending = new Subject<StoryResponse>();
     create.mockReturnValue(pending);
     form.form.controls.title.setValue('  Nueva historia  ');
@@ -293,6 +307,32 @@ describe('Story form and details', () => {
     expect(saveStory).toHaveBeenCalledTimes(2);
     expect(saveStory).toHaveBeenLastCalledWith('story');
     expect(detail.saved()).toBe(true);
+  });
+  it('keeps the reading detail free of writing controls even when the user can manage the story', async () => {
+    const { instance, harness, remove } = await setup(StoryDetail, true);
+    const detail = instance as StoryDetail;
+    expect(detail.canManage()).toBe(false);
+    expect(harness.routeNativeElement!.querySelector('.manage-story')).toBeNull();
+    expect(harness.routeNativeElement!.querySelector('a[href^="/writer"]')).toBeNull();
+    detail.confirmDelete();
+    detail.deleteStory();
+    expect(remove).not.toHaveBeenCalled();
+  });
+  it('shows only published chapters in reading details and all chapters in the writing workspace', async () => {
+    const chapters = [
+      { idExternal: 'published', chapterNumber: 1, title: 'Publicado', published: true, createdAt: '' },
+      { idExternal: 'draft', chapterNumber: 2, title: 'Borrador', published: false, createdAt: '' },
+    ];
+    const { instance, harness } = await setup(
+      StoryDetail,
+      true,
+      of({ ...story, chapters, chaptersCount: 2 }),
+    );
+    expect((instance as StoryDetail).visibleChapters()).toHaveLength(1);
+    const writer = await harness.navigateByUrl('/writer/story', StoryDetail);
+    expect(writer.visibleChapters()).toHaveLength(2);
+    expect(harness.routeNativeElement!.querySelector('.save-button')).toBeNull();
+    expect(harness.routeNativeElement!.querySelector('a[href^="/stories"]')).toBeNull();
   });
   it('explains the subscription restriction when a Free user saves a Premium story', async () => {
     const { instance, saveStory } = await setup(StoryDetail);

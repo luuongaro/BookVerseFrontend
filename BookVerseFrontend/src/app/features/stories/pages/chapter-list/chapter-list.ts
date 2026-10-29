@@ -32,13 +32,17 @@ export class ChapterList implements OnInit {
   private readonly stories = inject(StoryService);
   private readonly permissions = inject(StoryPermissions);
   private readonly destroyRef = inject(DestroyRef);
+  readonly writing = this.route.snapshot.data['writing'] === true;
+  readonly section = this.writing ? '/writer' : '/stories';
   readonly storyId = signal<string | null>(null);
   readonly story = signal<StoryDetailResponse | null>(null);
   readonly result = signal<PageResponse<ChapterResponse> | null>(null);
   readonly chapters = computed(() => this.result()?.content ?? []);
   readonly isLoading = signal(false);
   readonly errorMessage = signal<string | null>(null);
-  readonly canManage = computed(() => !!this.story() && this.permissions.canManage(this.story()!));
+  readonly canManage = computed(
+    () => this.writing && !!this.story() && this.permissions.canManage(this.story()!),
+  );
   readonly deleting = signal(false);
   readonly selectedChapter = signal<ChapterResponse | null>(null);
   readonly deleteError = signal('');
@@ -64,7 +68,9 @@ export class ChapterList implements OnInit {
     }
     this.request = forkJoin({
       story: this.stories.getById(id),
-      result: this.service.getByStory(id, page),
+      result: this.writing
+        ? this.service.getByStory(id, page)
+        : this.service.getByStory(id, page, true),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({

@@ -1,23 +1,25 @@
 import { Routes } from '@angular/router';
 
 import { StoryDetail } from './pages/story-detail/story-detail';
-import { StoryForm } from './pages/story-form/story-form';
 import { StoryList } from './pages/story-list/story-list';
 import { ChapterList } from './pages/chapter-list/chapter-list';
 import { ChapterReader } from './pages/chapter-reader/chapter-reader';
-import { ChapterForm } from './pages/chapter-form/chapter-form';
 
 export const storiesRoutes: Routes = [
   { path: '', component: StoryList },
 
-  { path: 'new', component: StoryForm },
+  { path: 'new', redirectTo: '/writer/new', pathMatch: 'full' },
   { path: 'mine', redirectTo: '/writer', pathMatch: 'full' },
 
-  { path: ':id/edit', component: StoryForm },
+  { path: ':id/edit', redirectTo: '/writer/:id/edit', pathMatch: 'full' },
 
-  { path: ':id/chapters/new', component: ChapterForm },
+  { path: ':id/chapters/new', redirectTo: '/writer/:id/chapters/new', pathMatch: 'full' },
 
-  { path: ':id/chapters/:chapterId/edit', component: ChapterForm },
+  {
+    path: ':id/chapters/:chapterId/edit',
+    redirectTo: '/writer/:id/chapters/:chapterId/edit',
+    pathMatch: 'full',
+  },
 
   { path: ':id/chapters/:chapterId', component: ChapterReader },
 
