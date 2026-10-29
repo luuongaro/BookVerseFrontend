@@ -6,15 +6,13 @@ import {
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, map, Observable, of, switchMap } from 'rxjs';
 
 import { ReadingGroupsService } from '../../services/reading-groups.service';
 import { UserService } from '../../../profile/services/user.service';
+import { LibraryService } from '../../../library/services/library.service';
 
 type GroupWorkType = 'book' | 'story';
-
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 @Component({
   selector: 'app-group-form',
@@ -29,11 +27,14 @@ export class GroupForm implements OnInit {
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly userService = inject(UserService);
+  private readonly libraryService = inject(LibraryService);
 
   groupId: string | null = null;
   isLoading = false;
   isSaving = false;
   errorMessage = '';
+  works: { idExternal: string; title: string }[] = [];
+  isLoadingWorks = false;
 
   get currentUsername(): string {
     return this.userService.currentUser()?.username ?? 'Usuario';
@@ -58,7 +59,7 @@ export class GroupForm implements OnInit {
       ],
     ],
     workType: ['book' as GroupWorkType, Validators.required],
-    referenceId: ['', [Validators.required, Validators.pattern(UUID_PATTERN)]],
+    referenceId: ['', Validators.required],
   });
 
   ngOnInit(): void {
@@ -66,7 +67,69 @@ export class GroupForm implements OnInit {
 
     if (this.groupId) {
       this.loadGroup(this.groupId);
+    } else {
+      this.loadWorks();
     }
+  }
+
+  private loadAllPages<T>(
+    getPage: (page: number) => Observable<{ content: T[]; last: boolean }>,
+    page = 0,
+    accumulated: T[] = [],
+  ): Observable<T[]> {
+    return getPage(page).pipe(
+      switchMap((result) => {
+        const allItems = [...accumulated, ...result.content];
+
+        return result.last
+          ? of(allItems)
+          : this.loadAllPages(getPage, page + 1, allItems);
+      }),
+    );
+  }
+
+  loadWorks(): void {
+    const workType = this.groupForm.controls.workType.value;
+
+    this.isLoadingWorks = true;
+    this.errorMessage = '';
+    this.works = [];
+    this.groupForm.controls.referenceId.setValue('');
+
+    const request: Observable<{ idExternal: string; title: string }[]> = this.libraryService
+      .getMyLibrary()
+      .pipe(
+        map((library) =>
+          workType === 'book'
+            ? library.entries.map(({ book }) => ({
+                idExternal: book.idExternal,
+                title: book.title,
+              }))
+            : (library.stories ?? []).map(({ story }) => ({
+                idExternal: story.idExternal,
+                title: story.title,
+              })),
+        ),
+      );
+
+    request
+      .pipe(
+        finalize(() => {
+          this.isLoadingWorks = false;
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (works) => {
+          this.works = works;
+          this.cdr.markForCheck();
+        },
+        error: (error: unknown) => {
+          console.error('Error loading works:', error);
+          this.errorMessage = 'No se pudieron cargar las obras disponibles.';
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   private loadGroup(groupId: string): void {
@@ -105,12 +168,6 @@ export class GroupForm implements OnInit {
 
   get isEditing(): boolean {
     return this.groupId !== null;
-  }
-
-  get referenceLabel(): string {
-    return this.groupForm.controls.workType.value === 'book'
-      ? 'UUID del libro'
-      : 'UUID de la historia';
   }
 
   onSubmit(): void {

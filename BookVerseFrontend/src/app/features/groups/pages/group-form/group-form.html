@@ -84,40 +84,46 @@
             @if (!isEditing) {
               <div class="field">
                 <label for="workType">¿Qué van a leer?</label>
-                <select id="workType" formControlName="workType">
-                  <option value="book">Un libro publicado</option>
-                  <option value="story">Una historia de la comunidad</option>
+                <select
+                  id="workType"
+                  formControlName="workType"
+                  (change)="loadWorks()"
+                >
+                  <option value="book">Un libro</option>
+                  <option value="story">Una historia</option>
                 </select>
               </div>
 
               <div class="field">
-                <label for="referenceId">{{ referenceLabel }}</label>
-                <input
+                <label for="referenceId">Elegí la obra</label>
+                <select
                   id="referenceId"
-                  type="text"
                   formControlName="referenceId"
-                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                  autocomplete="off"
-                />
+                  [disabled]="isLoadingWorks || works.length === 0"
+                >
+                  <option value="" disabled>
+                    {{ isLoadingWorks ? 'Cargando tu biblioteca…' : 'Seleccioná una obra' }}
+                  </option>
 
-                <small class="field-hint">
-                  Ingresá el UUID de la obra que compartirán.
-                </small>
+                  @for (work of works; track work.idExternal) {
+                    <option [value]="work.idExternal">
+                      {{ work.title }}
+                    </option>
+                  }
+                </select>
 
                 @if (
                   groupForm.controls.referenceId.touched &&
                   groupForm.controls.referenceId.hasError('required')
                 ) {
-                  <small class="field-error">
-                    Ingresá el UUID de la obra.
-                  </small>
+                  <small class="field-error">Elegí una obra para el grupo.</small>
                 }
 
-                @if (
-                  groupForm.controls.referenceId.touched &&
-                  groupForm.controls.referenceId.hasError('pattern')
-                ) {
-                  <small class="field-error">Ingresá un UUID válido.</small>
+                @if (!isLoadingWorks && works.length === 0 && !errorMessage) {
+                  <small class="field-hint">
+                    No tenés obras disponibles en tu biblioteca para seleccionar.
+                    <a routerLink="/library">Ir a mi biblioteca</a>
+                  </small>
                 }
               </div>
             }
