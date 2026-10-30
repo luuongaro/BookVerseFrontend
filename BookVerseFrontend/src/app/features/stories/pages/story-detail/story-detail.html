@@ -19,11 +19,10 @@
     <div class="prose" [innerHTML]="currentStory.description"></div>
     <div class="story-actions">
       <div class="reading-actions">
-        <a
-          class="button read-button"
-          [routerLink]="[section, currentStory.idExternal, 'chapters']"
-          >{{ writing ? 'Gestionar capítulos' : 'Ver capítulos' }}</a
-        >
+        <a class="button read-button" [routerLink]="[section, currentStory.idExternal, 'chapters']">
+          {{ writing ? 'Gestionar capítulos' : 'Ver capítulos' }}
+        </a>
+
         @if (!writing) {
           <button
             class="button secondary save-button"
@@ -42,24 +41,40 @@
             >
               <path d="M6 4h12v17l-6-4-6 4z" />
             </svg>
+
             {{ saving() ? 'Guardando…' : saved() ? 'En tu biblioteca' : 'Guardar en biblioteca' }}
           </button>
+
+          <button
+            class="button secondary tip-button"
+            type="button"
+            [disabled]="tipping()"
+            (click)="sendTip(1000)"
+          >
+            {{ tipping() ? 'Preparando checkout…' : '☕ Dejar un cafecito · $1.000' }}
+          </button>
+
           <div class="related-links">
-            <a routerLink="/reviews" [queryParams]="{ storyId: currentStory.idExternal }"
-              >Ver reseñas</a
-            >
-            <a routerLink="/library">Mi biblioteca</a>
+            <a routerLink="/reviews" [queryParams]="{ storyId: currentStory.idExternal }">
+              Ver reseñas
+            </a>
+
+            <a routerLink="/library"> Mi biblioteca </a>
           </div>
         }
       </div>
+
       @if (canManage()) {
         <details class="manage-story">
           <summary>Gestionar historia</summary>
+
           <div class="manage-options">
-            <a [routerLink]="['/writer', currentStory.idExternal, 'edit']">Editar historia</a>
-            <a [routerLink]="['/writer', currentStory.idExternal, 'chapters', 'new']"
-              >Nuevo capítulo</a
-            >
+            <a [routerLink]="['/writer', currentStory.idExternal, 'edit']"> Editar historia </a>
+
+            <a [routerLink]="['/writer', currentStory.idExternal, 'chapters', 'new']">
+              Nuevo capítulo
+            </a>
+
             <button type="button" class="delete-option" (click)="confirmDelete()">
               Eliminar historia
             </button>
@@ -69,6 +84,9 @@
     </div>
     @if (saveError()) {
       <p class="validation" role="alert">{{ saveError() }}</p>
+    }
+    @if (tipError()) {
+      <p class="validation" role="alert">{{ tipError() }}</p>
     }
     @if (saved()) {
       <p role="status">Historia guardada en tu biblioteca.</p>

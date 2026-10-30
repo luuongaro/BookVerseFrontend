@@ -16,6 +16,7 @@ import { StoryPermissions } from '../../services/story-permissions.service';
 import { StoryDetailResponse } from '../../models/story-detail-response';
 import { apiError } from '../../../../core/api/api.config';
 import { LibraryService, libraryError } from '../../../library/services/library.service';
+import { TipService } from '../../../tips/services/tip.service';
 
 @Component({
   selector: 'app-story-detail',
@@ -24,9 +25,11 @@ import { LibraryService, libraryError } from '../../../library/services/library.
   styleUrl: './story-detail.css',
 })
 export class StoryDetail implements OnInit {
+
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly service = inject(StoryService);
+  private readonly tips = inject(TipService);
   private readonly permissions = inject(StoryPermissions);
   private readonly destroyRef = inject(DestroyRef);
   private readonly library = inject(LibraryService);
@@ -35,6 +38,8 @@ export class StoryDetail implements OnInit {
   readonly saving = signal(false);
   readonly saved = signal(false);
   readonly saveError = signal('');
+  readonly tipping = signal(false);
+  readonly tipError = signal('');
   readonly story = signal<StoryDetailResponse | null>(null);
   readonly isLoading = signal(false);
   readonly errorMessage = signal('');
@@ -49,9 +54,11 @@ export class StoryDetail implements OnInit {
   readonly deleted = signal(false);
   readonly deleteDialog = viewChild.required<ElementRef<HTMLDialogElement>>('deleteDialog');
   private request?: Subscription;
+  
   ngOnInit(): void {
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.load());
   }
+
   load(): void {
     const id = this.route.snapshot.paramMap.get('id');
     this.request?.unsubscribe();
@@ -103,6 +110,34 @@ export class StoryDetail implements OnInit {
         },
       });
   }
+  
+  sendTip(amount: number): void {
+  const story = this.story();
+
+  if (!story || this.writing || this.tipping()) return;
+
+  this.tipping.set(true);
+  this.tipError.set('');
+
+  this.tips
+    .createTip({
+      storyId: story.idExternal,
+      amount,
+      message: `Cafecito para ${story.title}`,
+    })
+    .pipe(takeUntilDestroyed(this.destroyRef))
+    .subscribe({
+      next: (response) => {
+        this.tipping.set(false);
+        window.location.href = response.checkout.checkoutUrl;
+      },
+      error: (error) => {
+        this.tipping.set(false);
+        this.tipError.set(apiError(error));
+      },
+    });
+}
+
   cancelDelete(): void {
     if (!this.deleting()) this.deleteDialog().nativeElement.close();
   }
@@ -127,4 +162,6 @@ export class StoryDetail implements OnInit {
         },
       });
   }
+
+  
 }
