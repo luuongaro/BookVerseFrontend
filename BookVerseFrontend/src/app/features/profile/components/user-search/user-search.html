@@ -1,0 +1,69 @@
+<label class="search-field">
+  <span>Buscar por nombre de usuario</span>
+  <input
+    type="search"
+    [value]="query"
+    (input)="search($event)"
+    maxlength="100"
+    placeholder="Nombre de usuario"
+    autocomplete="off"
+    [disabled]="disabled"
+  />
+</label>
+
+<div class="search-results" [class.selection-list]="selectable" [attr.aria-busy]="loading()">
+  @if (loading()) {
+    <p class="state" role="status">Buscando usuarios…</p>
+  } @else if (error()) {
+    <div class="state error" role="alert">
+      <p>{{ error() }}</p>
+      <button type="button" (click)="request(page())">Reintentar</button>
+    </div>
+  } @else if (!profiles().length) {
+    <p class="state" role="status">No encontramos usuarios con ese nombre.</p>
+  } @else {
+    @for (user of profiles(); track user.idExternal) {
+      <article class="user-card" [class.selected]="selectedUserId === user.idExternal">
+        <a class="user-identity" [routerLink]="['/users', user.idExternal]">
+          <span class="avatar" aria-hidden="true">{{ initials(user.username) }}</span>
+          <span class="user-name">{{ '@' + user.username }}</span>
+        </a>
+        @if (selectable) {
+          <button
+            type="button"
+            (click)="select(user)"
+            [disabled]="
+              disabled || memberIds.includes(user.idExternal) || selectedUserId === user.idExternal
+            "
+          >
+            {{
+              memberIds.includes(user.idExternal)
+                ? 'Ya es miembro'
+                : selectedUserId === user.idExternal
+                  ? 'Seleccionado'
+                  : 'Seleccionar'
+            }}
+          </button>
+        } @else {
+          <a class="profile-link" [routerLink]="['/users', user.idExternal]">Ver perfil</a>
+        }
+      </article>
+    }
+  }
+</div>
+
+@if (!loading() && !error() && totalPages() > 1) {
+  <nav class="pagination" aria-label="Páginas de usuarios">
+    <button type="button" [disabled]="disabled || page() === 0" (click)="request(page() - 1)">
+      Anterior
+    </button>
+    <span aria-live="polite">{{ page() + 1 }} de {{ totalPages() }}</span>
+    <button
+      type="button"
+      [disabled]="disabled || page() + 1 >= totalPages()"
+      (click)="request(page() + 1)"
+    >
+      Siguiente
+    </button>
+  </nav>
+}

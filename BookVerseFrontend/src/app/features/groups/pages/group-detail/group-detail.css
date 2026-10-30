@@ -25,151 +25,6 @@
   background: var(--paper);
 }
 
-.sidebar {
-  min-height: 100vh;
-  padding: 28px 16px 20px;
-  display: flex;
-  flex-direction: column;
-  border-right: 1px solid var(--line);
-  background: var(--sidebar-bg);
-}
-
-.sidebar-brand {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  color: var(--ink);
-  font-family: var(--serif);
-  font-size: 29px;
-  letter-spacing: -1.2px;
-  text-decoration: none;
-}
-
-.brand-symbol {
-  width: 35px;
-  height: 37px;
-  display: grid;
-  place-items: center;
-  border-radius: 10px 10px 10px 3px;
-  background: #7968b1;
-  color: #fff;
-  transform: rotate(-4deg);
-}
-
-.brand-symbol svg {
-  width: 23px;
-  height: 23px;
-  transform: rotate(4deg);
-}
-
-.brand-wordmark > span,
-.brand-wordmark sup {
-  color: #7968b1;
-}
-
-.brand-wordmark sup {
-  margin-left: 3px;
-  font-family: var(--sans);
-  font-size: 11px;
-}
-
-.sidebar-label {
-  margin: 53px 5px 20px;
-  color: #aaa3b5;
-  font-size: 11px;
-  letter-spacing: 1.4px;
-}
-
-.sidebar-nav,
-.sidebar-bottom {
-  display: grid;
-  gap: 7px;
-}
-
-.sidebar-link {
-  min-height: 44px;
-  padding: 0 11px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border-radius: 10px;
-  color: #898497;
-  font-size: 13px;
-  text-decoration: none;
-}
-
-.sidebar-link svg {
-  width: 19px;
-  height: 19px;
-  flex: 0 0 auto;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.sidebar-link:hover,
-.sidebar-link.active {
-  background: #e9e1f1;
-  color: #675799;
-}
-
-.sidebar-link.active {
-  font-weight: 600;
-}
-
-.active-dot {
-  width: 5px;
-  height: 5px;
-  margin-left: auto;
-  border-radius: 50%;
-  background: #7968b1;
-}
-
-.sidebar-quote {
-  margin: 17px 6px auto;
-  padding: 10px;
-  color: #ab9ac2;
-  text-align: center;
-}
-
-.quote-sparkle {
-  font-size: 24px;
-}
-
-.sidebar-quote p {
-  margin: 12px 0;
-  font-family: var(--serif);
-  font-size: 23px;
-  font-style: italic;
-  line-height: 1.25;
-}
-
-.sidebar-quote small {
-  font-size: 9px;
-  letter-spacing: 1px;
-}
-
-.sidebar-bottom {
-  gap: 5px;
-  margin-top: 25px;
-}
-
-.sidebar-bottom .sidebar-link {
-  min-height: 38px;
-}
-
-.account-link {
-  margin-top: 12px;
-  padding: 13px 4px 0;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  border-top: 1px solid var(--line);
-  color: var(--ink);
-  text-decoration: none;
-}
 
 .avatar {
   width: 35px;
@@ -599,7 +454,7 @@
 
 .goal-actions,
 .member-management,
-.add-member-form {
+.invite-form {
   margin-top: 11px;
   display: flex;
   flex-wrap: wrap;
@@ -711,7 +566,7 @@
   margin-top: 14px;
 }
 
-.add-member-form input {
+.invite-form input {
   min-width: 0;
   min-height: 38px;
   flex: 1 1 170px;
@@ -1140,3 +995,7 @@
     font-size: 18px;
   }
 }
+
+.member-name-list a, .comment-author a { color: inherit; text-decoration: none; text-underline-offset: 3px; }
+.member-name-list a:hover, .comment-author a:hover { color: #665498; text-decoration: underline; }
+.member-success { color: #416c59; }

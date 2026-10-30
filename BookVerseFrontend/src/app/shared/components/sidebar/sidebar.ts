@@ -45,6 +45,7 @@ export class Sidebar implements OnInit {
     { label: 'Libros', route: '/books', icon: 'book' },
     { label: 'Reseñas', route: '/reviews', icon: 'review' },
     { label: 'Grupos de lectura', route: '/groups', icon: 'people' },
+    { label: 'Fellow Readers', route: '/users', icon: 'profile' },
   ];
 
   readonly iconPaths: Record<string, string> = {

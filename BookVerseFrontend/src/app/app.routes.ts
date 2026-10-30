@@ -28,6 +28,8 @@ export const routes: Routes = [
     children: [
       { path: 'dashboard', component: Dashboard },
       { path: 'profile', component: Profile },
+      { path: 'users', loadComponent: () => import('./features/profile/pages/community/community').then((m) => m.Community) },
+      { path: 'users/:id', loadComponent: () => import('./features/profile/pages/public-profile/public-profile').then((m) => m.PublicProfile) },
       { path: 'library', component: MyLibrary },
       {
         path: 'writer',

@@ -18,6 +18,7 @@
         {{ writing ? currentStory.chaptersCount : currentStory.publishedChaptersCount }}
         capítulos{{ writing ? '' : ' disponibles' }}
       </span>
+      <a [routerLink]="['/users', currentStory.authorId]">Perfil del autor</a>
     </div>
     <div class="prose" [innerHTML]="currentStory.description"></div>
     @if (!writing) {

@@ -122,6 +122,9 @@
         </div>
 
         <div class="identity-badges">
+          @if (userService.currentUser(); as user) {
+            <a class="public-profile-link" [routerLink]="['/users', user.idExternal]">Ver perfil público</a>
+          }
           <span class="membership active-state">
             {{ profile.accountStatus }}
           </span>

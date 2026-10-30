@@ -13,7 +13,7 @@ import { UserService } from '../../services/user.service';
   templateUrl: './profile.html',
 })
 export class Profile implements OnInit {
-  private readonly userService = inject(UserService);
+  readonly userService = inject(UserService);
   private readonly groupMembersService = inject(GroupMembersService);
   private readonly readingStatusService = inject(ReadingStatusService);
   private readonly storyService = inject(StoryService);
