@@ -189,11 +189,7 @@ export class ReviewReportList implements OnInit {
 
     operation.subscribe({
       next: (updatedReport) => {
-        this.reports.update((reports) =>
-          reports.map((item) =>
-            item.reportId === updatedReport.reportId ? updatedReport : item,
-          ),
-        );
+        this.load();
         this.selectedReport.set(null);
         this.saving.set(false);
         this.toastMessage.set(
