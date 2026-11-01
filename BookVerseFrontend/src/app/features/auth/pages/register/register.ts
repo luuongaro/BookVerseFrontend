@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -14,6 +14,7 @@ export class Register {
   private readonly formBuilder = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   showPassword = false;
   isSubmitting = false;
@@ -58,16 +59,26 @@ export class Register {
     this.authService.register(this.registerForm.getRawValue()).subscribe({
       next: () => {
         this.isSubmitting = false;
+        this.cdr.markForCheck();
         alert('Cuenta creada correctamente. Ahora podés iniciar sesión.');
         void this.router.navigate(['/login']);
       },
       error: (error: HttpErrorResponse) => {
         this.isSubmitting = false;
 
+        const serverMessage = String(
+          error.error?.message ?? error.error?.detail ?? '',
+        ).toLocaleLowerCase();
+
         this.errorMessage =
-          error.status === 409
-            ? 'Ese correo o nombre de usuario ya está registrado.'
-            : 'No se pudo crear la cuenta. Revisá los datos e intentá nuevamente.';
+          error.status === 409 && serverMessage.includes('email')
+            ? 'Este correo ya está registrado. Iniciá sesión o usá otro correo.'
+            : error.status === 409 && serverMessage.includes('username')
+              ? 'Ese nombre de usuario ya está registrado. Elegí otro.'
+              : error.status === 409
+                ? 'El correo o nombre de usuario ya está registrado.'
+                : 'No se pudo crear la cuenta. Revisá los datos e intentá nuevamente.';
+        this.cdr.markForCheck();
       },
     });
   }
