@@ -132,10 +132,9 @@
               </div>
 
               @if (activeGoal) {
-                <div class="due-date">
-                  <span aria-hidden="true">▢</span>
-                  <span>
-                    Fecha límite<br />
+                <div class="goal-deadline">
+                  <span class="deadline-text">
+                    <small>Fecha límite</small>
                     <strong>{{ activeGoal.targetDate | date: 'd MMM y' }}</strong>
                   </span>
                 </div>
@@ -225,19 +224,77 @@
                   <input
                     type="number"
                     min="1"
-                    [max]="goalType === 'PERCENTAGE' ? 100 : null"
+                    step="1"
+                    [max]="goalType === 'PERCENTAGE' ? 100 : maxChapterTarget || null"
                     [(ngModel)]="targetProgress"
                     name="targetProgress"
                   />
+
+                  @if (goalType === 'CHAPTER' && isLoadingLinkedContent) {
+                    <small>Verificando los capítulos publicados…</small>
+                  }
+
+                  @if (
+                    goalType === 'CHAPTER' &&
+                    linkedStory &&
+                    maxChapterTarget === 0
+                  ) {
+                    <small>Esta historia no tiene capítulos publicados.</small>
+                  }
+
+                  @if (
+                    goalType === 'CHAPTER' &&
+                    linkedStory &&
+                    maxChapterTarget > 0
+                  ) {
+                    <small>Máximo: {{ maxChapterTarget }} capítulos publicados.</small>
+
+                    @if (targetProgress > maxChapterTarget) {
+                      <small>El objetivo no puede superar los capítulos publicados.</small>
+                    }
+                  }
+
+                  @if (
+                    goalType === 'PERCENTAGE' &&
+                    isStoryGroup &&
+                    linkedStory &&
+                    linkedStory.publishedChaptersCount > 0
+                  ) {
+                    <small>
+                      El progreso se calcula sobre
+                      {{ linkedStory.publishedChaptersCount }} capítulos publicados.
+                    </small>
+                  }
+
+                  @if (
+                    goalType === 'PERCENTAGE' &&
+                    isStoryGroup &&
+                    linkedStory?.publishedChaptersCount === 0
+                  ) {
+                    <small>Publicá al menos un capítulo para crear una meta porcentual.</small>
+                  }
+
+                  @if (
+                    goalType === 'PERCENTAGE' &&
+                    (targetProgress < 1 || targetProgress > 100)
+                  ) {
+                    <small>El porcentaje debe estar entre 1 y 100.</small>
+                  }
                 </label>
 
                 <label>
                   Fecha límite
                   <input
-                    type="datetime-local"
+                    type="date"
                     [(ngModel)]="targetDate"
+                    (ngModelChange)="targetDatePastError = false"
+                    [min]="minTargetDate"
                     name="targetDate"
+                    required
                   />
+                  @if (targetDatePastError) {
+                    <small>La fecha límite debe ser posterior a hoy.</small>
+                  }
                 </label>
 
                 <button
@@ -247,8 +304,11 @@
                   [disabled]="
                     isSavingGoal ||
                     !targetDate ||
+                    targetDate < minTargetDate ||
+                    !isTargetProgressInteger ||
                     targetProgress < 1 ||
-                    (goalType === 'PERCENTAGE' && targetProgress > 100)
+                    isChapterTargetInvalid ||
+                    isPercentageTargetInvalid
                   "
                 >
                   {{ isSavingGoal ? 'Guardando…' : 'Crear meta' }}

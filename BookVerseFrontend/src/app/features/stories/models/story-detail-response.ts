@@ -12,5 +12,6 @@ export interface StoryDetailResponse {
   createdAt: string;
   updatedAt: string;
   chaptersCount: number;
+  publishedChaptersCount: number;
   chapters: ChapterSummary[];
 }
