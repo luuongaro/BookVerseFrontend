@@ -1,4 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -52,6 +53,8 @@ export class GroupDetail implements OnInit {
   goalType: 'CHAPTER' | 'PERCENTAGE' = 'PERCENTAGE';
   targetProgress = 1;
   targetDate = '';
+  readonly minTargetDate = this.getTomorrowDate();
+  targetDatePastError = false;
   commentContent = '';
   commentProgress = 0;
   readerEmail = '';
@@ -85,6 +88,17 @@ export class GroupDetail implements OnInit {
     return username ? username.slice(0, 2).toUpperCase() : 'BV';
   }
 
+  private getTomorrowDate(): string {
+    const date = new Date();
+    date.setDate(date.getDate() + 1);
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
+
   logout(): void {
     this.userService.logout();
   }
@@ -111,6 +125,46 @@ export class GroupDetail implements OnInit {
 
   get goalUnit(): string {
     return this.goalType === 'PERCENTAGE' ? '%' : 'capítulos';
+  }
+
+  get isTargetProgressInteger(): boolean {
+    return Number.isInteger(this.targetProgress);
+  }
+
+  get maxChapterTarget(): number {
+    return this.linkedStory?.publishedChaptersCount ?? 0;
+  }
+
+  get isChapterTargetInvalid(): boolean {
+    if (this.goalType !== 'CHAPTER') {
+      return false;
+    }
+
+    return (
+      this.isLoadingLinkedContent ||
+      !this.linkedStory ||
+      this.maxChapterTarget === 0 ||
+      this.targetProgress > this.maxChapterTarget
+    );
+  }
+
+  get isPercentageTargetInvalid(): boolean {
+    if (this.goalType !== 'PERCENTAGE') {
+      return false;
+    }
+
+    const invalidRange =
+      !Number.isInteger(this.targetProgress) ||
+      this.targetProgress < 1 ||
+      this.targetProgress > 100;
+
+    const storyHasNoPublishedChapters =
+      this.isStoryGroup &&
+      (this.isLoadingLinkedContent ||
+        !this.linkedStory ||
+        this.linkedStory.publishedChaptersCount === 0);
+
+    return invalidRange || storyHasNoPublishedChapters;
   }
 
   get activeGoalLabel(): string {
@@ -195,12 +249,18 @@ export class GroupDetail implements OnInit {
   }
 
   createGoal(): void {
+    this.targetDatePastError =
+      !!this.targetDate && this.targetDate < this.minTargetDate;
+
     if (
       !this.group ||
       this.isSavingGoal ||
       !this.targetDate ||
+      this.targetDatePastError ||
+      !Number.isInteger(this.targetProgress) ||
       this.targetProgress < 1 ||
-      (this.goalType === 'PERCENTAGE' && this.targetProgress > 100)
+      this.isChapterTargetInvalid ||
+      this.isPercentageTargetInvalid
     ) {
       return;
     }
@@ -213,10 +273,7 @@ export class GroupDetail implements OnInit {
         groupId: this.group.idExternal,
         goalType: this.goalType,
         targetProgress: Number(this.targetProgress),
-        targetDate:
-          this.targetDate.length === 16
-            ? `${this.targetDate}:00`
-            : this.targetDate,
+        targetDate: this.targetDate,
       })
       .subscribe({
         next: (goal) => {
@@ -228,8 +285,22 @@ export class GroupDetail implements OnInit {
         },
         error: (error: unknown) => {
           console.error('Error creating group goal:', error);
+          const status =
+            error instanceof HttpErrorResponse ? error.status : undefined;
+
+          const apiMessage =
+            error instanceof HttpErrorResponse &&
+            typeof error.error?.message === 'string'
+              ? error.error.message
+              : null;
+
           this.goalActionMessage =
-            'No se pudo crear la meta. Puede que ya exista una meta activa o que no tengas permisos.';
+            apiMessage ??
+            (status === 409
+              ? 'Este grupo ya tiene una meta activa.'
+              : status === 403
+                ? 'No tenés permisos para crear una meta en este grupo.'
+                : 'No se pudo crear la meta. Revisá la consola para ver el error.');
           this.isSavingGoal = false;
           this.changeDetector.markForCheck();
         },
