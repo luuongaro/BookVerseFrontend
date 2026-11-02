@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
-export const API_URL = 'http://localhost:8080/api';
+export const API_URL = environment.apiUrl;
 
 export function apiError(error: unknown): string {
   if (!(error instanceof HttpErrorResponse)) {

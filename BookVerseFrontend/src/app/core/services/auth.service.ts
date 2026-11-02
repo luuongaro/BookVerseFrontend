@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { API_URL } from '../api/api.config';
 
 interface AuthRequest {
   email: string;
@@ -30,19 +31,13 @@ export interface RegisterResponse {
 })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8080/api/auth';
+  private readonly apiUrl = `${API_URL}/auth`;
 
   login(credentials: AuthRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(
-      `${this.apiUrl}/login`,
-      credentials,
-    );
+    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, credentials);
   }
 
   register(userData: RegisterRequest): Observable<RegisterResponse> {
-    return this.http.post<RegisterResponse>(
-      `${this.apiUrl}/register`,
-      userData,
-    );
+    return this.http.post<RegisterResponse>(`${this.apiUrl}/register`, userData);
   }
 }
