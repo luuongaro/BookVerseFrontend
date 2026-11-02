@@ -11,46 +11,56 @@
   />
 </label>
 
-<div class="search-results" [class.selection-list]="selectable" [attr.aria-busy]="loading()">
-  @if (loading()) {
-    <p class="state" role="status">Buscando usuarios…</p>
-  } @else if (error()) {
-    <div class="state error" role="alert">
-      <p>{{ error() }}</p>
-      <button type="button" (click)="request(page())">Reintentar</button>
-    </div>
-  } @else if (!profiles().length) {
-    <p class="state" role="status">No encontramos usuarios con ese nombre.</p>
-  } @else {
-    @for (user of profiles(); track user.idExternal) {
-      <article class="user-card" [class.selected]="selectedUserId === user.idExternal">
-        <a class="user-identity" [routerLink]="['/users', user.idExternal]">
-          <span class="avatar" aria-hidden="true">{{ initials(user.username) }}</span>
-          <span class="user-name">{{ '@' + user.username }}</span>
-        </a>
-        @if (selectable) {
-          <button
-            type="button"
-            (click)="select(user)"
-            [disabled]="
-              disabled || memberIds.includes(user.idExternal) || selectedUserId === user.idExternal
-            "
-          >
-            {{
-              memberIds.includes(user.idExternal)
-                ? 'Ya es miembro'
-                : selectedUserId === user.idExternal
-                  ? 'Seleccionado'
-                  : 'Seleccionar'
-            }}
-          </button>
-        } @else {
-          <a class="profile-link" [routerLink]="['/users', user.idExternal]">Ver perfil</a>
-        }
-      </article>
+@if (!searchOnly || hasQuery) {
+  <div class="search-results" [class.selection-list]="selectable" [attr.aria-busy]="loading()">
+    @if (loading()) {
+      <p class="state" role="status">Buscando usuarios…</p>
+    } @else if (error()) {
+      <div class="state error" role="alert">
+        <p>{{ error() }}</p>
+        <button type="button" (click)="request(page())">Reintentar</button>
+      </div>
+    } @else if (!profiles().length) {
+      <p class="state" role="status">No encontramos usuarios con ese nombre.</p>
+    } @else {
+      @for (user of profiles(); track user.idExternal) {
+        <article class="user-card" [class.selected]="selectedUserId === user.idExternal">
+          <a class="user-identity" [routerLink]="['/users', user.idExternal]">
+            <span class="avatar" aria-hidden="true">
+              @if (failedAvatars().has(user.idExternal)) {
+                {{ initials(user.username) }}
+              } @else {
+                <img [src]="avatar(user)" alt="" (error)="avatarFailed(user.idExternal)" />
+              }
+            </span>
+            <span class="user-name">{{ '@' + user.username }}</span>
+          </a>
+          @if (selectable) {
+            <button
+              type="button"
+              (click)="select(user)"
+              [disabled]="
+                disabled ||
+                memberIds.includes(user.idExternal) ||
+                selectedUserId === user.idExternal
+              "
+            >
+              {{
+                memberIds.includes(user.idExternal)
+                  ? 'Ya es miembro'
+                  : selectedUserId === user.idExternal
+                    ? 'Seleccionado'
+                    : 'Seleccionar'
+              }}
+            </button>
+          } @else {
+            <a class="profile-link" [routerLink]="['/users', user.idExternal]">Ver perfil</a>
+          }
+        </article>
+      }
     }
-  }
-</div>
+  </div>
+}
 
 @if (!loading() && !error() && totalPages() > 1) {
   <nav class="pagination" aria-label="Páginas de usuarios">

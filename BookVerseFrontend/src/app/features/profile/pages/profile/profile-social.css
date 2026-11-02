@@ -1,0 +1,187 @@
+.profile-state {
+  padding: 16px 30px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.profile-error {
+  color: #a44d68;
+}
+.profile-success {
+  color: #416c59;
+}
+.profile-button,
+.profile-state button {
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: white;
+  color: var(--violet);
+  font: 13px var(--sans);
+  text-decoration: none;
+  cursor: pointer;
+}
+.profile-primary {
+  border-color: var(--lavender);
+  background: var(--lavender);
+  color: white;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.group-picker {
+  margin: 12px 30px 24px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: white;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+.group-picker label {
+  color: var(--muted);
+  font-size: 13px;
+}
+.group-picker select {
+  min-height: 40px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  font: 13px var(--sans);
+  max-width: 100%;
+}
+.group-picker p {
+  width: 100%;
+  font-size: 13px;
+  color: var(--muted);
+}
+.group-picker a {
+  color: var(--violet);
+}
+.identity-copy {
+  min-width: 0;
+}
+.identity-copy h1,
+.identity-copy p {
+  overflow-wrap: anywhere;
+}
+.identity-badges {
+  flex-wrap: wrap;
+}
+.profile-button:focus-visible,
+.profile-state button:focus-visible,
+.group-picker select:focus-visible {
+  outline: 2px solid var(--lavender);
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .group-picker {
+    margin: 12px 0 24px;
+  }
+  .profile-state {
+    padding: 16px 0;
+  }
+}
+.profile-avatar {
+  position: relative;
+}
+.profile-avatar > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.avatar-edit {
+  position: absolute;
+  right: -5px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 31px;
+  height: 31px;
+  border: 3px solid var(--paper);
+  border-radius: 50%;
+  background: var(--lavender);
+  color: white;
+  cursor: pointer;
+}
+.avatar-edit svg {
+  width: 15px;
+  height: 15px;
+}
+.avatar-picker {
+  width: min(640px, calc(100vw - 36px));
+  padding: 26px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.avatar-picker::backdrop {
+  background: rgb(38 28 53 / 45%);
+}
+.avatar-picker-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.avatar-picker-heading h2 {
+  margin: 0;
+  font: 32px var(--serif);
+}
+.avatar-picker-close {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 26px;
+  cursor: pointer;
+}
+.avatar-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.avatar-option {
+  min-width: 0;
+  padding: 8px;
+  border: 2px solid transparent;
+  border-radius: 15px;
+  background: white;
+  cursor: pointer;
+  color: var(--ink);
+  font: 13px var(--sans);
+}
+.avatar-option.is-selected {
+  border-color: var(--lavender);
+  background: #f0e9f8;
+}
+.avatar-option img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+.avatar-picker-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 22px;
+}
+@media (max-width: 500px) {
+  .avatar-options {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .avatar-picker {
+    padding: 18px;
+  }
+}

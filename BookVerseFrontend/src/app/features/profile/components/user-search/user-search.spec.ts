@@ -10,12 +10,13 @@ describe('User discovery and selection', () => {
   const page = (content = [user], number = 0, totalPages = 1) => ({ content, number, totalPages });
   const tick = () => new Promise((resolve) => setTimeout(resolve, 280));
 
-  function setup(selectable = false) {
+  function setup(selectable = false, searchOnly = false) {
     TestBed.configureTestingModule({
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     });
     const fixture = TestBed.createComponent(UserSearch);
     fixture.componentRef.setInput('selectable', selectable);
+    fixture.componentRef.setInput('searchOnly', searchOnly);
     fixture.detectChanges();
     return {
       fixture,
@@ -34,6 +35,24 @@ describe('User discovery and selection', () => {
     expect(fixture.nativeElement.textContent).toContain('@Marina');
     expect(fixture.nativeElement.textContent).not.toContain('private@example.test');
     expect(fixture.nativeElement.querySelector('a').getAttribute('href')).toBe('/users/reader-id');
+  });
+
+  it('shows no profiles or requests until searching and clears results when the search is erased', async () => {
+    const { fixture, component, http } = setup(false, true);
+    await tick();
+    http.expectNone((request) => request.url.endsWith('/users/profiles'));
+    expect(fixture.nativeElement.querySelector('.user-card')).toBeNull();
+    component.search({ target: { value: '@Marina' } } as unknown as Event);
+    await tick();
+    http.expectOne((request) => request.params.get('username') === 'Marina').flush(page());
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.user-card')).not.toBeNull();
+    component.search({ target: { value: ' @ ' } } as unknown as Event);
+    fixture.detectChanges();
+    await tick();
+    http.expectNone((request) => request.url.endsWith('/users/profiles'));
+    expect(fixture.nativeElement.querySelector('.user-card')).toBeNull();
+    expect(component.totalPages()).toBe(0);
   });
 
   it('cancels obsolete searches, accepts @ and keeps the query when paginating', async () => {

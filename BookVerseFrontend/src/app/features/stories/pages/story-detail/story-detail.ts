@@ -16,14 +16,15 @@ import { StoryPermissions } from '../../services/story-permissions.service';
 import { StoryDetailResponse } from '../../models/story-detail-response';
 import { apiError } from '../../../../core/api/api.config';
 import { LibraryService, libraryError } from '../../../library/services/library.service';
-import { TipService } from '../../../tips/services/tip.service';
+import { SendTip } from '../../../tips/components/send-tip/send-tip';
+import { UserService } from '../../../profile/services/user.service';
 import { ChapterService } from '../../services/chapter.service';
 import { ChapterResponse } from '../../models/chapter-response';
 import { PageResponse } from '../../models/page-response';
 
 @Component({
   selector: 'app-story-detail',
-  imports: [RouterLink],
+  imports: [RouterLink, SendTip],
   templateUrl: './story-detail.html',
   styleUrl: './story-detail.css',
 })
@@ -32,7 +33,11 @@ export class StoryDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly service = inject(StoryService);
-  private readonly tips = inject(TipService);
+  private readonly users = inject(UserService);
+  readonly favorite = signal<boolean | null>(null);
+  readonly favoriteSaving = signal(false);
+  readonly favoriteError = signal('');
+  private favoriteRequest?: Subscription;
   private readonly permissions = inject(StoryPermissions);
   private readonly destroyRef = inject(DestroyRef);
   private readonly library = inject(LibraryService);
@@ -42,8 +47,7 @@ export class StoryDetail implements OnInit {
   readonly saving = signal(false);
   readonly saved = signal(false);
   readonly saveError = signal('');
-  readonly tipping = signal(false);
-  readonly tipError = signal('');
+  readonly canSendTip = computed(() => !this.writing && !!this.story() && this.story()!.authorId !== localStorage.getItem('userId') && this.story()!.publishedChaptersCount > 0);
   readonly story = signal<StoryDetailResponse | null>(null);
   readonly isLoading = signal(false);
   readonly errorMessage = signal('');
@@ -68,6 +72,9 @@ export class StoryDetail implements OnInit {
   load(): void {
     const id = this.route.snapshot.paramMap.get('id');
     this.request?.unsubscribe();
+    this.favoriteRequest?.unsubscribe();
+    this.favorite.set(null);
+    this.favoriteError.set('');
     this.chapterRequest?.unsubscribe();
     this.story.set(null);
     this.chapterPage.set(null);
@@ -87,6 +94,7 @@ export class StoryDetail implements OnInit {
       .subscribe({
         next: (story) => {
           this.story.set(story);
+          if (!this.writing) this.loadFavorite(story.idExternal);
           this.loadChapters(story.idExternal, 0);
           this.isLoading.set(false);
         },
@@ -144,32 +152,39 @@ export class StoryDetail implements OnInit {
       });
   }
   
-  sendTip(amount: number): void {
-  const story = this.story();
+  loadFavorite(storyId: string): void {
+    this.favoriteRequest?.unsubscribe();
+    this.favoriteError.set('');
+    this.favoriteRequest = this.users
+      .isFavoriteStory(storyId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (result) => this.favorite.set(result.favorite),
+        error: () => this.favoriteError.set('No pudimos cargar el estado de favoritas.'),
+      });
+  }
 
-  if (!story || this.writing || this.tipping()) return;
-
-  this.tipping.set(true);
-  this.tipError.set('');
-
-  this.tips
-    .createTip({
-      storyId: story.idExternal,
-      amount,
-      message: `Cafecito para ${story.title}`,
-    })
-    .pipe(takeUntilDestroyed(this.destroyRef))
-    .subscribe({
-      next: (response) => {
-        this.tipping.set(false);
-        window.location.href = response.checkout.checkoutUrl;
+  toggleFavorite(): void {
+    const story = this.story();
+    const favorite = this.favorite();
+    if (this.writing || !story || favorite === null || this.favoriteSaving()) return;
+    this.favoriteSaving.set(true);
+    this.favoriteError.set('');
+    const request = favorite
+      ? this.users.removeFavoriteStory(story.idExternal)
+      : this.users.addFavoriteStory(story.idExternal);
+    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.favoriteSaving.set(false);
+        if (this.story()?.idExternal === story.idExternal) this.favorite.set(!favorite);
       },
-      error: (error) => {
-        this.tipping.set(false);
-        this.tipError.set(apiError(error));
+      error: () => {
+        this.favoriteSaving.set(false);
+        if (this.story()?.idExternal === story.idExternal)
+          this.favoriteError.set('No pudimos actualizar tus favoritas. Intentá de nuevo.');
       },
     });
-}
+  }
 
   cancelDelete(): void {
     if (!this.deleting()) this.deleteDialog().nativeElement.close();

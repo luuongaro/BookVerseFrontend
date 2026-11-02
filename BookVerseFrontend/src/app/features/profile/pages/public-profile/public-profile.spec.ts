@@ -7,6 +7,7 @@ import { PublicProfile } from './public-profile';
 import { UserService } from '../../services/user.service';
 import { ReadingGroupsService } from '../../../groups/services/reading-groups.service';
 import { GroupMembersService } from '../../../groups/services/group-members.service';
+import { TipService } from '../../../tips/services/tip.service';
 
 describe('Visiting user profiles', () => {
   const reader = { idExternal: 'reader', username: 'Marina', email: 'private@example.test' };
@@ -18,6 +19,18 @@ describe('Visiting user profiles', () => {
     const users = {
       getProfile: vi.fn(() => of(reader)),
       getProfileStories: vi.fn(() => of(emptyPage)),
+      getFavoriteStories: vi.fn(() => of(emptyPage)),
+      getProfileActivity: vi.fn(() =>
+        of({
+          wantToRead: 2,
+          inProgress: 3,
+          finished: 4,
+          createdStories: 5,
+          activeGroups: 1,
+          tipStoryId: null as string | null,
+        }),
+      ),
+      getProfileAppearance: vi.fn(() => of({ coverIndex: 1, avatarIndex: 2, configured: true })),
       setCurrentUser: vi.fn(),
     };
     const groups = {
@@ -36,6 +49,7 @@ describe('Visiting user profiles', () => {
         { provide: UserService, useValue: users },
         { provide: ReadingGroupsService, useValue: groups },
         { provide: GroupMembersService, useValue: members },
+        { provide: TipService, useValue: { createTip: vi.fn() } },
       ],
     });
     const harness = await RouterTestingHarness.create();
@@ -52,6 +66,23 @@ describe('Visiting user profiles', () => {
     expect(component.isOwnProfile()).toBe(false);
     expect(users.setCurrentUser).not.toHaveBeenCalled();
     expect(localStorage.getItem('userId')).toBe('me');
+    for (const label of [
+      'Quiero leer',
+      'En curso',
+      'Finalizadas',
+      'Historias creadas',
+      'Grupos activos',
+      'Historias favoritas',
+    ]) {
+      expect(harness.routeNativeElement!.textContent).toContain(label);
+    }
+    expect(component.readingCounts()).toEqual({ wantToRead: '2', inProgress: '3', finished: '4' });
+    expect(component.selectedCoverIndex).toBe(1);
+    expect(
+      harness.routeNativeElement!.querySelector('.profile-avatar img')?.getAttribute('src'),
+    ).toContain('/avatars/romance.png');
+    expect(harness.routeNativeElement!.querySelector('.cover-button')).toBeNull();
+    expect(harness.routeNativeElement!.querySelector('.avatar-edit')).toBeNull();
   });
 
   it('offers only active groups created by the current user and sends the selected identity once', async () => {
@@ -69,6 +100,28 @@ describe('Visiting user profiles', () => {
     pending.complete();
     expect(component.groupMessage()).toContain('@Marina');
     expect(component.showGroupPicker()).toBe(false);
+  });
+
+  it('only offers a cafecito for another user with a published story', async () => {
+    const { component, users, harness } = await setup();
+    expect(harness.routeNativeElement!.querySelector('app-send-tip')).toBeNull();
+    users.getProfileActivity.mockReturnValue(
+      of({
+        wantToRead: 2,
+        inProgress: 3,
+        finished: 4,
+        createdStories: 5,
+        activeGroups: 1,
+        tipStoryId: 'published-story',
+      }),
+    );
+    component.loadActivity();
+    harness.detectChanges();
+    expect(harness.routeNativeElement!.querySelector('.tip-button')).not.toBeNull();
+    users.getProfile.mockReturnValue(of({ ...reader, idExternal: 'me' }));
+    component.retry();
+    harness.detectChanges();
+    expect(harness.routeNativeElement!.querySelector('app-send-tip')).toBeNull();
   });
 
   it('does not accept an arbitrary group id and handles an existing membership', async () => {

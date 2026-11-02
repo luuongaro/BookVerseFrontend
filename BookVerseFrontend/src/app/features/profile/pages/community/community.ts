@@ -6,10 +6,10 @@ import { UserSearch } from '../../components/user-search/user-search';
   imports: [UserSearch],
   template: `<main class="community-page">
     <header>
-      <h1>Fellow Readers</h1>
-      <p>Buscá usuarios y visitá sus perfiles.</p>
+      <h1>Lectores</h1>
+      <p>Buscá a alguien por su nombre de usuario.</p>
     </header>
-    <app-user-search />
+    <app-user-search [searchOnly]="true" />
   </main>`,
   styleUrl: '../../community.css',
 })
