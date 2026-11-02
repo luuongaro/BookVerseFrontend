@@ -204,8 +204,7 @@
       <div class="person">
         <span class="avatar" aria-hidden="true">{{ initials(review) }}</span>
         <div>
-          <strong>{{ readerName(review) }}</strong
-          ><small
+          <a class="reviewer-profile" [routerLink]="['/users', review.reviewerId]">{{ readerName(review) }}</a><small
             >{{ review.createdAt | date: 'dd/MM/yyyy' }}
             @if (session.userId() === review.reviewerId) {
               · Tu reseña

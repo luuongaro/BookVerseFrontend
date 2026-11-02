@@ -35,6 +35,7 @@ const chapter: ChapterResponse = {
 const story: StoryDetailResponse = {
   idExternal: 'story',
   authorId: 'owner',
+  authorUsername: 'Owner',
   title: 'Historia real',
   description: 'Descripción',
   accessType: StoryAccessType.FREE,
@@ -42,6 +43,7 @@ const story: StoryDetailResponse = {
   deleted: false,
   createdAt: '',
   updatedAt: '',
+  publishedChaptersCount: 0,
   chaptersCount: 1,
   chapters: [chapter],
 };

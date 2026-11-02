@@ -1,0 +1,71 @@
+<section aria-labelledby="favorite-stories-title">
+  <h2 id="favorite-stories-title">Historias favoritas</h2>
+  @if (loading()) {
+    <p class="state" role="status">Cargando favoritas…</p>
+  } @else if (error()) {
+    <div class="state error" role="alert">
+      <p>{{ error() }}</p>
+      <button type="button" (click)="load()">Reintentar</button>
+    </div>
+  } @else if (!stories().length) {
+    <p class="state">
+      {{
+        editable
+          ? 'Todavía no agregaste historias a favoritas.'
+          : 'Este usuario todavía no tiene historias favoritas.'
+      }}
+    </p>
+    @if (editable) {
+      <a routerLink="/stories">Explorar historias</a>
+    }
+  } @else {
+    <div class="favorites-grid">
+      @for (story of stories(); track story.idExternal) {
+        <article class="favorite-card">
+          <a class="favorite-link" [routerLink]="['/stories', story.idExternal]">
+            <span class="story-cover" aria-hidden="true"
+              ><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+                <path
+                  d="M8 21h12a2 2 0 0 0 2-2v-2H10v2a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2h4M6 3h12a2 2 0 0 1 2 2v12M10 7h6m-6 4h6"
+                /></svg
+            ></span>
+            <span class="story-info"
+              ><small>{{ story.accessType === 'PREMIUM' ? 'Premium' : 'Gratuita' }}</small
+              ><strong>{{ story.title }}</strong
+              ><span>Ver historia</span></span
+            >
+          </a>
+          @if (editable) {
+            <button
+              type="button"
+              class="remove-favorite"
+              (click)="remove(story)"
+              [disabled]="!!removing()"
+              [attr.aria-label]="'Quitar ' + story.title + ' de favoritas'"
+            >
+              {{ removing() === story.idExternal ? 'Quitando…' : 'Quitar de favoritas' }}
+            </button>
+          }
+        </article>
+      }
+    </div>
+  }
+  @if (actionError()) {
+    <p class="error" role="alert">{{ actionError() }}</p>
+  }
+  @if (!loading() && !error() && totalPages() > 1) {
+    <nav class="pagination" aria-label="Páginas de historias favoritas">
+      <button type="button" (click)="load(page() - 1)" [disabled]="page() === 0 || !!removing()">
+        Anterior
+      </button>
+      <span aria-live="polite">{{ page() + 1 }} de {{ totalPages() }}</span>
+      <button
+        type="button"
+        (click)="load(page() + 1)"
+        [disabled]="page() + 1 >= totalPages() || !!removing()"
+      >
+        Siguiente
+      </button>
+    </nav>
+  }
+</section>

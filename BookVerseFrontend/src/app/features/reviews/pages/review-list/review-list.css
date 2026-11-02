@@ -670,3 +670,5 @@ select:focus-visible {
   opacity: 0.45;
   cursor: default;
 }
+.reviewer-profile { color: inherit; font-weight: 600; text-decoration: none; }
+.reviewer-profile:hover { color: #665498; text-decoration: underline; text-underline-offset: 3px; }

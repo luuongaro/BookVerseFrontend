@@ -378,7 +378,7 @@
               <ul class="member-name-list" aria-label="Integrantes del grupo">
                 @for (member of members; track member.idExternal) {
                   <li>
-                    {{ member.userName }}
+                    <a [routerLink]="['/users', member.userId]">{{ member.userName }}</a>
                     <small>
                       {{ member.memberType === 'CREATOR' ? 'Creador' : '' }}
                     </small>
@@ -387,15 +387,18 @@
               </ul>
             }
 
-            @if (members.length > 0) {
+            @if (!isLoadingMembers && !membersErrorMessage && (canManageMembers || canLeaveGroup)) {
               <div class="member-management">
+                @if (canManageMembers) {
                 <button
                   class="button button-outline"
                   type="button"
-                  (click)="showAddMemberForm = !showAddMemberForm"
+                  (click)="toggleInviteForm()"
+                  [disabled]="isUpdatingMembers"
                 >
-                  {{ showAddMemberForm ? 'Cerrar' : 'Agregar lector' }}
+                  {{ showInviteForm ? 'Cerrar invitación' : 'Agregar lector' }}
                 </button>
+                }
 
                 @if (canLeaveGroup) {
                   <button
@@ -409,31 +412,22 @@
                 }
               </div>
 
-              @if (showAddMemberForm) {
-                <form class="add-member-form" (ngSubmit)="addMember()">
-                  <label class="visually-hidden" for="readerEmail">
-                    Correo electrónico del lector
-                  </label>
-
-                  <input
-                    id="readerEmail"
-                    type="email"
-                    name="readerEmail"
-                    [(ngModel)]="readerEmail"
-                    placeholder="Correo electrónico del lector"
-                    autocomplete="email"
-                    maxlength="254"
-                    required
-                  />
-
+              @if (showInviteForm && canManageMembers) {
+                <app-user-search [selectable]="true" [memberIds]="memberUserIds"
+                  [disabled]="isUpdatingMembers" [selectedUserId]="selectedInviteUser?.idExternal ?? null"
+                  (userSelected)="selectedInviteUser = $event; memberActionMessage = ''" />
+                @if (selectedInviteUser; as selected) {
+                <form class="invite-form" (ngSubmit)="inviteMember()">
+                  <span>{{ '@' + selected.username }}</span>
                   <button
                     class="button button-primary"
                     type="submit"
-                    [disabled]="isUpdatingMembers || !readerEmail.trim()"
+                    [disabled]="isUpdatingMembers || memberUserIds.includes(selected.idExternal)"
                   >
                     {{ isUpdatingMembers ? 'Agregando…' : 'Agregar' }}
                   </button>
                 </form>
+                }
               }
 
               @if (memberActionMessage) {
@@ -441,6 +435,9 @@
                   {{ memberActionMessage }}
                 </p>
               }
+            }
+            @if (memberSuccessMessage) {
+              <p class="member-state member-success" role="status">{{ memberSuccessMessage }}</p>
             }
           </article>
         </section>
@@ -478,7 +475,7 @@
 
                   <div class="comment-content">
                     <div class="comment-author">
-                      <strong>{{ comment.userName || 'Lector' }}</strong>
+                      <a [routerLink]="['/users', comment.userId]"><strong>{{ comment.userName || 'Lector' }}</strong></a>
                       <span>{{ comment.createdAt | date: 'd MMM, HH:mm' }}</span>
                     </div>
                     <p>{{ comment.content }}</p>

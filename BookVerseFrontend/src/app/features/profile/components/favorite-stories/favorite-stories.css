@@ -1,0 +1,137 @@
+:host {
+  display: block;
+  padding: 8px 30px 38px;
+}
+* {
+  box-sizing: border-box;
+}
+h2 {
+  margin: 0 0 22px;
+  font:
+    34px 'Libre Caslon Display',
+    Georgia,
+    serif;
+  color: #302b43;
+}
+.favorites-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 18px;
+}
+.favorite-card {
+  border: 1px solid #e8e2ef;
+  border-radius: 15px;
+  overflow: hidden;
+  background: #fff;
+}
+.favorite-link {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 20px;
+  color: #302b43;
+  text-decoration: none;
+}
+.favorite-link:hover strong {
+  color: #7465ad;
+}
+.story-cover {
+  display: grid;
+  place-items: center;
+  width: 70px;
+  height: 100px;
+  flex: 0 0 auto;
+  border-radius: 5px 10px 10px 5px;
+  background: #e8dff2;
+  color: #80689e;
+  box-shadow: inset 5px 0 rgb(94 67 126 / 8%);
+}
+.story-cover svg {
+  width: 30px;
+  height: 30px;
+}
+.favorite-card:nth-child(3n + 2) .story-cover {
+  background: #e1ebe3;
+  color: #60796b;
+}
+.favorite-card:nth-child(3n) .story-cover {
+  background: #f0e1df;
+  color: #a07477;
+}
+.story-info {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+.story-info strong {
+  font:
+    25px/1.1 'Libre Caslon Display',
+    Georgia,
+    serif;
+  overflow-wrap: anywhere;
+}
+.story-info small,
+.story-info > span {
+  color: #81738f;
+  font-size: 12px;
+}
+.remove-favorite {
+  margin: 0 20px 16px;
+  border: 0;
+  background: transparent;
+  color: #81738f;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  padding: 8px 0;
+}
+.state {
+  color: #898397;
+  line-height: 1.7;
+  font-size: 14px;
+}
+.error {
+  color: #a44d68;
+  font-size: 14px;
+}
+a {
+  color: #7465ad;
+}
+button {
+  font: inherit;
+  cursor: pointer;
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+.state button,
+.pagination button {
+  padding: 9px 14px;
+  color: #665498;
+  border: 1px solid #e8e2ef;
+  background: #fff;
+  border-radius: 8px;
+  font-size: 13px;
+}
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid #7465ad;
+  outline-offset: 3px;
+}
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  margin-top: 24px;
+  font-size: 13px;
+  color: #898397;
+}
+@media (max-width: 600px) {
+  :host {
+    padding: 8px 0 28px;
+  }
+}

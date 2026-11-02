@@ -2,9 +2,11 @@
   <div class="profile-body">
     <header class="topbar">
       <div class="breadcrumb">
-        <a routerLink="/dashboard">Mi universo</a>
+        <a [routerLink]="isPublicView() ? '/users' : '/dashboard'">{{
+          isPublicView() ? 'Lectores' : 'Mi universo'
+        }}</a>
         <span aria-hidden="true">/</span>
-        <strong>Mi perfil</strong>
+        <strong>{{ isOwnProfile() ? 'Mi perfil' : 'Perfil' }}</strong>
       </div>
 
       <div class="topbar-note">
@@ -15,199 +17,411 @@
     </header>
 
     <main class="profile-main">
-      <section
-        class="cover"
-        [style.background-image]="
-          'linear-gradient(0deg, #271b3b75, transparent 55%), url(' +
-          currentCover.src +
-          ')'
-        "
-        [style.background-position]="currentCover.objectPosition"
-        aria-label="Portada del perfil"
-      >
-        <button
-          class="cover-button"
-          type="button"
-          aria-haspopup="dialog"
-          (click)="openCoverPicker()"
-        >
-          <span aria-hidden="true">◎</span>
-          Cambiar portada
-        </button>
-
-        <span class="cover-caption">
-          LECTOR, ESCRITOR, COLECCIONISTA DE PEQUEÑOS MUNDOS.
-        </span>
-      </section>
-
-      <dialog
-        #coverPicker
-        class="cover-picker"
-        aria-labelledby="cover-picker-title"
-        (click)="closeCoverPickerOnBackdrop($event)"
-      >
-        <div class="cover-picker-heading">
-          <div>
-            <span class="eyebrow">HACÉ TUYO ESTE ESPACIO</span>
-            <h2 id="cover-picker-title">Elegí tu portada.</h2>
-          </div>
-
-          <button
-            class="cover-picker-close"
-            type="button"
-            aria-label="Cerrar selector de portada"
-            (click)="closeCoverPicker()"
-          >
-            ×
-          </button>
+      @if (loading()) {
+        <p class="profile-state" role="status">Cargando perfil…</p>
+      } @else if (error()) {
+        <div class="profile-state profile-error" role="alert">
+          <p>{{ error() }}</p>
+          <button type="button" (click)="retry()">Reintentar</button>
         </div>
-
-        <p class="cover-picker-description">Una ventana a tu mundo.</p>
-
-        <div class="cover-options">
-          @for (cover of covers; track cover.src; let index = $index) {
+      } @else if (viewedUser(); as user) {
+        <section
+          class="cover"
+          [style.background-image]="
+            'linear-gradient(0deg, #271b3b75, transparent 55%), url(' + currentCover.src + ')'
+          "
+          [style.background-position]="currentCover.objectPosition"
+          aria-label="Portada del perfil"
+        >
+          @if (canEditProfile()) {
             <button
-              class="cover-option"
-              [class.is-selected]="index === selectedCoverIndex"
-              [attr.aria-pressed]="index === selectedCoverIndex"
+              class="cover-button"
               type="button"
-              (click)="selectCover(index)"
+              aria-haspopup="dialog"
+              (click)="openCoverPicker()"
+              [disabled]="appearanceLoading() || savingCover() || savingAvatar()"
             >
-              <img
-                [src]="cover.src"
-                [alt]="cover.alt"
-                [style.object-position]="cover.objectPosition"
-              />
-
-              <span>{{ cover.name }}</span>
-
-              @if (index === selectedCoverIndex) {
-                <span
-                  class="cover-selected-mark"
-                  aria-label="Portada seleccionada"
-                >
-                  ✓
-                </span>
-              }
+              <span aria-hidden="true">◎</span>
+              Cambiar portada
             </button>
           }
-        </div>
 
-        <div class="cover-picker-footer">
-          <span>Elegí una imagen para previsualizarla en tu perfil.</span>
-          <button
-            class="cover-picker-done"
-            type="button"
-            (click)="closeCoverPicker()"
+          <span class="cover-caption"> LECTOR, ESCRITOR, COLECCIONISTA DE PEQUEÑOS MUNDOS. </span>
+        </section>
+
+        @if (canEditProfile()) {
+          <dialog
+            #coverPicker
+            class="cover-picker"
+            aria-labelledby="cover-picker-title"
+            (click)="closeCoverPickerOnBackdrop($event)"
+            (cancel)="cancelCoverPicker($event)"
           >
-            Listo
-          </button>
-        </div>
-      </dialog>
+            <div class="cover-picker-heading">
+              <div>
+                <span class="eyebrow">HACÉ TUYO ESTE ESPACIO</span>
+                <h2 id="cover-picker-title">Elegí tu portada.</h2>
+              </div>
 
-      <section class="identity" aria-label="Información del perfil">
-        <div class="profile-avatar" aria-hidden="true">
-          {{ profile.initials }}
-        </div>
+              <button
+                class="cover-picker-close"
+                type="button"
+                aria-label="Cerrar selector de portada"
+                (click)="closeCoverPicker()"
+              >
+                ×
+              </button>
+            </div>
 
-        <div class="identity-copy">
-          <h1>
-            {{ profile.name }}
-            <span aria-hidden="true">✧</span>
-          </h1>
-          <p>{{ profile.username }}</p>
-          @if (profile.email) {
-            <p>{{ profile.email }}</p>
-          }
-        </div>
+            <p class="cover-picker-description">Una ventana a tu mundo.</p>
 
-        <div class="identity-badges">
-          <span class="membership active-state">
-            {{ profile.accountStatus }}
-          </span>
-          <span class="membership role-state">
-            {{ roleLabel }}
-          </span>
-        </div>
-      </section>
+            <div class="cover-options">
+              @for (cover of covers; track cover.src; let index = $index) {
+                <button
+                  class="cover-option"
+                  [class.is-selected]="index === selectedCoverIndex"
+                  [attr.aria-pressed]="index === selectedCoverIndex"
+                  type="button"
+                  (click)="selectCover(index)"
+                  [disabled]="savingCover()"
+                >
+                  <img
+                    loading="lazy"
+                    decoding="async"
+                    [src]="cover.src"
+                    [alt]="cover.alt"
+                    [style.object-position]="cover.objectPosition"
+                  />
 
-      <section class="activity-section" aria-label="Actividad lectora">
-        <div class="activity-heading">
-          <div>
-            <p class="eyebrow">TU ACTIVIDAD EN BOOKVERSE</p>
-            <h2>Tu recorrido lector.</h2>
+                  <span>{{ cover.name }}</span>
+
+                  @if (index === selectedCoverIndex) {
+                    <span class="cover-selected-mark" aria-label="Portada seleccionada"> ✓ </span>
+                  }
+                </button>
+              }
+            </div>
+
+            <div class="cover-picker-footer">
+              @if (coverError()) {
+                <p class="profile-error" role="alert">{{ coverError() }}</p>
+              }
+              <span>Elegí una imagen para previsualizarla en tu perfil.</span>
+              <button
+                class="cover-picker-done"
+                type="button"
+                (click)="saveCover()"
+                [disabled]="savingCover()"
+              >
+                {{ savingCover() ? 'Guardando…' : 'Listo' }}
+              </button>
+            </div>
+          </dialog>
+        }
+
+        <section class="identity" aria-label="Información del perfil">
+          <div class="profile-avatar">
+            @if (!avatarImageFailed()) {
+              <img
+                [src]="currentAvatar.src"
+                [alt]="'Avatar de ' + profile.name"
+                (error)="avatarImageFailed.set(true)"
+              />
+            } @else {
+              <span aria-hidden="true">{{ profile.initials }}</span>
+            }
+            @if (canEditProfile()) {
+              <button
+                class="avatar-edit"
+                type="button"
+                aria-label="Cambiar avatar"
+                (click)="openAvatarPicker()"
+                [disabled]="appearanceLoading() || savingAvatar() || savingCover()"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  aria-hidden="true"
+                >
+                  <path d="m16 3 5 5L8 21H3v-5L16 3Zm-3 3 5 5" />
+                </svg>
+              </button>
+            }
           </div>
-          <p class="activity-note">
-            Un resumen de tus lecturas e historias.
-          </p>
-        </div>
 
-        <div class="reading-cards" aria-label="Estados de lectura">
-          <article class="reading-card want-card">
-            <span class="metric-overline">EN TU ESTANTERÍA</span>
-            <strong class="metric-value">
-              {{ readingCounts().wantToRead }}
-            </strong>
-            <h3>Quiero leer</h3>
-            <p>Libros e historias que guardaste.</p>
-          </article>
+          <div class="identity-copy">
+            <h1>
+              {{ profile.name }}
+              <span aria-hidden="true">✧</span>
+            </h1>
+            <p>{{ profile.username }}</p>
+            @if (profile.email) {
+              <p>{{ profile.email }}</p>
+            }
+          </div>
 
-          <article class="reading-card progress-card">
-            <span class="metric-overline">AHORA</span>
-            <strong class="metric-value">
-              {{ readingCounts().inProgress }}
-            </strong>
-            <h3>En curso</h3>
-            <p>Lecturas que estás disfrutando.</p>
-          </article>
+          <div class="identity-badges">
+            @if (canSendTip()) {
+              <app-send-tip [storyId]="tipStoryId()!" [recipientName]="profile.name" />
+            }
+            @if (canEditProfile()) {
+              <a class="public-profile-link" [routerLink]="['/users', user.idExternal]"
+                >Ver perfil público</a
+              >
+              <span class="membership active-state">
+                {{ profile.accountStatus }}
+              </span>
+              <span class="membership role-state">
+                {{ roleLabel }}
+              </span>
+            } @else if (isOwnProfile()) {
+              <a class="profile-button" routerLink="/profile">Mi perfil</a>
+            } @else {
+              <button
+                class="profile-button profile-primary"
+                type="button"
+                (click)="openGroupPicker()"
+                [disabled]="groupsLoading() || adding()"
+              >
+                Agregar a un grupo
+              </button>
+            }
+          </div>
+        </section>
 
-          <article class="reading-card finished-card">
-            <span class="metric-overline">RECORRIDO</span>
-            <strong class="metric-value">
-              {{ readingCounts().finished }}
-            </strong>
-            <h3>Finalizadas</h3>
-            <p>Historias que ya completaste.</p>
-          </article>
-        </div>
-
-        <div class="extra-heading">
-          <span class="eyebrow">TAMBIÉN EN TU UNIVERSO</span>
-          <span class="extra-note">Actividad de tu cuenta</span>
-        </div>
-
-        <div class="secondary-cards">
-          <article class="secondary-card">
-            <span class="secondary-icon" aria-hidden="true">✧</span>
-            <div>
-              <span class="secondary-overline">TU AUTORÍA</span>
-              <h3>Historias creadas</h3>
-              <p>Relatos que empezaron con vos.</p>
+        @if (canEditProfile()) {
+          <dialog
+            #avatarPicker
+            class="avatar-picker"
+            aria-labelledby="avatar-picker-title"
+            (cancel)="closeAvatarPicker($event)"
+            (click)="$event.target === $event.currentTarget && closeAvatarPicker()"
+          >
+            <div class="avatar-picker-heading">
+              <h2 id="avatar-picker-title">Elegí tu avatar</h2>
+              <button
+                type="button"
+                class="avatar-picker-close"
+                (click)="closeAvatarPicker()"
+                [disabled]="savingAvatar()"
+                aria-label="Cerrar selector de avatar"
+              >
+                ×
+              </button>
             </div>
-            <strong>{{ createdStoriesCount() }}</strong>
-          </article>
-
-          <article class="secondary-card groups-card">
-            <span class="secondary-icon" aria-hidden="true">♧</span>
-            <div>
-              <span class="secondary-overline">LECTURA EN COMUNIDAD</span>
-              <h3>Grupos activos</h3>
-              <p>Grupos de lectura a los que pertenecés.</p>
+            <div class="avatar-options">
+              @for (avatar of avatars; track avatar.src; let index = $index) {
+                <button
+                  type="button"
+                  class="avatar-option"
+                  [class.is-selected]="selectedAvatarIndex === index"
+                  [attr.aria-pressed]="selectedAvatarIndex === index"
+                  [disabled]="savingAvatar()"
+                  (click)="selectAvatar(index)"
+                >
+                  <img
+                    loading="lazy"
+                    decoding="async"
+                    [src]="avatar.src"
+                    [alt]="avatar.name"
+                  /><span>{{ avatar.name }}</span>
+                </button>
+              }
             </div>
-            <strong>{{ activeGroupsCount() }}</strong>
-          </article>
-        </div>
+            @if (avatarError()) {
+              <p class="profile-error" role="alert">{{ avatarError() }}</p>
+            }
+            <div class="avatar-picker-actions">
+              <button
+                class="profile-button"
+                type="button"
+                (click)="closeAvatarPicker()"
+                [disabled]="savingAvatar()"
+              >
+                Cancelar</button
+              ><button
+                class="profile-button profile-primary"
+                type="button"
+                (click)="saveAvatar()"
+                [disabled]="savingAvatar()"
+              >
+                {{ savingAvatar() ? 'Guardando…' : 'Guardar avatar' }}
+              </button>
+            </div>
+          </dialog>
+        }
 
-        <div class="reading-scope">
-          <span aria-hidden="true">✦</span>
-          <span>El resumen incluye libros e historias.</span>
-        </div>
-      </section>
+        @if (coverError()) {
+          <div class="profile-state profile-error" role="alert">
+            {{ coverError() }} <button type="button" (click)="loadAppearance()">Reintentar</button>
+          </div>
+        }
+        @if (groupMessage()) {
+          <p class="profile-state profile-success" role="status">{{ groupMessage() }}</p>
+        }
+        @if (showGroupPicker()) {
+          <section class="group-picker" aria-label="Agregar usuario a un grupo">
+            @if (groupsLoading()) {
+              <p role="status">Cargando tus grupos…</p>
+            } @else {
+              @if (groupsError()) {
+                <p class="profile-error" role="alert">{{ groupsError() }}</p>
+              }
+              @if (groups().length) {
+                <label for="profile-group">Grupo de lectura</label>
+                <select id="profile-group" [(ngModel)]="selectedGroupId" [disabled]="adding()">
+                  <option value="" disabled>Elegí un grupo</option>
+                  @for (group of groups(); track group.idExternal) {
+                    <option [value]="group.idExternal">{{ group.name }}</option>
+                  }
+                </select>
+                <button
+                  type="button"
+                  class="profile-button profile-primary"
+                  (click)="addToGroup()"
+                  [disabled]="!selectedGroupId || adding()"
+                >
+                  {{ adding() ? 'Agregando…' : 'Agregar' }}
+                </button>
+              } @else if (!groupsError()) {
+                <p>No tenés grupos activos creados por vos.</p>
+                <a routerLink="/groups/new">Crear un grupo</a>
+              } @else {
+                <button class="profile-button" type="button" (click)="openGroupPicker()">
+                  Reintentar
+                </button>
+              }
+            }
+            <button
+              class="profile-button"
+              type="button"
+              (click)="showGroupPicker.set(false)"
+              [disabled]="adding()"
+            >
+              Cerrar
+            </button>
+          </section>
+        }
 
-      <footer class="page-footer">
-        <span>Un pequeño mundo propio.</span>
-        <span>BOOKVERSE ✦</span>
-      </footer>
+        <section class="activity-section" aria-label="Actividad lectora">
+          <div class="activity-heading">
+            <div>
+              <p class="eyebrow">
+                {{ isOwnProfile() ? 'TU ACTIVIDAD EN BOOKVERSE' : 'ACTIVIDAD EN BOOKVERSE' }}
+              </p>
+              <h2>{{ isOwnProfile() ? 'Tu recorrido lector.' : 'Actividad lectora' }}</h2>
+            </div>
+            <p class="activity-note">
+              {{
+                isOwnProfile()
+                  ? 'Un resumen de tus lecturas e historias.'
+                  : 'Lecturas e historias de ' + profile.name + '.'
+              }}
+            </p>
+          </div>
+
+          <div class="reading-cards" aria-label="Estados de lectura">
+            <article class="reading-card want-card">
+              <span class="metric-overline">EN TU ESTANTERÍA</span>
+              <strong class="metric-value">
+                {{ readingCounts().wantToRead }}
+              </strong>
+              <h3>Quiero leer</h3>
+              <p>
+                {{
+                  isOwnProfile()
+                    ? 'Libros e historias que guardaste.'
+                    : 'Libros e historias pendientes.'
+                }}
+              </p>
+            </article>
+
+            <article class="reading-card progress-card">
+              <span class="metric-overline">AHORA</span>
+              <strong class="metric-value">
+                {{ readingCounts().inProgress }}
+              </strong>
+              <h3>En curso</h3>
+              <p>{{ isOwnProfile() ? 'Lecturas que estás disfrutando.' : 'Lecturas en curso.' }}</p>
+            </article>
+
+            <article class="reading-card finished-card">
+              <span class="metric-overline">RECORRIDO</span>
+              <strong class="metric-value">
+                {{ readingCounts().finished }}
+              </strong>
+              <h3>Finalizadas</h3>
+              <p>
+                {{ isOwnProfile() ? 'Historias que ya completaste.' : 'Lecturas completadas.' }}
+              </p>
+            </article>
+          </div>
+
+          <div class="extra-heading">
+            <span class="eyebrow">{{
+              isOwnProfile() ? 'TAMBIÉN EN TU UNIVERSO' : 'OTRA ACTIVIDAD'
+            }}</span>
+            <span class="extra-note">{{
+              isOwnProfile() ? 'Actividad de tu cuenta' : 'Actividad del usuario'
+            }}</span>
+          </div>
+
+          <div class="secondary-cards">
+            <article class="secondary-card">
+              <span class="secondary-icon" aria-hidden="true">✧</span>
+              <div>
+                <span class="secondary-overline">{{
+                  isOwnProfile() ? 'TU AUTORÍA' : 'AUTORÍA'
+                }}</span>
+                <h3>Historias creadas</h3>
+                <p>
+                  {{
+                    isOwnProfile() ? 'Relatos que empezaron con vos.' : 'Historias de este usuario.'
+                  }}
+                </p>
+              </div>
+              <strong>{{ createdStoriesCount() }}</strong>
+            </article>
+
+            <article class="secondary-card groups-card">
+              <span class="secondary-icon" aria-hidden="true">♧</span>
+              <div>
+                <span class="secondary-overline">LECTURA EN COMUNIDAD</span>
+                <h3>Grupos activos</h3>
+                <p>
+                  {{
+                    isOwnProfile()
+                      ? 'Grupos de lectura a los que pertenecés.'
+                      : 'Grupos de lectura en los que participa.'
+                  }}
+                </p>
+              </div>
+              <strong>{{ activeGroupsCount() }}</strong>
+            </article>
+          </div>
+
+          <div class="reading-scope">
+            <span aria-hidden="true">✦</span>
+            <span>El resumen incluye libros e historias.</span>
+          </div>
+
+          @if (activityError()) {
+            <div class="profile-state profile-error" role="alert">
+              {{ activityError() }}
+              <button type="button" (click)="loadActivity()">Reintentar</button>
+            </div>
+          }
+        </section>
+
+        <app-favorite-stories [userId]="user.idExternal" [editable]="canEditProfile()" />
+
+        <footer class="page-footer">
+          <span>Un pequeño mundo propio.</span>
+          <span>BOOKVERSE ✦</span>
+        </footer>
+      }
     </main>
   </div>
 </div>

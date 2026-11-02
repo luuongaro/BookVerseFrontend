@@ -5,9 +5,9 @@ import { Observable } from 'rxjs';
 import { API_URL } from '../../../core/api/api.config';
 import { GroupMember } from '../models/group-member.model';
 
-interface AddGroupMemberRequest {
-  email: string;
-}
+type AddGroupMemberRequest =
+  | { userId: string; email?: never }
+  | { email: string; userId?: never };
 
 @Service()
 export class GroupMembersService {

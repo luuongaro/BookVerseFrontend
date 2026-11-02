@@ -16,7 +16,7 @@
     }
     <article class="panel">
       <h2 class="rating">★ {{ review.rating }} / 5</h2>
-      <p>Por {{ review.reviewerName?.trim() || 'Usuario' }}</p>
+      <p>Por <a [routerLink]="['/users', review.reviewerId]">{{ review.reviewerName?.trim() || 'Usuario' }}</a></p>
       <p class="prose">{{ review.content }}</p>
       <p>Publicada el {{ review.createdAt | date: 'dd/MM/yyyy' }}</p>
       <div class="actions">

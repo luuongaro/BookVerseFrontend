@@ -18,12 +18,16 @@ import { GroupMembersService } from '../../services/group-members.service';
 import { GroupProgressService } from '../../services/group-progress.service';
 import { ReadingGroupsService } from '../../services/reading-groups.service';
 import { UserService } from '../../../profile/services/user.service';
+import { UserSearch } from '../../../profile/components/user-search/user-search';
+import { UserProfile } from '../../../profile/models/user-profile.model';
+import { TokenService } from '../../../../core/services/token.service';
+
 import { StoryDetailResponse } from '../../../stories/models/story-detail-response';
 import { StoryService } from '../../../stories/services/story.services';
 
 @Component({
   selector: 'app-group-detail',
-  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink],
+  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, UserSearch],
   styleUrl: './group-detail.css',
   templateUrl: './group-detail.html',
 })
@@ -39,6 +43,7 @@ export class GroupDetail implements OnInit {
   private readonly booksService = inject(BooksService);
   private readonly storyService = inject(StoryService);
   private readonly userService = inject(UserService);
+  private readonly tokens = inject(TokenService);
 
   group: ReadingGroup | null = null;
   members: GroupMember[] = [];
@@ -57,8 +62,8 @@ export class GroupDetail implements OnInit {
   targetDatePastError = false;
   commentContent = '';
   commentProgress = 0;
-  readerEmail = '';
-  showAddMemberForm = false;
+  selectedInviteUser: UserProfile | null = null;
+  showInviteForm = false;
 
   isLoading = true;
   isLoadingMembers = true;
@@ -78,6 +83,7 @@ export class GroupDetail implements OnInit {
   goalActionMessage = '';
   commentActionMessage = '';
   memberActionMessage = '';
+  memberSuccessMessage = '';
 
   get currentUsername(): string {
     return this.userService.currentUser()?.username ?? 'Usuario';
@@ -191,34 +197,61 @@ export class GroupDetail implements OnInit {
   get canLeaveGroup(): boolean {
     return (
       !!this.group &&
-      localStorage.getItem('userId') !== this.group.createdByUserId
+      localStorage.getItem('userId') !== this.group.createdByUserId &&
+      this.members.some((member) => member.userId === localStorage.getItem('userId'))
     );
   }
 
-  addMember(): void {
-    const email = this.readerEmail.trim();
+  get canManageMembers(): boolean {
+    return !!this.group?.isActive && (
+      this.group.createdByUserId === localStorage.getItem('userId') ||
+      this.tokens.hasAnyRole('ROLE_ADMIN', 'ROLE_MODERATOR')
+    );
+  }
 
-    if (!this.group || this.isUpdatingMembers || !email) {
+  get memberUserIds(): string[] {
+    return this.members.map((member) => member.userId);
+  }
+
+  toggleInviteForm(): void {
+    if (this.isUpdatingMembers) return;
+    this.showInviteForm = !this.showInviteForm;
+    this.selectedInviteUser = null;
+    this.memberActionMessage = '';
+    this.memberSuccessMessage = '';
+  }
+
+  inviteMember(): void {
+    const user = this.selectedInviteUser;
+    if (!this.group || !this.canManageMembers || this.isUpdatingMembers || !user || this.memberUserIds.includes(user.idExternal)) {
       return;
     }
 
     this.memberActionMessage = '';
+    this.memberSuccessMessage = '';
     this.isUpdatingMembers = true;
 
     this.groupMembersService
-      .addMember(this.group.idExternal, { email })
+      .addMember(this.group.idExternal, {
+        userId: user.idExternal,
+      })
       .subscribe({
         next: () => {
-          this.readerEmail = '';
-          this.showAddMemberForm = false;
+          this.selectedInviteUser = null;
+          this.showInviteForm = false;
           this.isUpdatingMembers = false;
+          this.memberSuccessMessage = `Agregaste a @${user.username} al grupo.`;
           this.loadMembers(this.group!.idExternal);
           this.changeDetector.markForCheck();
         },
         error: (error: unknown) => {
-          console.error('Error adding group member:', error);
-          this.memberActionMessage =
-            'No se pudo agregar al lector. Verificá el correo, que la cuenta esté activa y que tengas permisos para administrar el grupo.';
+          console.error('Error inviting group member:', error);
+          const status = (error as { status?: number })?.status;
+          this.memberActionMessage = status === 409
+            ? 'Este usuario ya pertenece al grupo.'
+            : status === 403
+              ? 'No se puede agregar a este usuario al grupo.'
+              : 'No pudimos agregar al usuario. Intentá de nuevo.';
           this.isUpdatingMembers = false;
           this.changeDetector.markForCheck();
         },
