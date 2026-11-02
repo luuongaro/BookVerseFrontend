@@ -719,3 +719,217 @@
     color 0.2s,
     background 0.2s;
 }
+
+.story-editor .chapter-item {
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.story-editor .chapter-item:hover:not(.selected) {
+  background: #f8f5fa;
+}
+
+.story-editor .chapter-item:focus-visible {
+  outline: 2px solid #8e79a5;
+  outline-offset: 2px;
+}
+
+.story-editor .toolbar-context {
+  padding: 7px 10px;
+  border: 1px solid #ddd3e9;
+  border-radius: 7px;
+  background: #f5f1f8;
+  color: var(--violet);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.story-editor .format-toolbar .format-button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--violet);
+}
+
+.story-editor .format-toolbar .format-button:hover {
+  border-color: #c9b9d8;
+  background: #f5f1f8;
+}
+
+.story-editor .format-toolbar .format-button:focus-visible {
+  outline: 2px solid #8e79a5;
+  outline-offset: 2px;
+}
+
+.story-editor .manuscript-description-input {
+  min-height: 220px;
+  padding: 18px 20px;
+  border: 1px solid #ddd3e9;
+  border-radius: 10px;
+  background: #fff;
+  line-height: 1.8;
+}
+
+.story-editor .manuscript-description-input:focus-visible {
+  outline: 2px solid #b5a4c4;
+  outline-offset: 2px;
+}
+
+.story-editor .paper-actions .danger-button {
+  margin-right: auto;
+  border-color: #ead5df;
+  background: #fff;
+  color: #9a526c;
+}
+
+.story-editor .paper-actions .danger-button:hover {
+  background: #fff6f8;
+}
+
+.danger-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.confirm-dialog {
+  width: min(480px, calc(100vw - 32px));
+  padding: 30px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  color: var(--ink);
+  box-shadow: 0 24px 70px #302b4330;
+}
+
+.confirm-dialog::backdrop {
+  background: #302b4366;
+  backdrop-filter: blur(2px);
+}
+
+.confirm-dialog h2 {
+  margin: 0 0 14px;
+  font: 400 30px/1.15 var(--serif);
+}
+
+.confirm-dialog p {
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+
+.confirm-dialog .delete-error {
+  color: #933c4a;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.dialog-actions .danger-button {
+  border-color: #ead5df;
+  background: #fff6f8;
+  color: #9a526c;
+}
+
+.dialog-actions .danger-button:hover {
+  background: #f9e9ef;
+}
+
+.content-group {
+  min-height: 330px;
+}
+
+.story-editor .format-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  border-block: 1px solid var(--line);
+}
+
+.format-toolbar button {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
+.format-toolbar button:hover:not(:disabled) {
+  background: var(--lavender);
+  color: var(--violet);
+}
+
+.format-toolbar button:focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 2px;
+}
+
+.format-toolbar button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.story-editor .manuscript-description-input {
+  min-height: 350px;
+  padding: 10px 4px;
+  border: 0;
+  outline: none;
+  color: var(--ink);
+  font-family: Georgia, serif;
+  font-size: 17px;
+  line-height: 1.95;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.story-editor .manuscript-description-input:focus {
+  outline: none;
+}
+
+.story-editor .manuscript-description-input:empty::before {
+  content: 'Escribí la descripción de tu historia…';
+  color: var(--muted);
+  pointer-events: none;
+}
+
+#story-main-section,
+#story-description-section,
+#story-accessType-section {
+  scroll-margin-top: 24px;
+}
+
+.chapter-list .chapter-item {
+  width: 100%;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chapter-list .chapter-item.selected {
+  background: #e8e0ef;
+  color: #665498;
+}
+
+.chapter-list .chapter-item:focus-visible {
+  outline: 2px solid #7465ad;
+  outline-offset: 2px;
+}

@@ -1,4 +1,12 @@
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  inject,
+  OnInit,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
@@ -30,6 +38,11 @@ export class WriterDesk implements OnInit {
   readonly chapterError = signal('');
   readonly storyPage = signal(0);
   readonly chapterPage = signal(0);
+  readonly deleting = signal(false);
+  readonly selectedChapter = signal<ChapterResponse | null>(null);
+  readonly deleteError = signal('');
+  readonly deleteDialog =
+    viewChild.required<ElementRef<HTMLDialogElement>>('deleteDialog');
 
   ngOnInit(): void {
     this.loadStories();
@@ -90,7 +103,7 @@ export class WriterDesk implements OnInit {
     this.loadingChapters.set(true);
     this.chapterError.set('');
     this.chapterRequest = this.chapters
-      .getByStory(story.idExternal, page)
+      .getByStory(story.idExternal, page, false, 5)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (result) => {
@@ -104,6 +117,68 @@ export class WriterDesk implements OnInit {
         error: (error) => {
           this.loadingChapters.set(false);
           this.chapterError.set(apiError(error));
+        },
+      });
+  }
+
+  confirmDelete(chapter: ChapterResponse): void {
+    const story = this.selected();
+
+    if (
+      !story ||
+      this.deleting() ||
+      chapter.storyId !== story.idExternal
+    ) {
+      return;
+    }
+
+    this.selectedChapter.set(chapter);
+    this.deleteError.set('');
+    this.deleteDialog().nativeElement.showModal();
+  }
+
+  cancelDelete(): void {
+    if (!this.deleting()) {
+      this.deleteDialog().nativeElement.close();
+    }
+  }
+
+  deleteChapter(): void {
+    const chapter = this.selectedChapter();
+    const story = this.selected();
+
+    if (
+      !chapter ||
+      !story ||
+      this.deleting() ||
+      chapter.storyId !== story.idExternal
+    ) {
+      return;
+    }
+
+    this.deleting.set(true);
+    this.deleteError.set('');
+
+    this.chapters
+      .delete(chapter.idExternal)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          const currentPage = this.chapterPage();
+          const currentResult = this.chapterResult();
+          const previousPage =
+            currentPage > 0 && currentResult?.content.length === 1
+              ? currentPage - 1
+              : currentPage;
+
+          this.selectedChapter.set(null);
+          this.deleting.set(false);
+          this.deleteDialog().nativeElement.close();
+          this.loadChapters(previousPage);
+        },
+        error: (error) => {
+          this.deleting.set(false);
+          this.deleteError.set(apiError(error));
         },
       });
   }
