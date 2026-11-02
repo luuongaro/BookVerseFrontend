@@ -31,10 +31,7 @@
 
           <a
             class="text-button"
-            [routerLink]="[
-              section,
-              storyId()
-            ]"
+            [routerLink]="writing ? '/writer' : [section, storyId()]"
           >
             Volver a la historia
           </a>
@@ -52,10 +49,7 @@
 
         <a
           class="back-link"
-          [routerLink]="[
-            section,
-            storyId()
-          ]"
+          [routerLink]="writing ? '/writer' : [section, storyId()]"
         >
           <span aria-hidden="true">
             ←
@@ -274,10 +268,7 @@
 
           <a
             class="return-link"
-            [routerLink]="[
-              section,
-              storyId()
-            ]"
+            [routerLink]="writing ? '/writer' : [section, storyId()]"
           >
             Volver a la historia
             <span aria-hidden="true">→</span>

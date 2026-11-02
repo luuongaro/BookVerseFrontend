@@ -74,7 +74,6 @@
               <h2 id="selected-story-title">{{ story.title }}</h2>
               <div class="story-actions">
                 <a [routerLink]="['/writer', story.idExternal, 'edit']">Editar historia</a>
-                <a [routerLink]="['/writer', story.idExternal]">Gestionar historia</a>
               </div>
             </header>
             <div class="chapters-heading">
@@ -99,61 +98,81 @@
                 <button type="button" (click)="loadChapters(chapterPage())">Reintentar</button>
               </div>
             } @else if (chapterResult(); as chapters) {
-              <ol class="chapter-list" aria-label="Capítulos de la historia seleccionada">
+              <div class="chapter-list" aria-label="Capítulos de la historia seleccionada">
                 @for (chapter of chapters.content; track chapter.idExternal) {
-                  <li>
-                    <span class="chapter-number">{{
-                      chapter.chapterNumber.toString().padStart(2, '0')
-                    }}</span>
+                  <article class="chapter-row">
+                    <span class="chapter-number">
+                      {{ chapter.chapterNumber.toString().padStart(2, '0') }}
+                    </span>
+
                     <div class="chapter-info">
+                      <span class="chapter-kicker">Capítulo {{ chapter.chapterNumber }}</span>
                       <h4>{{ chapter.title }}</h4>
                       <span class="chapter-status" [class.published]="chapter.published">
                         <span aria-hidden="true">●</span>
                         {{ chapter.published ? 'Publicado' : 'Borrador' }}
                       </span>
                     </div>
-                    <a
-                      class="edit-chapter"
-                      [routerLink]="[
-                        '/writer',
-                        story.idExternal,
-                        'chapters',
-                        chapter.idExternal,
-                        'edit',
-                      ]"
-                      [attr.aria-label]="'Editar capítulo: ' + chapter.title"
-                      >Editar <span aria-hidden="true">→</span></a
-                    >
-                  </li>
+
+                    <div class="chapter-actions">
+                      <a
+                        class="chapter-action preview"
+                        [routerLink]="[
+                          '/writer',
+                          story.idExternal,
+                          'chapters',
+                          chapter.idExternal,
+                        ]"
+                      >
+                        Vista previa <span aria-hidden="true">→</span>
+                      </a>
+
+                      <a
+                        class="chapter-action edit"
+                        [routerLink]="[
+                          '/writer',
+                          story.idExternal,
+                          'chapters',
+                          chapter.idExternal,
+                          'edit',
+                        ]"
+                      >
+                        <span aria-hidden="true">✎</span> Editar
+                      </a>
+
+                      <button
+                        type="button"
+                        class="chapter-action delete"
+                        (click)="confirmDelete(chapter)"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </article>
                 } @empty {
-                  <li class="chapter-state">
+                  <p class="chapter-state">
                     Esta historia todavía no tiene capítulos. Usá “Nuevo capítulo” para crear el
                     primero.
-                  </li>
+                  </p>
                 }
-              </ol>
-              @if (chapters.totalPages > 1) {
-                <nav class="pagination" aria-label="Páginas de capítulos del escritorio">
-                  <button
-                    type="button"
-                    [disabled]="chapters.first"
-                    (click)="loadChapters(chapters.number - 1)"
-                  >
-                    Anterior
-                  </button>
-                  <span>Página {{ chapters.number + 1 }} de {{ chapters.totalPages }}</span>
-                  <button
-                    type="button"
-                    [disabled]="chapters.last"
-                    (click)="loadChapters(chapters.number + 1)"
-                  >
-                    Siguiente
-                  </button>
-                </nav>
-              }
-              <a class="manage-link" [routerLink]="['/writer', story.idExternal, 'chapters']"
-                >Gestionar capítulos <span aria-hidden="true">→</span></a
-              >
+              </div>
+              <nav class="pagination" aria-label="Páginas de capítulos del escritorio">
+                <button
+                  type="button"
+                  [disabled]="chapters.first"
+                  (click)="loadChapters(chapters.number - 1)"
+                >
+                  Anterior
+                </button>
+                <span>Página {{ chapters.number + 1 }} de {{ chapters.totalPages }}</span>
+                <button
+                  type="button"
+                  [disabled]="chapters.last"
+                  (click)="loadChapters(chapters.number + 1)"
+                >
+                  Siguiente
+                </button>
+              </nav>
             }
           </section>
         }
@@ -168,3 +187,38 @@
     }
   }
 </div>
+
+<dialog
+  #deleteDialog
+  class="confirm-dialog"
+  aria-labelledby="delete-chapter-heading"
+  (cancel)="deleting() && $event.preventDefault()"
+>
+  <h2 id="delete-chapter-heading">¿Eliminar este capítulo?</h2>
+  <p>{{ selectedChapter()?.title }}</p>
+
+  @if (deleteError()) {
+    <p class="delete-error" role="alert">{{ deleteError() }}</p>
+  }
+
+  <div class="dialog-actions">
+    <button
+      type="button"
+      class="chapter-action delete"
+      [disabled]="deleting()"
+      (click)="deleteChapter()"
+    >
+      {{ deleting() ? 'Eliminando…' : 'Eliminar capítulo' }}
+    </button>
+
+    <button
+      type="button"
+      class="chapter-action edit"
+      [disabled]="deleting()"
+      (click)="cancelDelete()"
+      autofocus
+    >
+      Cancelar
+    </button>
+  </div>
+</dialog>
