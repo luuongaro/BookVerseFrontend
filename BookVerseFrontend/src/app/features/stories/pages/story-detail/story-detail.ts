@@ -17,6 +17,9 @@ import { StoryDetailResponse } from '../../models/story-detail-response';
 import { apiError } from '../../../../core/api/api.config';
 import { LibraryService, libraryError } from '../../../library/services/library.service';
 import { TipService } from '../../../tips/services/tip.service';
+import { ChapterService } from '../../services/chapter.service';
+import { ChapterResponse } from '../../models/chapter-response';
+import { PageResponse } from '../../models/page-response';
 
 @Component({
   selector: 'app-story-detail',
@@ -33,6 +36,7 @@ export class StoryDetail implements OnInit {
   private readonly permissions = inject(StoryPermissions);
   private readonly destroyRef = inject(DestroyRef);
   private readonly library = inject(LibraryService);
+  private readonly chaptersService = inject(ChapterService);
   readonly writing = this.route.snapshot.data['writing'] === true;
   readonly section = this.writing ? '/writer' : '/stories';
   readonly saving = signal(false);
@@ -46,14 +50,16 @@ export class StoryDetail implements OnInit {
   readonly canManage = computed(
     () => this.writing && !!this.story() && this.permissions.canManage(this.story()!),
   );
-  readonly visibleChapters = computed(
-    () => this.story()?.chapters.filter((chapter) => this.canManage() || chapter.published) ?? [],
-  );
+  readonly chapterPage = signal<PageResponse<ChapterResponse> | null>(null);
+  readonly chaptersLoading = signal(false);
+  readonly chaptersError = signal('');
+  readonly visibleChapters = computed(() => this.chapterPage()?.content ?? []);
   readonly deleting = signal(false);
   readonly deleteError = signal('');
   readonly deleted = signal(false);
   readonly deleteDialog = viewChild.required<ElementRef<HTMLDialogElement>>('deleteDialog');
   private request?: Subscription;
+  private chapterRequest?: Subscription;
   
   ngOnInit(): void {
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.load());
@@ -62,7 +68,10 @@ export class StoryDetail implements OnInit {
   load(): void {
     const id = this.route.snapshot.paramMap.get('id');
     this.request?.unsubscribe();
+    this.chapterRequest?.unsubscribe();
     this.story.set(null);
+    this.chapterPage.set(null);
+    this.chaptersError.set('');
     this.saved.set(false);
     this.saveError.set('');
     this.errorMessage.set('');
@@ -78,6 +87,7 @@ export class StoryDetail implements OnInit {
       .subscribe({
         next: (story) => {
           this.story.set(story);
+          this.loadChapters(story.idExternal, 0);
           this.isLoading.set(false);
         },
         error: (error) => {
@@ -86,6 +96,29 @@ export class StoryDetail implements OnInit {
         },
       });
   }
+
+  loadChapters(storyId: string, page = 0): void {
+    if (page < 0) return;
+
+    this.chapterRequest?.unsubscribe();
+    this.chaptersLoading.set(true);
+    this.chaptersError.set('');
+
+    this.chapterRequest = this.chaptersService
+      .getByStory(storyId, page, !this.writing)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (result) => {
+          this.chapterPage.set(result);
+          this.chaptersLoading.set(false);
+        },
+        error: (error) => {
+          this.chaptersError.set(apiError(error));
+          this.chaptersLoading.set(false);
+        },
+      });
+  }
+
   confirmDelete(): void {
     if (!this.canManage() || this.deleting() || this.deleted()) return;
     this.deleteError.set('');

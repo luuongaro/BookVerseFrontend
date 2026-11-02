@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 
 import { StoryDetail } from './pages/story-detail/story-detail';
 import { StoryList } from './pages/story-list/story-list';
-import { ChapterList } from './pages/chapter-list/chapter-list';
 import { ChapterReader } from './pages/chapter-reader/chapter-reader';
 
 export const storiesRoutes: Routes = [
@@ -23,7 +22,7 @@ export const storiesRoutes: Routes = [
 
   { path: ':id/chapters/:chapterId', component: ChapterReader },
 
-  { path: ':id/chapters', component: ChapterList },
+  { path: ':id/chapters', redirectTo: '/stories/:id', pathMatch: 'full' },
 
   { path: ':id', component: StoryDetail },
 ];
