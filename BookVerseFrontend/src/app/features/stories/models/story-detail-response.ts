@@ -4,6 +4,7 @@ import { StoryAccessType } from './story-access-type';
 export interface StoryDetailResponse {
   idExternal: string;
   authorId: string;
+  authorUsername: string;
   title: string;
   description: string;
   accessType: StoryAccessType;

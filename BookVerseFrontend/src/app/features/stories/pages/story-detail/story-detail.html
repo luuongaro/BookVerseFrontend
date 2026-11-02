@@ -14,14 +14,48 @@
       <span class="access-badge" [class.premium]="currentStory.accessType === 'PREMIUM'">
         {{ currentStory.accessType === 'PREMIUM' ? 'Premium' : 'Gratuita' }}
       </span>
-      <span>{{ visibleChapters().length }} capítulos{{ writing ? '' : ' disponibles' }}</span>
+      <span>
+        {{ writing ? currentStory.chaptersCount : currentStory.publishedChaptersCount }}
+        capítulos{{ writing ? '' : ' disponibles' }}
+      </span>
     </div>
     <div class="prose" [innerHTML]="currentStory.description"></div>
+    @if (!writing) {
+      <div class="author-actions">
+        @if (currentStory.authorUsername) {
+          <div class="story-author">
+            <span class="author-avatar" aria-hidden="true">
+              {{ currentStory.authorUsername.slice(0, 2).toUpperCase() }}
+            </span>
+
+            <div class="author-copy">
+              <span class="author-label">Escrita por</span>
+              <span class="author-name">{{ currentStory.authorUsername }}</span>
+            </div>
+          </div>
+        }
+
+        <button
+          class="button secondary tip-button"
+          type="button"
+          [disabled]="tipping()"
+          (click)="sendTip(1000)"
+        >
+          {{ tipping() ? 'Preparando checkout…' : '☕ Mandar un cafecito · $1.000' }}
+        </button>
+      </div>
+    }
+
     <div class="story-actions">
       <div class="reading-actions">
-        <a class="button read-button" [routerLink]="[section, currentStory.idExternal, 'chapters']">
-          {{ writing ? 'Gestionar capítulos' : 'Ver capítulos' }}
-        </a>
+        @if (writing) {
+          <a
+            class="button read-button"
+            [routerLink]="[section, currentStory.idExternal, 'chapters']"
+          >
+            Gestionar capítulos
+          </a>
+        }
 
         @if (!writing) {
           <button
@@ -41,26 +75,16 @@
             >
               <path d="M6 4h12v17l-6-4-6 4z" />
             </svg>
-
             {{ saving() ? 'Guardando…' : saved() ? 'En tu biblioteca' : 'Guardar en biblioteca' }}
           </button>
 
-          <button
-            class="button secondary tip-button"
-            type="button"
-            [disabled]="tipping()"
-            (click)="sendTip(1000)"
+          <a
+            class="button secondary"
+            routerLink="/reviews"
+            [queryParams]="{ storyId: currentStory.idExternal }"
           >
-            {{ tipping() ? 'Preparando checkout…' : '☕ Dejar un cafecito · $1.000' }}
-          </button>
-
-          <div class="related-links">
-            <a routerLink="/reviews" [queryParams]="{ storyId: currentStory.idExternal }">
-              Ver reseñas
-            </a>
-
-            <a routerLink="/library"> Mi biblioteca </a>
-          </div>
+            Ver reseñas
+          </a>
         }
       </div>
 
@@ -91,49 +115,96 @@
     @if (saved()) {
       <p role="status">Historia guardada en tu biblioteca.</p>
     }
-    <h2>Capítulos</h2>
-    <div class="chapters-list">
-      @for (chapter of visibleChapters(); track chapter.idExternal) {
-        <article class="panel chapter-row">
-          <div>
-            <h3>{{ chapter.chapterNumber }}. {{ chapter.title }}</h3>
-            <p>{{ chapter.published ? 'Publicado' : 'Borrador' }}</p>
-          </div>
-          <div class="chapter-actions">
-            @if (chapter.published || canManage()) {
-              <a
-                class="chapter-read"
-                [routerLink]="[section, currentStory.idExternal, 'chapters', chapter.idExternal]"
-                >{{ writing ? 'Vista previa' : 'Leer capítulo' }}</a
-              >
-            }
-            @if (canManage()) {
-              <a
-                class="chapter-edit"
-                [routerLink]="[
-                  '/writer',
-                  currentStory.idExternal,
-                  'chapters',
-                  chapter.idExternal,
-                  'edit',
-                ]"
-                ><svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15z" /></svg
-                >Editar capítulo</a
-              >
-            }
-          </div>
-        </article>
-      } @empty {
-        <p class="state">Esta historia todavía no tiene capítulos disponibles.</p>
+    <div class="chapter-section">
+      <span class="chapter-ornament" aria-hidden="true">✦</span>
+      <h2>Capítulos</h2>
+
+      @if (chaptersLoading()) {
+        <p class="state" role="status">Cargando capítulos…</p>
+      } @else if (chaptersError()) {
+        <div class="state error" role="alert">
+          {{ chaptersError() }}
+          <button
+            type="button"
+            (click)="loadChapters(currentStory.idExternal, chapterPage()?.number ?? 0)"
+          >
+            Reintentar
+          </button>
+        </div>
+      } @else {
+        <div class="chapters-list">
+          @for (chapter of visibleChapters(); track chapter.idExternal) {
+            <article class="chapter-row" [class.draft]="!chapter.published">
+              <span class="chapter-number" aria-hidden="true">
+                {{ chapter.chapterNumber.toString().padStart(2, '0') }}
+              </span>
+
+              <div class="chapter-info">
+                <span class="chapter-kicker">CAPÍTULO {{ chapter.chapterNumber }}</span>
+                <h3>{{ chapter.title }}</h3>
+                <span class="chapter-status" [class.published]="chapter.published">
+                  {{ chapter.published ? 'PUBLICADO' : 'BORRADOR' }}
+                </span>
+              </div>
+
+              @if (chapter.published || canManage()) {
+                <div class="chapter-actions">
+                  <a
+                    class="chapter-read"
+                    [routerLink]="[
+                      section,
+                      currentStory.idExternal,
+                      'chapters',
+                      chapter.idExternal
+                    ]"
+                  >
+                    {{ writing ? 'Vista previa' : 'Leer capítulo' }}
+                    <span aria-hidden="true">⟶</span>
+                  </a>
+                </div>
+              }
+            </article>
+          } @empty {
+            <p class="state">Esta historia todavía no tiene capítulos disponibles.</p>
+          }
+        </div>
+
+        @if (chapterPage(); as page) {
+          <nav class="chapter-pagination" aria-label="Páginas de capítulos">
+            <button
+              type="button"
+              [disabled]="page.first"
+              (click)="loadChapters(currentStory.idExternal, page.number - 1)"
+            >
+              Anterior
+            </button>
+
+            <span>Página {{ page.number + 1 }} de {{ page.totalPages }}</span>
+
+            <button
+              type="button"
+              [disabled]="page.last"
+              (click)="loadChapters(currentStory.idExternal, page.number + 1)"
+            >
+              Siguiente
+            </button>
+          </nav>
+        }
+      }
+
+      @if (!writing) {
+        <div class="reviews-note">
+          <p>¿Ya leíste la historia? Compartí tu opinión con la comunidad.</p>
+
+          <a
+            class="button secondary"
+            routerLink="/reviews/new"
+            [queryParams]="{ storyId: currentStory.idExternal }"
+          >
+            Escribir una reseña
+            <span aria-hidden="true">↗</span>
+          </a>
+        </div>
       }
     </div>
   }
