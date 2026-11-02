@@ -3,7 +3,8 @@ import { provideHttpClient, withInterceptors, HttpErrorResponse } from '@angular
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { of, Subject, throwError } from 'rxjs';
+import { of, Subject, throwError, map } from 'rxjs';
+import { ChapterService } from './services/chapter.service';
 import { StoryService } from './services/story.services';
 import { LibraryService } from '../library/services/library.service';
 import { StoryPermissions } from './services/story-permissions.service';
@@ -21,6 +22,7 @@ import { UserService } from '../profile/services/user.service';
 const story: StoryDetailResponse = {
   idExternal: 'story',
   authorId: 'owner',
+  authorUsername: 'Owner',
   title: 'Historia real',
   description: '<p>Descripción real</p>',
   accessType: StoryAccessType.FREE,
@@ -28,6 +30,7 @@ const story: StoryDetailResponse = {
   deleted: false,
   createdAt: '',
   updatedAt: '',
+  publishedChaptersCount: 0,
   chaptersCount: 0,
   chapters: [],
 };
@@ -164,6 +167,21 @@ describe('Story form and details', () => {
     const create = vi.fn();
     const remove = vi.fn();
     const saveStory = vi.fn(() => of({ idExternal: 'saved' }));
+    const getByStory = vi.fn((id: string, number = 0, publishedOnly = false) =>
+      response.pipe(
+        map((current) => {
+          const content = current.chapters.filter((chapter) => !publishedOnly || chapter.published);
+          return {
+            content,
+            number,
+            totalPages: 1,
+            totalElements: content.length,
+            first: number === 0,
+            last: true,
+          };
+        }),
+      ),
+    );
     const favorites = {
       isFavoriteStory: vi.fn(() => of({ favorite: false })),
       addFavoriteStory: vi.fn(() => of(undefined)),
@@ -181,6 +199,7 @@ describe('Story form and details', () => {
         { provide: StoryPermissions, useValue: { canManage: () => role } },
         { provide: LibraryService, useValue: { saveStory } },
         { provide: UserService, useValue: favorites },
+        { provide: ChapterService, useValue: { getByStory } },
       ],
     });
     const harness = await RouterTestingHarness.create();
@@ -189,7 +208,18 @@ describe('Story form and details', () => {
       component,
     );
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
-    return { harness, instance, getById, update, create, remove, navigate, saveStory, favorites };
+    return {
+      harness,
+      instance,
+      getById,
+      update,
+      create,
+      remove,
+      navigate,
+      saveStory,
+      favorites,
+      getByStory,
+    };
   }
   it('sanitizes stored description markup and preserves the original author for an administrator edit', async () => {
     const { harness, instance, update } = await setup(

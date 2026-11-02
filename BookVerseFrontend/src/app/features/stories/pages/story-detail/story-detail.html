@@ -30,7 +30,9 @@
 
             <div class="author-copy">
               <span class="author-label">Escrita por</span>
-              <a class="author-name" [routerLink]="['/users', currentStory.authorId]">{{ currentStory.authorUsername }}</a>
+              <a class="author-name" [routerLink]="['/users', currentStory.authorId]">{{
+                currentStory.authorUsername
+              }}</a>
             </div>
           </div>
         }
@@ -127,8 +129,11 @@
       <p class="validation" role="alert">{{ saveError() }}</p>
     }
     @if (favoriteError()) {
-      <p class="validation" role="alert">{{ favoriteError() }}
-        @if (favorite() === null) { <button type="button" (click)="loadFavorite(currentStory.idExternal)">Reintentar</button> }
+      <p class="validation" role="alert">
+        {{ favoriteError() }}
+        @if (favorite() === null) {
+          <button type="button" (click)="loadFavorite(currentStory.idExternal)">Reintentar</button>
+        }
       </p>
     }
     @if (saved()) {
@@ -174,7 +179,7 @@
                       section,
                       currentStory.idExternal,
                       'chapters',
-                      chapter.idExternal
+                      chapter.idExternal,
                     ]"
                   >
                     {{ writing ? 'Vista previa' : 'Leer capítulo' }}

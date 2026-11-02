@@ -29,7 +29,6 @@ import { PageResponse } from '../../models/page-response';
   styleUrl: './story-detail.css',
 })
 export class StoryDetail implements OnInit {
-
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly service = inject(StoryService);
@@ -47,7 +46,13 @@ export class StoryDetail implements OnInit {
   readonly saving = signal(false);
   readonly saved = signal(false);
   readonly saveError = signal('');
-  readonly canSendTip = computed(() => !this.writing && !!this.story() && this.story()!.authorId !== localStorage.getItem('userId') && this.story()!.publishedChaptersCount > 0);
+  readonly canSendTip = computed(
+    () =>
+      !this.writing &&
+      !!this.story() &&
+      this.story()!.authorId !== localStorage.getItem('userId') &&
+      this.story()!.publishedChaptersCount > 0,
+  );
   readonly story = signal<StoryDetailResponse | null>(null);
   readonly isLoading = signal(false);
   readonly errorMessage = signal('');
@@ -64,7 +69,7 @@ export class StoryDetail implements OnInit {
   readonly deleteDialog = viewChild.required<ElementRef<HTMLDialogElement>>('deleteDialog');
   private request?: Subscription;
   private chapterRequest?: Subscription;
-  
+
   ngOnInit(): void {
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.load());
   }
@@ -151,7 +156,7 @@ export class StoryDetail implements OnInit {
         },
       });
   }
-  
+
   loadFavorite(storyId: string): void {
     this.favoriteRequest?.unsubscribe();
     this.favoriteError.set('');
@@ -210,6 +215,4 @@ export class StoryDetail implements OnInit {
         },
       });
   }
-
-  
 }
