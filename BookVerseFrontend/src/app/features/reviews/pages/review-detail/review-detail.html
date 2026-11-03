@@ -14,38 +14,97 @@
       <h1>{{ work.title }}</h1>
       <p>De {{ work.author }}</p>
     }
-    <article class="panel">
-      <h2 class="rating">★ {{ review.rating }} / 5</h2>
-      <p>Por <a [routerLink]="['/users', review.reviewerId]">{{ review.reviewerName?.trim() || 'Usuario' }}</a></p>
-      <p class="prose">{{ review.content }}</p>
-      <p>Publicada el {{ review.createdAt | date: 'dd/MM/yyyy' }}</p>
-      <div class="actions">
-        @if (review.bookId) {
-          <a [routerLink]="['/books', review.bookId]">Ver libro</a>
-        }
-        @if (review.storyId) {
-          <a [routerLink]="['/stories', review.storyId]">Ver historia</a>
-        }
-        <a routerLink="/reviews" [queryParams]="{ bookId: review.bookId, storyId: review.storyId }"
-          >Reseñas de esta obra</a
+    <article class="review-detail-card">
+      <header class="review-detail-head">
+        <div class="reviewer">
+          @if (reviewerAvatar(); as avatarUrl) {
+            <img
+              class="reviewer-avatar reviewer-avatar--image"
+              [src]="avatarUrl"
+              [alt]="'Foto de perfil de ' + (review.reviewerName?.trim() || 'Usuario')"
+              loading="lazy"
+            />
+          } @else {
+            <span class="reviewer-avatar" aria-hidden="true">
+              {{ review.reviewerName?.trim()?.slice(0, 1)?.toUpperCase() || 'U' }}
+            </span>
+          }
+
+          <div class="reviewer-info">
+            <a [routerLink]="['/users', review.reviewerId]">
+              {{ review.reviewerName?.trim() || 'Usuario' }}
+            </a>
+            <small>Publicada el {{ review.createdAt | date: 'dd/MM/yyyy' }}</small>
+          </div>
+        </div>
+
+        <div
+          class="detail-rating"
+          role="img"
+          [attr.aria-label]="review.rating + ' de 5 estrellas'"
         >
-        @if (session.canEdit(review)) {
-          <a class="button" [routerLink]="['/reviews', review.reviewId, 'edit']">Editar reseña</a>
-          <button type="button" class="danger" (click)="confirmDelete()">Eliminar reseña</button>
-        }
-        @if (
-          session.userId() &&
-          session.userId() !== review.reviewerId &&
-          review.takedownStatus !== 'TAKEN_DOWN'
-        ) {
-          <a
-            [routerLink]="['/reports', 'new']"
-            [queryParams]="{ reviewId: review.reviewId }"
-          >
-            Reportar reseña
+          @for (star of [1, 2, 3, 4, 5]; track star) {
+            <span [class.filled]="star <= review.rating" aria-hidden="true">★</span>
+          }
+          <strong>{{ review.rating }}/5</strong>
+        </div>
+      </header>
+
+      <p class="review-detail-content">{{ review.content }}</p>
+
+      <footer class="review-detail-actions">
+        <div class="work-actions">
+        @if (review.bookId) {
+          <a class="detail-action detail-action--quiet" [routerLink]="['/books', review.bookId]">
+            Ver libro
           </a>
         }
-      </div>
+        @if (review.storyId) {
+          <a class="detail-action detail-action--quiet" [routerLink]="['/stories', review.storyId]">
+            Ver historia
+          </a>
+        }
+        <a
+          class="detail-action detail-action--quiet"
+          routerLink="/reviews"
+          [queryParams]="{ bookId: review.bookId, storyId: review.storyId }"
+        >
+          Reseñas de esta obra
+        </a>
+        </div>
+
+        <div class="review-actions">
+          @if (session.canEdit(review)) {
+            <a
+              class="detail-action detail-action--primary"
+              [routerLink]="['/reviews', review.reviewId, 'edit']"
+            >
+              Editar reseña
+            </a>
+            <button
+              type="button"
+              class="detail-action detail-action--danger"
+              (click)="confirmDelete()"
+            >
+              Eliminar reseña
+            </button>
+          }
+
+          @if (
+            session.userId() &&
+            session.userId() !== review.reviewerId &&
+            review.takedownStatus !== 'TAKEN_DOWN'
+          ) {
+            <a
+              class="detail-action detail-action--quiet"
+              [routerLink]="['/reports', 'new']"
+              [queryParams]="{ reviewId: review.reviewId }"
+            >
+              Reportar reseña
+            </a>
+          }
+        </div>
+      </footer>
     </article>
   }
 </main>
