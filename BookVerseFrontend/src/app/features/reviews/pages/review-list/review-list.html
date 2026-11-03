@@ -52,23 +52,75 @@
           </div>
         </div>
         @if (featured(); as featured) {
-          <a class="featured" [routerLink]="['/reviews', featured.review.reviewId]">
-            <app-book-cover
-              class="featured-cover"
-              [src]="featured.work.coverUrl"
-              [title]="featured.work.title"
-            />
-            <div class="featured-copy">
-              <span class="featured-label">RESEÑA DESTACADA</span>
-              <h2>{{ featured.work.title }}</h2>
-              <p class="featured-excerpt">{{ featured.review.content }}</p>
-            </div>
-            <span
-              class="featured-rating"
-              [attr.aria-label]="featured.review.rating + ' de 5 estrellas'"
-              >{{ stars(featured.review.rating) }}</span
-            >
-          </a>
+          <article class="featured">
+            <a class="featured-link" [routerLink]="['/reviews', featured.review.reviewId]">
+              @if (featured.work.kind === 'story') {
+                <div
+                  class="featured-story-cover"
+                  [attr.data-theme]="featured.work.coverTheme || 'moon'"
+                  role="img"
+                  [attr.aria-label]="'Portada de historia: ' + featured.work.title"
+                >
+                  <span class="featured-story-cover__symbol" aria-hidden="true">
+                    {{ featured.work.coverSymbol || '✦' }}
+                  </span>
+
+                  <span class="featured-story-cover__title">
+                    {{ featured.work.title }}
+                  </span>
+
+                  <span class="featured-story-cover__type">HISTORIA</span>
+                </div>
+              } @else {
+                <app-book-cover
+                  class="featured-cover"
+                  [src]="featured.work.coverUrl"
+                  [title]="featured.work.title"
+                />
+              }
+
+              <div class="featured-copy">
+                <span class="featured-label">RESEÑA DESTACADA</span>
+                <h2>{{ featured.work.title }}</h2>
+                <p class="featured-excerpt">{{ featured.review.content }}</p>
+              </div>
+            </a>
+
+            @if (featuredEntries().length > 1) {
+              <div class="featured-controls" aria-label="Navegar reseñas destacadas">
+                <button
+                  type="button"
+                  class="featured-arrow"
+                  aria-label="Reseña anterior"
+                  (click)="moveFeatured(-1)"
+                >
+                  ‹
+                </button>
+
+                <div class="featured-dots">
+                  @for (entry of featuredEntries(); track entry.work.key; let index = $index) {
+                    <button
+                      type="button"
+                      class="featured-dot"
+                      [class.active]="featuredIndex() === index"
+                      [attr.aria-label]="'Mostrar reseña de ' + entry.work.title"
+                      [attr.aria-current]="featuredIndex() === index ? 'true' : null"
+                      (click)="featuredIndex.set(index)"
+                    ></button>
+                  }
+                </div>
+
+                <button
+                  type="button"
+                  class="featured-arrow"
+                  aria-label="Siguiente reseña"
+                  (click)="moveFeatured(1)"
+                >
+                  ›
+                </button>
+              </div>
+            }
+          </article>
         }
       </section>
       <section class="filters" aria-label="Filtros de reseñas">
@@ -94,16 +146,22 @@
           }
         </div>
         <div class="tools">
-          <label class="search"
-            ><span aria-hidden="true">⌕</span
-            ><input
+          <label class="search">
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="6.5"></circle>
+              <path d="m16 16 4 4"></path>
+            </svg>
+
+            <input
               #query
               type="search"
               aria-label="Buscar por título o autor"
               placeholder="Buscar título o autor…"
               [value]="search()"
-              (input)="search.set(query.value)" /></label
-          ><select
+              (input)="search.set(query.value)"
+            />
+          </label>
+          <select
             class="sort"
             #order
             aria-label="Ordenar reseñas"
@@ -202,29 +260,71 @@
   <article class="review-card">
     <div class="card-head">
       <div class="person">
-        <span class="avatar" aria-hidden="true">{{ initials(review) }}</span>
-        <div>
-          <a class="reviewer-profile" [routerLink]="['/users', review.reviewerId]">{{ readerName(review) }}</a><small
-            >{{ review.createdAt | date: 'dd/MM/yyyy' }}
+        @if (reviewerAvatars()[review.reviewerId]; as avatarUrl) {
+          <img
+            class="avatar profile-avatar"
+            [src]="avatarUrl"
+            [alt]="'Foto de perfil de ' + readerName(review)"
+            loading="lazy"
+          />
+        } @else {
+          <span class="avatar" aria-hidden="true">{{ initials(review) }}</span>
+        }
+        <div class="person-info">
+          <a class="reviewer-profile" [routerLink]="['/users', review.reviewerId]">
+            {{ readerName(review) }}
+          </a>
+          <small class="review-date">
+            {{ review.createdAt | date: 'dd/MM/yyyy' }}
             @if (session.userId() === review.reviewerId) {
               · Tu reseña
             }
           </small>
         </div>
       </div>
-      <span class="rating-stars" [attr.aria-label]="review.rating + ' de 5 estrellas'">{{
-        stars(review.rating)
-      }}</span>
+      <span class="rating-stars" [attr.aria-label]="review.rating + ' de 5 estrellas'">
+        {{ stars(review.rating) }}
+      </span>
     </div>
-    <h3>{{ work.title }}</h3>
-    <p class="quote-text">{{ review.content }}</p>
+
+    <div class="review-copy">
+      <h3>{{ work.title }}</h3>
+      <p class="quote-text">{{ review.content }}</p>
+    </div>
+
     <div class="book-row">
       <div class="book-tag">
-        <app-book-cover class="book-thumb" [src]="work.coverUrl" [title]="work.title" /><span
-          >{{ work.title }} · {{ work.author
-          }}<small>{{ work.kind === 'book' ? 'Libro' : 'Historia' }}</small></span
-        >
+        @if (work.kind === 'story') {
+          <div
+            class="story-thumb"
+            [attr.data-theme]="work.coverTheme || 'moon'"
+            role="img"
+            [attr.aria-label]="'Portada de historia: ' + work.title"
+          >
+            <span class="story-thumb__symbol" aria-hidden="true">
+              {{ work.coverSymbol || '✦' }}
+            </span>
+            <span class="story-thumb__title">{{ work.title }}</span>
+          </div>
+        } @else {
+          <app-book-cover
+            class="book-thumb"
+            [src]="work.coverUrl"
+            [title]="work.title"
+          />
+        }
+
+        <div class="work-info">
+          <small class="work-kind">
+            {{ work.kind === 'book' ? 'LIBRO' : 'HISTORIA' }}
+          </small>
+          <span class="work-author">
+            {{ work.kind === 'story' ? 'Escrita por' : 'Autor' }}:
+            {{ work.author }}
+          </span>
+        </div>
       </div>
+
       <a class="read-link" [routerLink]="['/reviews', review.reviewId]">Ver reseña →</a>
     </div>
   </article>
