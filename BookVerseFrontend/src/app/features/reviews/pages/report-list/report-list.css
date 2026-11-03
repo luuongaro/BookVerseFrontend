@@ -131,19 +131,28 @@
   display: grid;
   place-items: center;
   border-radius: 11px;
-  background: #f1ebf6;
-  color: var(--lavender);
-  font-size: 20px;
+  background: #f7f0e5;
+  color: #a57943;
 }
 
-.stat-icon.amber {
-  background: #f6f0e8;
-  color: var(--amber);
+.stat-icon svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
 }
 
-.stat-icon.green {
-  background: #edf3ef;
-  color: var(--green);
+.stat-icon.approved {
+  background: #edf3ed;
+  color: #66816e;
+}
+
+.stat-icon.rejected {
+  background: #f8edef;
+  color: #a6606d;
 }
 
 .stat strong {
@@ -829,4 +838,42 @@ img.review-cover.book-cover {
   background:
     radial-gradient(circle at 70% 26%, #ffe7a8 0 8%, transparent 9%),
     linear-gradient(145deg, #67503c, #a78050 62%, #dfc99a);
+}
+.category-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 12px 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.category-tab {
+  padding: 10px 14px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #8a8395;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.category-tab.active {
+  border-bottom-color: var(--lavender);
+  color: var(--violet);
+  font-weight: 700;
+}
+
+.category-tab:focus-visible {
+  outline: 2px solid var(--lavender);
+  outline-offset: -2px;
+}
+
+@media (max-width: 600px) {
+  .category-tabs {
+    overflow-x: auto;
+  }
+
+  .category-tab {
+    flex: 0 0 auto;
+  }
 }

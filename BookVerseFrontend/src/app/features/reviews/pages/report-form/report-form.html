@@ -1,8 +1,14 @@
 <main>
-  <a [routerLink]="['/reviews', reviewId]">← Volver a la reseña</a>
+  <a
+    [routerLink]="isStoryReport() ? ['/stories', storyId] : ['/reviews', reviewId]"
+  >
+    {{ isStoryReport() ? '← Volver a la historia' : '← Volver a la reseña' }}
+  </a>
   <span class="eyebrow">AYUDANOS A CUIDAR LA COMUNIDAD</span>
-  <h1>Reportar una reseña</h1>
-  <p>Contanos qué sucede. El equipo de moderación revisará el reporte.</p>
+  <h1>{{ isStoryReport() ? 'Reportar una historia' : 'Reportar una reseña' }}</h1>
+  <p>
+    Contanos qué sucede. El equipo de moderación revisará el reporte.
+  </p>
   <form class="panel" [formGroup]="form" (ngSubmit)="submit()">
     <label for="reason">Motivo</label>
     <input id="reason" type="text" formControlName="reason" maxlength="1000" />
@@ -14,7 +20,9 @@
     @if (error()) { <p class="state error" role="alert">{{ error() }}</p> }
     <div class="actions">
       <button [disabled]="saving() || !session.userId() || !!error()">{{ saving() ? 'Enviando…' : 'Enviar reporte' }}</button>
-      <a routerLink="/reviews">Cancelar</a>
+      <a [routerLink]="isStoryReport() ? ['/stories', storyId] : ['/reviews']">
+        Cancelar
+      </a>
     </div>
   </form>
 </main>

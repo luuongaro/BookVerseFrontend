@@ -40,7 +40,7 @@ export const routes: Routes = [
       { path: 'books', children: booksRoutes },
       { path: 'google-books', component: GoogleBookSearch },
       { path: 'reviews', children: reviewsRoutes },
-      { path: 'review-reports', children: reviewReportsRoutes },
+      { path: 'reports', children: reviewReportsRoutes },
       {
         path: 'role-management',
         component: RoleManagement,

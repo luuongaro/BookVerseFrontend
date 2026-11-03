@@ -97,13 +97,22 @@
             {{ saving() ? 'Guardando…' : saved() ? 'En tu biblioteca' : 'Guardar en biblioteca' }}
           </button>
 
-          <a
-            class="button secondary"
-            routerLink="/reviews"
-            [queryParams]="{ storyId: currentStory.idExternal }"
-          >
-            Ver reseñas
-          </a>
+          <div class="related-links">
+            <a
+              class="button secondary"
+              routerLink="/reviews"
+              [queryParams]="{ storyId: currentStory.idExternal }"
+            >
+              Ver reseñas
+            </a>
+
+            <a
+              [routerLink]="['/reports', 'new']"
+              [queryParams]="{ storyId: currentStory.idExternal }"
+            >
+              Reportar historia
+            </a>
+          </div>
         }
       </div>
 

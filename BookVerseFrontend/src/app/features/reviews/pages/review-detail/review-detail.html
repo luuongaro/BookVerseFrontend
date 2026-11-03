@@ -39,7 +39,7 @@
           review.takedownStatus !== 'TAKEN_DOWN'
         ) {
           <a
-            [routerLink]="['/review-reports', 'new']"
+            [routerLink]="['/reports', 'new']"
             [queryParams]="{ reviewId: review.reviewId }"
           >
             Reportar reseña
