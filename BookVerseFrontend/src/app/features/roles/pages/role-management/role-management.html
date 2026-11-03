@@ -19,7 +19,24 @@
   </section>
 
   @if (notice()) {
-    <p class="notice" role="status">{{ notice() }}</p>
+    <p class="notice" role="status">
+      @if (notice().includes('conservar el rol ADMIN')) {
+        <svg
+          class="crown-icon notice-crown"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="m2 8 5 4 5-7 5 7 5-4-2 12H4L2 8Z" />
+          <path d="M4 20h16" />
+        </svg>
+      }
+      {{ notice() }}
+    </p>
   }
 
   @if (error()) {
@@ -34,7 +51,15 @@
   } @else if (!error()) {
     <section class="role-stats" aria-label="Resumen de cuentas">
       <article class="stat-card">
-        <span class="stat-icon">♙</span>
+        <span class="stat-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="8" r="3" />
+            <path d="M3.5 19a5.5 5.5 0 0 1 11 0" />
+            <path d="M16 11a3 3 0 0 0-1.5-5.6" />
+            <path d="M17 14a5 5 0 0 1 3.5 4.8" />
+          </svg>
+        </span>
         <div>
           <strong>{{ users().length }}</strong>
           <small>Cuentas registradas</small>
@@ -42,7 +67,13 @@
       </article>
 
       <article class="stat-card">
-        <span class="stat-icon moderator-icon">♧</span>
+        <span class="stat-icon moderator-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3 19 6v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3Z" />
+            <path d="m9 12 2 2 4-4" />
+          </svg>
+        </span>
         <div>
           <strong>{{ countUsersWithRole('MODERADOR') }}</strong>
           <small>Con rol MODERADOR</small>
@@ -50,7 +81,18 @@
       </article>
 
       <article class="stat-card">
-        <span class="stat-icon admin-icon">✧</span>
+        <span class="stat-icon admin-icon" aria-hidden="true">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m12 3 2.7 6.4 6.9.5-5.3 4.4 1.8 6.7-6.1-3.7-6.1 3.7 1.8-6.7-5.3-4.4 6.9-.5L12 3Z" />
+          </svg>
+        </span>
         <div>
           <strong>{{ countUsersWithRole('ADMIN') }}</strong>
           <small>Con rol ADMIN</small>
@@ -114,6 +156,26 @@
                     </span>
                     <span>
                       <strong>{{ user.username }}</strong>
+
+                      @if (isProtectedAdmin(user)) {
+                        <small class="protected-note">
+                          <svg
+                            class="crown-icon"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            aria-hidden="true"
+                          >
+                            <path d="m2 8 5 4 5-7 5 7 5-4-2 12H4L2 8Z" />
+                            <path d="M4 20h16" />
+                          </svg>
+                          Cuenta protegida
+                        </small>
+                      }
+
                       <small>{{ user.email }}</small>
                     </span>
                   </div>
@@ -140,7 +202,10 @@
                         <input
                           type="checkbox"
                           [checked]="isSelected(user.idExternal, role.name)"
-                          [disabled]="savingUserId() === user.idExternal"
+                          [disabled]="
+                            savingUserId() === user.idExternal ||
+                            (isProtectedAdmin(user) && role.name === 'ROLE_ADMIN')
+                          "
                           (change)="
                             toggleRole(
                               user,
@@ -172,6 +237,27 @@
                         : 'Guardar'
                     }}
                   </button>
+
+                  @if (isProtectedAdmin(user)) {
+                    <small class="protected-action-note">
+                      No se puede desactivar
+                    </small>
+                  } @else if (user.status === 'ACTIVE') {
+                    <button
+                      class="deactivate-button"
+                      type="button"
+                      [disabled]="!!deactivatingUserId()"
+                      (click)="deactivate(user)"
+                    >
+                      {{
+                        deactivatingUserId() === user.idExternal
+                          ? 'Desactivando…'
+                          : 'Desactivar cuenta'
+                      }}
+                    </button>
+                  } @else {
+                    <small class="inactive-label">Cuenta inactiva</small>
+                  }
 
                   @if ((drafts()[user.idExternal] ?? []).length === 0) {
                     <small class="validation">

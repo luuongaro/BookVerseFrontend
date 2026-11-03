@@ -14,12 +14,14 @@ import { RoleManagementService } from '../../services/role-management.service';
 })
 export class RoleManagement implements OnInit {
   private readonly service = inject(RoleManagementService);
+  private readonly protectedAdminEmail = 'admin@bookverse.com';
   roles = signal<ManagedRole[]>([]);
   users = signal<ManagedUser[]>([]);
   drafts = signal<Record<string, string[]>>({});
   query = signal('');
   loading = signal(true);
   savingUserId = signal<string | null>(null);
+  deactivatingUserId = signal<string | null>(null);
   error = signal('');
   notice = signal('');
   currentPage = signal(1);
@@ -94,6 +96,10 @@ export class RoleManagement implements OnInit {
     return role;
   }
 
+  isProtectedAdmin(user: ManagedUser): boolean {
+    return user.email.trim().toLowerCase() === this.protectedAdminEmail;
+  }
+
   countUsersWithRole(roleName: string): number {
     const role = this.roles().find(
       (item) => this.roleLabel(item.name) === roleName,
@@ -128,6 +134,15 @@ export class RoleManagement implements OnInit {
   }
 
   toggleRole(user: ManagedUser, roleName: string, checked: boolean): void {
+    if (
+      this.isProtectedAdmin(user) &&
+      roleName === 'ROLE_ADMIN' &&
+      !checked
+    ) {
+      this.notice.set('La cuenta protegida debe conservar el rol ADMIN.');
+      return;
+    }
+
     this.drafts.update((drafts) => {
       const current = drafts[user.idExternal] ?? [];
       const next = checked
@@ -140,6 +155,14 @@ export class RoleManagement implements OnInit {
 
   save(user: ManagedUser): void {
     const roleNames = this.drafts()[user.idExternal] ?? [];
+    if (
+      this.isProtectedAdmin(user) &&
+      !roleNames.includes('ROLE_ADMIN')
+    ) {
+      this.notice.set('La cuenta protegida debe conservar el rol ADMIN.');
+      return;
+    }
+
     if (roleNames.length === 0 || this.savingUserId()) return;
     const roleIds = this.roles()
       .filter((role) => roleNames.includes(role.name))
@@ -161,6 +184,44 @@ export class RoleManagement implements OnInit {
       error: (error) => {
         this.error.set(apiError(error));
         this.savingUserId.set(null);
+      },
+    });
+  }
+
+  deactivate(user: ManagedUser): void {
+    if (this.isProtectedAdmin(user)) {
+      this.notice.set('La cuenta protegida no se puede desactivar.');
+      return;
+    }
+
+    if (user.status !== 'ACTIVE' || this.deactivatingUserId()) return;
+
+    const confirmed = window.confirm(
+      `¿Querés desactivar la cuenta de ${user.username}?`,
+    );
+
+    if (!confirmed) return;
+
+    this.deactivatingUserId.set(user.idExternal);
+    this.error.set('');
+    this.notice.set('');
+
+    this.service.deactivateUser(user.idExternal).subscribe({
+      next: () => {
+        this.users.update((users) =>
+          users.map((item) =>
+            item.idExternal === user.idExternal
+              ? { ...item, status: 'INACTIVE' }
+              : item,
+          ),
+        );
+
+        this.deactivatingUserId.set(null);
+        this.notice.set(`La cuenta de ${user.username} quedó inactiva.`);
+      },
+      error: (error) => {
+        this.error.set(apiError(error));
+        this.deactivatingUserId.set(null);
       },
     });
   }
