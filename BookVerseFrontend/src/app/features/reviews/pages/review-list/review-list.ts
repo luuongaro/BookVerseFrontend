@@ -1,8 +1,10 @@
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { BookCover } from '../../../../shared/components/book-cover/book-cover';
-import { Subscription, switchMap, map } from 'rxjs';
+import { Observable, Subscription, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { ReviewWork, ReviewWorkService } from '../../services/review-work.service';
 import { ReviewSessionService } from '../../services/review-session.service';
+import { UserService } from '../../../profile/services/user.service';
+import { PROFILE_AVATARS } from '../../../profile/models/profile-avatars';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DestroyRef } from '@angular/core';
 import { Component, inject, signal, computed, linkedSignal, OnInit } from '@angular/core';
@@ -20,6 +22,7 @@ import { Review } from '../../models/review.model';
 export class ReviewList implements OnInit {
   private readonly service = inject(ReviewsService);
   private readonly worksService = inject(ReviewWorkService);
+  private readonly users = inject(UserService);
   readonly session = inject(ReviewSessionService);
   view = signal('cards');
   readonly pageSize = 8;
@@ -79,7 +82,7 @@ export class ReviewList implements OnInit {
       .toLocaleUpperCase();
   }
   ratingPercent(rating: number): number {
-    const reviews = this.visibleReviews();
+    const reviews = this.featuredReviews();
     return reviews.length
       ? Math.round(
           (100 * reviews.filter((review) => review.rating === rating).length) / reviews.length,
@@ -96,13 +99,46 @@ export class ReviewList implements OnInit {
           : b.review.createdAt.localeCompare(a.review.createdAt),
       ),
   );
+  featuredEntries = computed(() => {
+    const latestFirst = [...this.cards()].sort((a, b) =>
+      b.review.createdAt.localeCompare(a.review.createdAt),
+    );
+    const byWork = new Map<string, (typeof latestFirst)[number]>();
+
+    for (const entry of latestFirst) {
+      if (!byWork.has(entry.work.key)) {
+        byWork.set(entry.work.key, entry);
+      }
+    }
+
+    return [...byWork.values()];
+  });
+
+  featuredIndex = linkedSignal({
+    source: () => this.featuredEntries(),
+    computation: () => 0,
+  });
+
   featured = computed(
-    () =>
-      [...this.cards()].sort(
-        (a, b) =>
-          b.review.rating - a.review.rating || b.review.createdAt.localeCompare(a.review.createdAt),
-      )[0] ?? null,
+    () => this.featuredEntries()[this.featuredIndex()] ?? null,
   );
+
+  moveFeatured(direction: number): void {
+    const total = this.featuredEntries().length;
+    if (total < 2) return;
+
+    this.featuredIndex.update((index) => (index + direction + total) % total);
+  }
+  featuredReviews = computed(() => {
+    const featured = this.featured();
+    if (!featured) return [];
+
+    return this.reviews().filter((review) =>
+      featured.work.kind === 'book'
+        ? review.bookId === featured.work.id
+        : review.storyId === featured.work.id,
+    );
+  });
   works = signal<ReviewWork[]>([]);
   mine = signal(false);
   kind = signal('all');
@@ -155,15 +191,16 @@ export class ReviewList implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private request?: Subscription;
   reviews = signal<Review[]>([]);
+  reviewerAvatars = signal<Record<string, string>>({});
   loading = signal(true);
   error = signal('');
   bookId = this.route.snapshot.queryParamMap.get('bookId');
   storyId = this.route.snapshot.queryParamMap.get('storyId');
   average = computed(() =>
-    this.visibleReviews().length
+    this.featuredReviews().length
       ? (
-          this.visibleReviews().reduce((sum, review) => sum + review.rating, 0) /
-          this.visibleReviews().length
+          this.featuredReviews().reduce((sum, review) => sum + review.rating, 0) /
+          this.featuredReviews().length
         ).toFixed(1)
       : null,
   );
@@ -174,6 +211,36 @@ export class ReviewList implements OnInit {
       this.load();
     });
   }
+
+  private loadReviewerAvatars(
+    reviews: Review[],
+  ): Observable<Record<string, string>> {
+    const reviewerIds = [
+      ...new Set(reviews.map((review) => review.reviewerId).filter(Boolean)),
+    ];
+
+    if (!reviewerIds.length) return of({});
+
+    return forkJoin(
+      reviewerIds.map((reviewerId) =>
+        this.users.getProfileAppearance(reviewerId).pipe(
+          map((appearance) => ({
+            reviewerId,
+            src: PROFILE_AVATARS[appearance.avatarIndex]?.src ?? null,
+          })),
+          catchError(() => of({ reviewerId, src: null })),
+        ),
+      ),
+    ).pipe(
+      map((avatars) =>
+        avatars.reduce<Record<string, string>>((result, avatar) => {
+          if (avatar.src) result[avatar.reviewerId] = avatar.src;
+          return result;
+        }, {}),
+      ),
+    );
+  }
+
   load(): void {
     this.request?.unsubscribe();
     this.loading.set(true);
@@ -191,14 +258,18 @@ export class ReviewList implements OnInit {
     this.request = request
       .pipe(
         switchMap((reviews) =>
-          this.worksService.resolveAll(reviews).pipe(map((works) => ({ reviews, works }))),
+          forkJoin({
+            works: this.worksService.resolveAll(reviews),
+            avatars: this.loadReviewerAvatars(reviews),
+          }).pipe(map(({ works, avatars }) => ({ reviews, works, avatars }))),
         ),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: ({ reviews, works }) => {
+        next: ({ reviews, works, avatars }) => {
           this.reviews.set(reviews);
           this.works.set(works);
+          this.reviewerAvatars.set(avatars);
           this.loading.set(false);
         },
         error: (error) => {
