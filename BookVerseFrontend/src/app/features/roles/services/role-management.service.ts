@@ -22,4 +22,10 @@ export class RoleManagementService {
       { roleIds },
     );
   }
+
+  deactivateUser(userId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${API_URL}/users/${encodeURIComponent(userId)}`,
+    );
+  }
 }
