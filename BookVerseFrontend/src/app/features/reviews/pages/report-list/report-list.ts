@@ -4,6 +4,8 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ReviewReportsService } from '../../services/review-reports.service';
+import { StoryReport } from '../../models/story-report.model';
+import { StoryReportsService } from '../../services/story-reports.service';
 import { storyCoverFor } from '../../services/review-work.service';
 import { ReviewReport, ReviewReportStatus } from '../../models/review-report.model';
 import { apiError } from '../../../../core/api/api.config';
@@ -16,10 +18,14 @@ import { apiError } from '../../../../core/api/api.config';
 })
 export class ReviewReportList implements OnInit {
   private readonly service = inject(ReviewReportsService);
+  private readonly storyService = inject(StoryReportsService);
   private readonly formBuilder = inject(FormBuilder);
   reports = signal<ReviewReport[]>([]);
+  storyReports = signal<StoryReport[]>([]);
+  activeCategory = signal<'REVIEWS' | 'STORIES'>('REVIEWS');
   readonly storyCoverFor = storyCoverFor;
   selectedReport = signal<ReviewReport | null>(null);
+  selectedStoryReport = signal<StoryReport | null>(null);
   toastMessage = signal('');
   saving = signal(false);
   actionError = signal('');
@@ -51,8 +57,63 @@ export class ReviewReportList implements OnInit {
     () => this.reports().filter((report) => report.status === 'REJECTED').length,
   );
 
+  storyReasonOptions = computed(() =>
+    [...new Set(this.storyReports().map((report) => report.reason))].sort(),
+  );
+
+  storyPendingCount = computed(
+    () => this.storyReports().filter((report) => report.status === 'PENDING').length,
+  );
+
+  storyApprovedCount = computed(
+    () => this.storyReports().filter((report) => report.status === 'APPROVED').length,
+  );
+
+  storyRejectedCount = computed(
+    () => this.storyReports().filter((report) => report.status === 'REJECTED').length,
+  );
+
   currentPage = signal(1);
   readonly pageSize = 8;
+
+  filteredStoryReports = computed(() => {
+    const status = this.statusFilter();
+    const reason = this.reasonFilter();
+    const search = this.searchTerm().trim().toLocaleLowerCase('es');
+
+    return this.storyReports().filter((report) => {
+      const matchesStatus = status === 'ALL' || report.status === status;
+      const matchesReason = reason === 'ALL' || report.reason === reason;
+
+      const searchableText = [
+        report.reportId,
+        report.storyId,
+        report.storyTitle,
+        report.storyAuthorUsername,
+        report.reporterUserId,
+        report.reporterUsername ?? '',
+        report.reason,
+        report.details ?? '',
+      ]
+        .join(' ')
+        .toLocaleLowerCase('es');
+
+      return matchesStatus && matchesReason && (!search || searchableText.includes(search));
+    });
+  });
+
+  storyPageCount = computed(() =>
+    Math.ceil(this.filteredStoryReports().length / this.pageSize),
+  );
+
+  storyPageNumbers = computed(() =>
+    Array.from({ length: this.storyPageCount() }, (_, index) => index + 1),
+  );
+
+  paginatedStoryReports = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredStoryReports().slice(start, start + this.pageSize);
+  });
 
   pageCount = computed(() =>
     Math.ceil(this.filteredReports().length / this.pageSize),
@@ -66,6 +127,26 @@ export class ReviewReportList implements OnInit {
     const start = (this.currentPage() - 1) * this.pageSize;
     return this.filteredReports().slice(start, start + this.pageSize);
   });
+
+  activePageCount = computed(() =>
+    this.activeCategory() === 'REVIEWS' ? this.pageCount() : this.storyPageCount(),
+  );
+
+  activePageNumbers = computed(() =>
+    this.activeCategory() === 'REVIEWS' ? this.pageNumbers() : this.storyPageNumbers(),
+  );
+
+  activeFilteredCount = computed(() =>
+    this.activeCategory() === 'REVIEWS'
+      ? this.filteredReports().length
+      : this.filteredStoryReports().length,
+  );
+
+  activePaginatedCount = computed(() =>
+    this.activeCategory() === 'REVIEWS'
+      ? this.paginatedReports().length
+      : this.paginatedStoryReports().length,
+  );
 
   filteredReports = computed(() => {
     const status = this.statusFilter();
@@ -100,10 +181,31 @@ export class ReviewReportList implements OnInit {
   load(): void {
     this.loading.set(true);
     this.error.set('');
-    const request = this.showingAll() ? this.service.getAll() : this.service.getPending();
+
+    if (this.activeCategory() === 'REVIEWS') {
+      const request = this.showingAll() ? this.service.getAll() : this.service.getPending();
+
+      request.subscribe({
+        next: (reports) => {
+          this.reports.set(reports);
+          this.loading.set(false);
+        },
+        error: (error) => {
+          this.error.set(apiError(error));
+          this.loading.set(false);
+        },
+      });
+
+      return;
+    }
+
+    const request = this.showingAll()
+      ? this.storyService.getAll()
+      : this.storyService.getPending();
+
     request.subscribe({
       next: (reports) => {
-        this.reports.set(reports);
+        this.storyReports.set(reports);
         this.loading.set(false);
       },
       error: (error) => {
@@ -111,6 +213,15 @@ export class ReviewReportList implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  selectCategory(category: 'REVIEWS' | 'STORIES'): void {
+    this.activeCategory.set(category);
+    this.statusFilter.set('ALL');
+    this.reasonFilter.set('ALL');
+    this.searchTerm.set('');
+    this.currentPage.set(1);
+    this.load();
   }
 
   toggleScope(): void {
@@ -136,7 +247,7 @@ export class ReviewReportList implements OnInit {
   }
 
   goToPage(page: number): void {
-    const lastPage = Math.max(1, this.pageCount());
+    const lastPage = Math.max(1, this.activePageCount());
     this.currentPage.set(Math.min(Math.max(page, 1), lastPage));
   }
 
@@ -156,9 +267,18 @@ export class ReviewReportList implements OnInit {
     });
   }
 
+  openStoryReport(report: StoryReport): void {
+    this.selectedStoryReport.set(report);
+    this.actionError.set('');
+    this.resolutionForm.reset({
+      resolutionComment: report.resolutionComment ?? '',
+    });
+  }
+
   closeReport(): void {
     if (!this.saving()) {
       this.selectedReport.set(null);
+      this.selectedStoryReport.set(null);
     }
   }
 
@@ -188,8 +308,7 @@ export class ReviewReportList implements OnInit {
         : this.service.reject(report.reportId, request);
 
     operation.subscribe({
-      next: (updatedReport) => {
-        this.load();
+      next: () => {
         this.selectedReport.set(null);
         this.saving.set(false);
         this.toastMessage.set(
@@ -198,6 +317,56 @@ export class ReviewReportList implements OnInit {
             : 'Reporte rechazado. La reseña permanece publicada.',
         );
 
+        this.load();
+        window.setTimeout(() => this.toastMessage.set(''), 2500);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.actionError.set(
+          error.status === 409
+            ? 'Este reporte ya fue moderado. Actualizá la página para ver su estado.'
+            : 'No se pudo guardar la decisión. Intentá nuevamente.',
+        );
+        this.saving.set(false);
+      },
+    });
+  }
+
+  moderateStory(action: 'approve' | 'reject'): void {
+    const report = this.selectedStoryReport();
+
+    if (!report || report.status !== 'PENDING' || this.saving()) {
+      return;
+    }
+
+    if (this.resolutionForm.invalid) {
+      this.resolutionForm.markAllAsTouched();
+      return;
+    }
+
+    this.saving.set(true);
+    this.actionError.set('');
+
+    const request = {
+      resolutionComment:
+        this.resolutionForm.controls.resolutionComment.value.trim() || null,
+    };
+
+    const operation =
+      action === 'approve'
+        ? this.storyService.approve(report.reportId, request)
+        : this.storyService.reject(report.reportId, request);
+
+    operation.subscribe({
+      next: () => {
+        this.selectedStoryReport.set(null);
+        this.saving.set(false);
+        this.toastMessage.set(
+          action === 'approve'
+            ? 'Reporte aprobado. La historia fue dada de baja.'
+            : 'Reporte rechazado. La historia permanece disponible.',
+        );
+
+        this.load();
         window.setTimeout(() => this.toastMessage.set(''), 2500);
       },
       error: (error: HttpErrorResponse) => {

@@ -3,7 +3,9 @@
     <div class="crumb">
       <a routerLink="/dashboard">Mi espacio</a>
       <span aria-hidden="true">/</span>
-      <strong>Reportes de reseñas</strong>
+      <strong>
+        {{ activeCategory() === 'REVIEWS' ? 'Reportes de reseñas' : 'Reportes de historias' }}
+      </strong>
     </div>
 
     <span class="moderation-label">Panel de moderación</span>
@@ -13,7 +15,9 @@
     <section class="head">
       <div>
         <span class="eyebrow">CUIDADO DE LA COMUNIDAD</span>
-        <h1>Reportes de reseñas</h1>
+        <h1>
+          {{ activeCategory() === 'REVIEWS' ? 'Reportes de reseñas' : 'Reportes de historias' }}
+        </h1>
         <p>Revisá los reportes recibidos y registrá la decisión de moderación.</p>
       </div>
 
@@ -24,31 +28,77 @@
 
     <section class="summary" aria-label="Resumen de reportes">
       <article class="stat">
-        <div class="stat-icon">◷</div>
+        <div class="stat-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="8.5"></circle>
+            <path d="M12 7v5l3 2"></path>
+          </svg>
+        </div>
         <div>
-          <strong>{{ pendingCount() }}</strong>
+          <strong>
+            {{ activeCategory() === 'REVIEWS' ? pendingCount() : storyPendingCount() }}
+          </strong>
           <small>Reportes pendientes</small>
         </div>
       </article>
 
       <article class="stat">
-        <div class="stat-icon amber">↗</div>
+        <div class="stat-icon approved" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="m5 12 4.5 4.5L19 7"></path>
+          </svg>
+        </div>
         <div>
-          <strong>{{ approvedCount() }}</strong>
-          <small>Aprobados · reseña retirada</small>
+          <strong>
+            {{ activeCategory() === 'REVIEWS' ? approvedCount() : storyApprovedCount() }}
+          </strong>
+          <small>
+            Aprobados ·
+            {{ activeCategory() === 'REVIEWS' ? 'reseña retirada' : 'historia dada de baja' }}
+          </small>
         </div>
       </article>
 
       <article class="stat">
-        <div class="stat-icon green">✓</div>
+        <div class="stat-icon rejected" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="m6 6 12 12M18 6 6 18"></path>
+          </svg>
+        </div>
         <div>
-          <strong>{{ rejectedCount() }}</strong>
+          <strong>
+            {{ activeCategory() === 'REVIEWS' ? rejectedCount() : storyRejectedCount() }}
+          </strong>
           <small>Reportes rechazados</small>
         </div>
       </article>
     </section>
 
     <section class="workspace" aria-label="Listado de reportes">
+      <div class="category-tabs" role="tablist" aria-label="Tipo de reporte">
+        <button
+          type="button"
+          role="tab"
+          class="category-tab"
+          [class.active]="activeCategory() === 'REVIEWS'"
+          [attr.aria-selected]="activeCategory() === 'REVIEWS'"
+          (click)="selectCategory('REVIEWS')"
+        >
+          Reportes de reseñas
+        </button>
+
+        <button
+          type="button"
+          role="tab"
+          class="category-tab"
+          [class.active]="activeCategory() === 'STORIES'"
+          [attr.aria-selected]="activeCategory() === 'STORIES'"
+          (click)="selectCategory('STORIES')"
+        >
+          Reportes de historias
+        </button>
+      </div>
+
       <div class="toolbar">
         <div class="tabs" role="tablist" aria-label="Filtrar por estado">
           <button
@@ -57,7 +107,10 @@
             [class.active]="statusFilter() === 'ALL'"
             (click)="setFilter('ALL')"
           >
-            Todos <span class="num">{{ reports().length }}</span>
+            Todos
+            <span class="num">
+              {{ activeCategory() === 'REVIEWS' ? reports().length : storyReports().length }}
+            </span>
           </button>
 
           <button
@@ -66,7 +119,10 @@
             [class.active]="statusFilter() === 'PENDING'"
             (click)="setFilter('PENDING')"
           >
-            Pendientes <span class="num">{{ pendingCount() }}</span>
+            Pendientes
+            <span class="num">
+              {{ activeCategory() === 'REVIEWS' ? pendingCount() : storyPendingCount() }}
+            </span>
           </button>
 
           <button
@@ -93,7 +149,11 @@
             <span class="visually-hidden">Buscar reportes</span>
             <input
               type="search"
-              placeholder="Buscar por reseña o motivo…"
+              [placeholder]="
+                activeCategory() === 'REVIEWS'
+                  ? 'Buscar por reseña o motivo…'
+                  : 'Buscar por historia o motivo…'
+              "
               (input)="setSearch($any($event.target).value)"
             />
           </label>
@@ -106,8 +166,14 @@
               (change)="setReasonFilter($any($event.target).value)"
             >
               <option value="ALL">Todos los motivos</option>
-              @for (reason of reasonOptions(); track reason) {
-                <option [value]="reason">{{ reason }}</option>
+              @if (activeCategory() === 'REVIEWS') {
+                @for (reason of reasonOptions(); track reason) {
+                  <option [value]="reason">{{ reason }}</option>
+                }
+              } @else {
+                @for (reason of storyReasonOptions(); track reason) {
+                  <option [value]="reason">{{ reason }}</option>
+                }
               }
             </select>
           </label>
@@ -126,7 +192,9 @@
           <table class="report-table">
             <thead>
               <tr>
-                <th>RESEÑA DENUNCIADA</th>
+                <th>
+                  {{ activeCategory() === 'REVIEWS' ? 'RESEÑA DENUNCIADA' : 'HISTORIA DENUNCIADA' }}
+                </th>
                 <th>MOTIVO</th>
                 <th>REPORTES</th>
                 <th>FECHA</th>
@@ -136,7 +204,8 @@
             </thead>
 
             <tbody>
-              @for (report of paginatedReports(); track report.reportId) {
+              @if (activeCategory() === 'REVIEWS') {
+                @for (report of paginatedReports(); track report.reportId) {
                 <tr>
                   <td>
                     <div class="report-type">
@@ -227,12 +296,83 @@
                     </button>
                   </td>
                 </tr>
-              } @empty {
-                <tr>
-                  <td colspan="6" class="empty">
-                    No hay reportes que coincidan con los filtros.
-                  </td>
-                </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="6" class="empty">
+                      No hay reportes que coincidan con los filtros.
+                    </td>
+                  </tr>
+                }
+              } @else {
+                @for (report of paginatedStoryReports(); track report.reportId) {
+                  <tr>
+                    <td>
+                      <div class="report-type">
+                        <div
+                          class="review-cover story-cover"
+                          [class.cover-moon]="storyCoverFor(report.storyId).theme === 'moon'"
+                          [class.cover-stars]="storyCoverFor(report.storyId).theme === 'stars'"
+                          [class.cover-rose]="storyCoverFor(report.storyId).theme === 'rose'"
+                          [class.cover-teal]="storyCoverFor(report.storyId).theme === 'teal'"
+                          [class.cover-gold]="storyCoverFor(report.storyId).theme === 'gold'"
+                          role="img"
+                          [attr.aria-label]="'Portada temática de ' + report.storyTitle"
+                        >
+                          {{ storyCoverFor(report.storyId).symbol }}
+                        </div>
+
+                        <div class="review-info">
+                          <strong>{{ report.storyTitle }}</strong>
+                          <small>Historia de {{ report.storyAuthorUsername }}</small>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td>
+                      <div class="reason">
+                        {{ report.reason }}
+                        @if (report.details) {
+                          <small>{{ report.details }}</small>
+                        }
+                      </div>
+                    </td>
+
+                    <td><span class="report-count">1 reporte</span></td>
+
+                    <td>
+                      <span class="date">{{ report.createdAt | date: 'dd MMM · HH:mm' }}</span>
+                    </td>
+
+                    <td>
+                      <span
+                        class="status"
+                        [class.pending]="report.status === 'PENDING'"
+                        [class.approved]="report.status === 'APPROVED'"
+                        [class.rejected]="report.status === 'REJECTED'"
+                      >
+                        {{
+                          report.status === 'PENDING'
+                            ? 'Pendiente'
+                            : report.status === 'APPROVED'
+                              ? 'Aprobado'
+                              : 'Rechazado'
+                        }}
+                      </span>
+                    </td>
+
+                    <td>
+                      <button type="button" class="open" (click)="openStoryReport(report)">
+                        Ver caso →
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="6" class="empty">
+                      No hay reportes que coincidan con los filtros.
+                    </td>
+                  </tr>
+                }
               }
             </tbody>
           </table>
@@ -240,9 +380,7 @@
 
         <div class="foot">
           <span>
-            Mostrando {{ paginatedReports().length }} de
-            {{ filteredReports().length }}
-            reportes
+            Mostrando {{ activePaginatedCount() }} de {{ activeFilteredCount() }} reportes
           </span>
 
           <div class="page-controls" aria-label="Paginación">
@@ -255,7 +393,7 @@
               ‹
             </button>
 
-            @for (page of pageNumbers(); track page) {
+            @for (page of activePageNumbers(); track page) {
               <button
                 type="button"
                 [class.selected]="currentPage() === page"
@@ -269,7 +407,7 @@
             <button
               type="button"
               aria-label="Página siguiente"
-              [disabled]="currentPage() >= pageCount()"
+              [disabled]="currentPage() >= activePageCount()"
               (click)="nextPage()"
             >
               ›
@@ -407,6 +545,134 @@
             (click)="moderate('approve')"
           >
             {{ saving() ? 'Guardando…' : 'Aprobar y retirar reseña' }}
+          </button>
+        </div>
+      }
+    </section>
+  </div>
+}
+
+@if (selectedStoryReport(); as report) {
+  <div
+    class="modal-backdrop"
+    role="presentation"
+    (click)="closeReport()"
+  >
+    <section
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="story-modal-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-header">
+        <div>
+          <span class="eyebrow">DETALLE DE MODERACIÓN</span>
+          <h2 id="story-modal-title">Reporte de historia</h2>
+        </div>
+
+        <button
+          type="button"
+          class="close"
+          aria-label="Cerrar"
+          (click)="closeReport()"
+        >
+          ×
+        </button>
+      </header>
+
+      <div class="modal-body">
+        <div class="case-meta">
+          <div class="meta-box">
+            <small>Historia</small>
+            <strong>{{ report.storyTitle }}</strong>
+          </div>
+
+          <div class="meta-box">
+            <small>Autora o autor</small>
+            <strong>{{ report.storyAuthorUsername }}</strong>
+          </div>
+
+          <div class="meta-box">
+            <small>Reportada por</small>
+            <strong>{{ report.reporterUsername || report.reporterUserId }}</strong>
+          </div>
+
+          <div class="meta-box">
+            <small>Fecha</small>
+            <strong>{{ report.createdAt | date: 'dd/MM/yyyy · HH:mm' }}</strong>
+          </div>
+        </div>
+
+        <div class="reason-block">
+          <h3>Motivo</h3>
+          <p>{{ report.reason }}</p>
+
+          @if (report.details) {
+            <h3>Detalle del reporte</h3>
+            <p>{{ report.details }}</p>
+          }
+        </div>
+
+        <a
+          class="open"
+          [routerLink]="['/stories', report.storyId]"
+          (click)="closeReport()"
+        >
+          Abrir historia para revisar su contenido ↗
+        </a>
+
+        @if (report.status === 'PENDING') {
+          <form [formGroup]="resolutionForm">
+            <div class="resolution">
+              <label for="story-resolution-comment">
+                Comentario de resolución · opcional
+              </label>
+              <textarea
+                id="story-resolution-comment"
+                formControlName="resolutionComment"
+                maxlength="3000"
+                placeholder="Dejá constancia breve de la decisión…"
+              ></textarea>
+            </div>
+
+            @if (actionError()) {
+              <p class="state error" role="alert">{{ actionError() }}</p>
+            }
+          </form>
+        } @else {
+          <p class="modal-status-note">
+            Este reporte fue
+            {{ report.status === 'APPROVED' ? 'aprobado' : 'rechazado' }}.
+          </p>
+
+          @if (report.resolutionComment) {
+            <div class="reason-block">
+              <h3>Comentario de resolución</h3>
+              <p>{{ report.resolutionComment }}</p>
+            </div>
+          }
+        }
+      </div>
+
+      @if (report.status === 'PENDING') {
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn btn-reject"
+            [disabled]="saving()"
+            (click)="moderateStory('reject')"
+          >
+            Rechazar reporte
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-approve"
+            [disabled]="saving()"
+            (click)="moderateStory('approve')"
+          >
+            {{ saving() ? 'Guardando…' : 'Aprobar y dar de baja la historia' }}
           </button>
         </div>
       }
