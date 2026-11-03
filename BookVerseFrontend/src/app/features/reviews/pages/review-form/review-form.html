@@ -23,34 +23,96 @@
     @if (selectedWork(); as work) {
       <span class="eyebrow">{{ work.kind === 'book' ? 'LIBRO' : 'HISTORIA' }}</span>
       <h2>{{ work.title }}</h2>
-      <p>{{ work.author }}</p>
+      <div class="review-author">
+        <span class="review-author__avatar" aria-hidden="true">
+          {{ authorInitials(work.author) }}
+        </span>
+
+        <div class="review-author__info">
+          <span class="review-author__label">
+            {{ work.kind === 'story' ? 'ESCRITA POR' : 'ESCRITO POR' }}
+          </span>
+          <strong class="review-author__name">{{ work.author }}</strong>
+        </div>
+      </div>
     }
-    @if (!id && !storyId) {
-      @if (selectedBook(); as book) {
-        <h2>{{ book.title }}</h2>
-        <p>{{ book.authors?.join(', ') || 'Autor desconocido' }}</p>
-      } @else if (!bookId) {
-        <label for="book">Libro</label
-        ><select id="book" formControlName="bookId">
+    @if (!id && !bookId && !storyId) {
+      <label for="workType">Obra para reseñar</label>
+      <select
+        id="workType"
+        [value]="workType()"
+        (change)="selectWorkType($any($event.target).value)"
+      >
+        <option value="">Elegí el tipo de obra</option>
+        <option value="book">Libro</option>
+        <option value="story">Historia</option>
+      </select>
+
+      @if (workType() === 'book') {
+        <label for="book">Libro de Mi biblioteca</label>
+        <select id="book" formControlName="bookId">
           <option value="">Seleccioná un libro</option>
-          @for (book of books(); track book.idExternal) {
-            <option [value]="book.idExternal">{{ book.title }}</option>
+          @for (entry of libraryBooks(); track entry.book.idExternal) {
+            <option [value]="entry.book.idExternal">{{ entry.book.title }}</option>
           }
         </select>
-        @if (moreBooks()) {
-          <button type="button" class="secondary" [disabled]="loading()" (click)="loadBooks()">
-            Cargar más libros
-          </button>
-        }
-        @if (!loading() && !loadError() && books().length === 0) {
+
+        @if (!loading() && !loadError() && libraryBooks().length === 0) {
           <p>
-            No hay libros disponibles. <a routerLink="/google-books">Buscá uno en Google Books</a>.
+            No tenés libros guardados.
+            <a routerLink="/library">Agregá el libro a Mi biblioteca</a>
+            para poder reseñarlo.
           </p>
         }
+
         @if (form.controls.bookId.touched && form.controls.bookId.invalid) {
-          <p class="validation">Seleccioná un libro.</p>
+          <p class="validation">Seleccioná un libro de Mi biblioteca.</p>
         }
       }
+
+      @if (workType() === 'story') {
+        <label for="story">Historia de Mi biblioteca</label>
+        <select id="story" formControlName="storyId">
+          <option value="">Seleccioná una historia</option>
+          @for (entry of libraryStories(); track entry.story.idExternal) {
+            <option [value]="entry.story.idExternal">{{ entry.story.title }}</option>
+          }
+        </select>
+
+        @if (!loading() && !loadError() && libraryStories().length === 0) {
+          <p>
+            No tenés historias guardadas.
+            <a routerLink="/library">Agregá la historia a Mi biblioteca</a>
+            para poder reseñarla.
+          </p>
+        }
+
+        @if (form.controls.storyId.touched && form.controls.storyId.invalid) {
+          <p class="validation">Seleccioná una historia de Mi biblioteca.</p>
+        }
+      }
+
+      <div class="review-note review-note--library">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M5 4.75h13.5a1 1 0 0 1 1 1v13.5H7a2 2 0 0 0-2 2V4.75Z"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M5 19.25a2 2 0 0 1 2-2h12.5"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+        <p>
+          ¿No encontrás la obra?
+          <strong>Agregala primero a Mi biblioteca</strong> para poder reseñarla.
+        </p>
+      </div>
     }
     <label for="rating">Tu puntuación</label
     ><select id="rating" formControlName="rating">
@@ -69,6 +131,28 @@
       aria-describedby="content-help"
     ></textarea>
     <p id="content-help">Entre 10 y 5000 caracteres.</p>
+    <div class="review-note review-note--community">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
+        <path
+          d="M12 3 20 6v5.5c0 4.6-3.1 7.8-8 9.5-4.9-1.7-8-4.9-8-9.5V6l8-3Z"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          d="m9 12 2 2 4-4"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+      <p>
+        Escribí tu opinión con respeto. Podés expresar una crítica, pero evitá insultos,
+        ataques personales y contenido discriminatorio.
+      </p>
+    </div>
     @if (form.controls.content.touched && form.controls.content.invalid) {
       <p class="validation" role="alert">
         La reseña debe tener entre 10 y 5000 caracteres y no estar vacía.

@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of } from 'rxjs';
 import { API_URL } from '../../../core/api/api.config';
 import { BooksService } from '../../books/services/books.service';
 import { Review } from '../models/review.model';
@@ -72,21 +72,16 @@ export class ReviewWorkService {
         catchError(() => of(fallback)),
       );
     return this.http
-      .get<{ title: string; authorId: string }>(`${API_URL}/stories/${encodeURIComponent(id)}`)
+      .get<{ title: string; authorUsername: string }>(
+        `${API_URL}/stories/${encodeURIComponent(id)}`,
+      )
       .pipe(
-        switchMap((story) =>
-          this.http
-            .get<{ username: string }>(`${API_URL}/users/${encodeURIComponent(story.authorId)}`)
-            .pipe(
-              map((user) => ({
-                ...fallback,
-                title: story.title,
-                author: user.username,
-                unavailable: false,
-              })),
-              catchError(() => of({ ...fallback, title: story.title, unavailable: false })),
-            ),
-        ),
+        map((story) => ({
+          ...fallback,
+          title: story.title,
+          author: story.authorUsername?.trim() || 'Autor desconocido',
+          unavailable: false,
+        })),
         catchError(() => of(fallback)),
       );
   }
