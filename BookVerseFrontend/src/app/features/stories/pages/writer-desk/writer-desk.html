@@ -197,6 +197,12 @@
   <h2 id="delete-chapter-heading">¿Eliminar este capítulo?</h2>
   <p>{{ selectedChapter()?.title }}</p>
 
+  @if (selectedChapter()?.published) {
+    <p>Este capítulo está publicado y dejará de estar disponible para los lectores.</p>
+  }
+
+  <p>Los capítulos siguientes se renumerarán automáticamente.</p>
+
   @if (deleteError()) {
     <p class="delete-error" role="alert">{{ deleteError() }}</p>
   }

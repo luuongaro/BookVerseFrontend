@@ -5,23 +5,6 @@
 
       Volver al escritorio
     </a>
-
-    <span class="muted editor-subtitle">
-      <svg
-        class="icon"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-      >
-        <path d="M4 20 17 7M8 16C-1 5 16 0 22 2c0 13-5 20-14 14Zm4-4h8" />
-      </svg>
-
-      Datos de la historia
-    </span>
   </header>
 
   @if (errorMessage()) {
@@ -282,6 +265,37 @@
               </select>
             </div>
           </section>
+
+          @if (!isEditMode()) {
+            <div class="copyright-notice" role="note">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 3 20 6v5c0 5-3.4 8.2-8 10-4.6-1.8-8-5-8-10V6l8-3Z"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="m9 12 2 2 4-4"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+
+              <p>
+                Publicá solo historias originales o contenido que tengas autorización
+                para compartir. No presentes como propia una obra protegida por derechos
+                de autor.
+              </p>
+            </div>
+          }
 
           <div class="paper-actions">
             @if (isEditMode() && allowed()) {
