@@ -35,19 +35,34 @@
             <em>grupo de lectura.</em>
           </h1>
 
-          <p>
-            {{
-              isEditing
-                ? 'Actualizá el nombre del grupo. La obra vinculada no se puede cambiar.'
-                : 'Reuní lectores alrededor de un libro o una historia que quieras compartir.'
-            }}
-          </p>
+          @if (!isEditing) {
+            <p>
+              Reuní lectores alrededor de un libro o una historia que quieras compartir.
+            </p>
+          }
         </div>
 
         @if (isLoading) {
           <p class="field-hint" role="status">Cargando grupo…</p>
+        } @else if (isEditing && !group) {
+          <p class="form-error" role="alert">
+            {{ errorMessage || 'No se pudo cargar el grupo.' }}
+          </p>
+        } @else if (isEditing && !canManageGroup) {
+          <section class="permission-notice" role="alert">
+            <h2>Acceso restringido</h2>
+            <p>
+              Solo el creador del grupo, los moderadores y los administradores
+              pueden editar el nombre y administrar sus miembros.
+            </p>
+            <a [routerLink]="['/groups', groupId]">Volver al grupo</a>
+          </section>
         } @else {
-          <form [formGroup]="groupForm" (ngSubmit)="onSubmit()">
+          <form
+            id="group-form"
+            [formGroup]="groupForm"
+            (ngSubmit)="onSubmit()"
+          >
             <div class="field">
               <label for="name">Nombre del grupo</label>
               <input
@@ -57,6 +72,31 @@
                 placeholder="Por ejemplo: Los búhos nocturnos"
                 maxlength="60"
               />
+
+              @if (isEditing) {
+                <div class="group-name-hint" role="note">
+                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="9"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                    />
+                    <path
+                      d="M12 11v5"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                      stroke-linecap="round"
+                    />
+                    <circle cx="12" cy="8" r="0.85" fill="currentColor" />
+                  </svg>
+
+                  <p>
+                    Actualizá el nombre del grupo. La obra vinculada no se puede cambiar.
+                  </p>
+                </div>
+              }
 
               @if (
                 groupForm.controls.name.touched &&
@@ -161,30 +201,140 @@
               <p class="form-error" role="alert">{{ errorMessage }}</p>
             }
 
-            <div class="form-actions">
-              <a
-                class="secondary-button"
-                [routerLink]="isEditing && groupId ? ['/groups', groupId] : ['/groups']"
-              >
+          </form>
+
+          @if (isEditing) {
+            <section class="members-management" aria-labelledby="members-title">
+              <div class="members-heading">
+                <h2 id="members-title">Eliminar miembros del grupo</h2>
+                <span>{{ members.length }} integrantes</span>
+              </div>
+
+              <label class="member-search-label" for="memberSearch">
+                Buscar por nombre de usuario
+              </label>
+
+              <input
+                id="memberSearch"
+                class="member-search"
+                type="search"
+                [(ngModel)]="memberSearch"
+                [ngModelOptions]="{ standalone: true }"
+                placeholder="Nombre de usuario"
+              />
+
+              @if (isLoadingMembers) {
+                <p role="status">Cargando miembros…</p>
+              } @else if (members.length === 0) {
+                <p>Este grupo todavía no tiene miembros.</p>
+              } @else if (visibleMembers.length === 0) {
+                <p class="member-empty">
+                  No hay miembros que coincidan con la búsqueda.
+                </p>
+              } @else {
+                <ul class="members-list">
+                  @for (member of visibleMembers; track member.idExternal) {
+                    <li class="member-row">
+                      <div class="member-identity">
+                        <app-user-avatar
+                          class="member-list-avatar"
+                          [userId]="member.userId"
+                          [username]="member.userName"
+                          [decorative]="false"
+                        />
+
+                        <strong>{{ '@' + member.userName }}</strong>
+
+                        @if (member.memberType === 'CREATOR') {
+                          <span class="creator-badge">✦ Creador</span>
+                        }
+                      </div>
+
+                      @if (canRemoveMember(member)) {
+                        <button
+                          class="remove-member-button"
+                          type="button"
+                          [disabled]="removingUserId === member.userId"
+                          (click)="requestRemoveMember(member)"
+                        >
+                          {{
+                            removingUserId === member.userId
+                              ? 'Quitando…'
+                              : 'Eliminar del grupo'
+                          }}
+                        </button>
+                      }
+                    </li>
+                  }
+                </ul>
+              }
+
+              @if (memberMessage) {
+                <p role="status">{{ memberMessage }}</p>
+              }
+            </section>
+          }
+
+          @if (groupForm.dirty) {
+            <p class="form-change-note" role="status">
+              Hay cambios sin guardar.
+            </p>
+          }
+
+          <div class="form-actions">
+            @if (isEditing) {
+              <a class="secondary-button" [routerLink]="['/groups', groupId]">
                 Cancelar
               </a>
+            } @else {
+              <a class="secondary-button" routerLink="/groups">
+                Cancelar
+              </a>
+            }
 
-              <button
-                class="primary-button"
-                type="submit"
-                [disabled]="isSaving"
-              >
-                {{
-                  isSaving
-                    ? (isEditing ? 'Guardando…' : 'Creando grupo…')
-                    : (isEditing ? 'Guardar cambios' : 'Crear mi grupo')
-                }}
-                <span aria-hidden="true">→</span>
-              </button>
-            </div>
-          </form>
+            <button
+              class="primary-button"
+              type="submit"
+              form="group-form"
+              [disabled]="isSaving"
+            >
+              {{
+                isSaving
+                  ? (isEditing ? 'Guardando…' : 'Creando grupo…')
+                  : (isEditing ? 'Guardar cambios' : 'Crear mi grupo')
+              }}
+              <span aria-hidden="true">→</span>
+            </button>
+          </div>
         }
       </section>
+
+      <dialog #removeMemberDialog class="confirmation-dialog">
+        <h2>¿Quitar a este miembro?</h2>
+
+        <p>
+          {{ '@' + (selectedMemberForRemoval?.userName ?? '') }}
+          dejará de formar parte del grupo.
+        </p>
+
+        <div class="confirmation-actions">
+          <button
+            class="secondary-button"
+            type="button"
+            (click)="cancelRemoveMember()"
+          >
+            Cancelar
+          </button>
+
+          <button
+            class="remove-member-button"
+            type="button"
+            (click)="confirmRemoveMember()"
+          >
+            Eliminar del grupo
+          </button>
+        </div>
+      </dialog>
 
       <footer class="app-footer">
         <span>Un pequeño mundo propio.</span>

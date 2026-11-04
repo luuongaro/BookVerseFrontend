@@ -11,7 +11,17 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { BehaviorSubject, EMPTY, catchError, switchMap, timer } from 'rxjs';
+import {
+  BehaviorSubject,
+  EMPTY,
+  catchError,
+  expand,
+  map,
+  switchMap,
+  timer,
+  toArray,
+} from 'rxjs';
+import { PageResponse } from '../../../stories/models/page-response';
 import { UserProfile } from '../../models/user-profile.model';
 import { UserService } from '../../services/user.service';
 
@@ -28,6 +38,8 @@ export class UserSearch implements OnInit {
 
   @Input() selectable = false;
   @Input() searchOnly = false;
+  @Input() hidePagination = false;
+  @Input() hideExistingMembers = false;
   @Input() memberIds: readonly string[] = [];
   @Input() disabled = false;
   @Input() selectedUserId: string | null = null;
@@ -44,6 +56,12 @@ export class UserSearch implements OnInit {
     return !!this.query.trim().replace(/^@/, '').trim();
   }
 
+  get availableProfiles(): UserProfile[] {
+    return this.hideExistingMembers
+      ? this.profiles().filter((user) => !this.memberIds.includes(user.idExternal))
+      : this.profiles();
+  }
+
   ngOnInit(): void {
     this.requests
       .pipe(
@@ -58,6 +76,28 @@ export class UserSearch implements OnInit {
           }
           return timer(query ? 250 : 0).pipe(
             switchMap(() => this.users.searchProfiles(query, page)),
+            expand((result) =>
+              this.hidePagination && result.number + 1 < result.totalPages
+                ? this.users.searchProfiles(query, result.number + 1)
+                : EMPTY,
+            ),
+            toArray(),
+            map((pages): PageResponse<UserProfile> => {
+              const firstPage = pages[0]!;
+
+              if (!this.hidePagination) {
+                return firstPage;
+              }
+
+              return {
+                ...firstPage,
+                content: pages.flatMap((pageResult) => pageResult.content),
+                number: 0,
+                totalPages: 1,
+                first: true,
+                last: true,
+              };
+            }),
             catchError(() => {
               this.loading.set(false);
               this.error.set('No pudimos cargar los usuarios. Intentá de nuevo.');

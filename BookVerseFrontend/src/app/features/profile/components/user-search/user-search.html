@@ -1,11 +1,14 @@
 <label class="search-field">
-  <span>Buscar por nombre de usuario</span>
+  <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="11" cy="11" r="6.5" />
+    <path d="m16 16 4.5 4.5" />
+  </svg>
   <input
     type="search"
     [value]="query"
     (input)="search($event)"
     maxlength="100"
-    placeholder="Nombre de usuario"
+    placeholder="Buscar por nombre de usuario"
     autocomplete="off"
     [disabled]="disabled"
   />
@@ -20,10 +23,10 @@
         <p>{{ error() }}</p>
         <button type="button" (click)="request(page())">Reintentar</button>
       </div>
-    } @else if (!profiles().length) {
+    } @else if (!availableProfiles.length) {
       <p class="state" role="status">No encontramos usuarios con ese nombre.</p>
     } @else {
-      @for (user of profiles(); track user.idExternal) {
+      @for (user of availableProfiles; track user.idExternal) {
         <article class="user-card" [class.selected]="selectedUserId === user.idExternal">
           <a class="user-identity" [routerLink]="['/users', user.idExternal]">
             <app-user-avatar class="avatar" [userId]="user.idExternal" [username]="user.username" />
@@ -56,7 +59,7 @@
   </div>
 }
 
-@if (!loading() && !error() && totalPages() > 1) {
+@if (!hidePagination && !loading() && !error() && totalPages() > 1) {
   <nav class="pagination" aria-label="Páginas de usuarios">
     <button type="button" [disabled]="disabled || page() === 0" (click)="request(page() - 1)">
       Anterior
