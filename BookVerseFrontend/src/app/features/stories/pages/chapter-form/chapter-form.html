@@ -135,6 +135,7 @@
                 maxlength="150"
                 placeholder="Título del capítulo"
                 autocomplete="off"
+                (input)="saveLocalDraft()"
               />
 
               @if (
@@ -160,6 +161,8 @@
                   type="button"
                   aria-label="Negrita"
                   title="Negrita"
+                  [class.active]="toolbarState().bold"
+                  [attr.aria-pressed]="toolbarState().bold"
                   [disabled]="form.controls.content.disabled"
                   (mousedown)="$event.preventDefault()"
                   (click)="applyFormat('bold')"
@@ -170,6 +173,8 @@
                   type="button"
                   aria-label="Cursiva"
                   title="Cursiva"
+                  [class.active]="toolbarState().italic"
+                  [attr.aria-pressed]="toolbarState().italic"
                   [disabled]="form.controls.content.disabled"
                   (mousedown)="$event.preventDefault()"
                   (click)="applyFormat('italic')"
@@ -180,6 +185,8 @@
                   type="button"
                   aria-label="Subrayado"
                   title="Subrayado"
+                  [class.active]="toolbarState().underline"
+                  [attr.aria-pressed]="toolbarState().underline"
                   [disabled]="form.controls.content.disabled"
                   (mousedown)="$event.preventDefault()"
                   (click)="applyFormat('underline')"
@@ -189,33 +196,69 @@
                 <span class="toolbar-divider" aria-hidden="true"></span>
                 <button
                   type="button"
-                  aria-label="Alinear a la izquierda"
-                  title="Alinear a la izquierda"
+                  aria-label="Cambiar alineación"
                   [disabled]="form.controls.content.disabled"
                   (mousedown)="$event.preventDefault()"
-                  (click)="applyFormat('justifyLeft')"
+                  (click)="cycleAlignment()"
                 >
-                  ≡
+                  <span
+                    class="alignment-glyph"
+                    [class.align-center]="toolbarState().alignment === 'center'"
+                    [class.align-right]="toolbarState().alignment === 'right'"
+                    [class.align-justify]="toolbarState().alignment === 'justify'"
+                    aria-hidden="true"
+                  >
+                    <i></i><i></i><i></i>
+                  </span>
                 </button>
                 <button
                   type="button"
-                  aria-label="Lista"
-                  title="Lista"
+                  aria-label="Lista con viñetas"
+                  title="Lista con viñetas"
+                  [class.active]="toolbarState().list"
+                  [attr.aria-pressed]="toolbarState().list"
                   [disabled]="form.controls.content.disabled"
                   (mousedown)="$event.preventDefault()"
-                  (click)="applyFormat('insertUnorderedList')"
+                  (click)="toggleList()"
                 >
-                  ☷
+                  <span class="bullet-glyph" aria-hidden="true">
+                    <i></i><i></i><i></i>
+                  </span>
                 </button>
                 <button
                   type="button"
                   aria-label="Cita"
                   title="Cita"
+                  [class.active]="toolbarState().quote"
+                  [attr.aria-pressed]="toolbarState().quote"
                   [disabled]="form.controls.content.disabled"
                   (mousedown)="$event.preventDefault()"
-                  (click)="applyFormat('formatBlock', 'blockquote')"
+                  (click)="toggleQuote()"
                 >
                   “ ”
+                </button>
+                <span class="toolbar-divider" aria-hidden="true"></span>
+
+                <button
+                  type="button"
+                  aria-label="Deshacer el último cambio"
+                  title="Deshacer"
+                  [disabled]="form.controls.content.disabled"
+                  (mousedown)="$event.preventDefault()"
+                  (click)="undo()"
+                >
+                  ↶
+                </button>
+
+                <button
+                  type="button"
+                  aria-label="Rehacer el último cambio"
+                  title="Rehacer"
+                  [disabled]="form.controls.content.disabled"
+                  (mousedown)="$event.preventDefault()"
+                  (click)="redo()"
+                >
+                  ↷
                 </button>
               </div>
 
@@ -237,6 +280,9 @@
                 [innerHTML]="initialContent()"
                 data-placeholder="Contenido del capítulo"
                 (input)="updateContent()"
+                (focus)="refreshToolbarState()"
+                (keyup)="refreshToolbarState()"
+                (mouseup)="refreshToolbarState()"
                 (blur)="markContentTouched()"
                 (paste)="onPaste($event)"
               ></div>
@@ -269,7 +315,7 @@
                 [disabled]="isSaving() || isLoading() || !canManage() || loadFailed()"
                 (click)="saveDraft()"
               >
-                @if (isSaving() && !form.controls.published.value) {
+                @if (isSaving() && savingAction() === 'draft') {
                   Guardando...
                 } @else {
                   Guardar borrador
@@ -282,7 +328,7 @@
                 [disabled]="isSaving() || isLoading() || !canManage() || loadFailed()"
                 (click)="publish()"
               >
-                @if (isSaving() && form.controls.published.value) {
+                @if (isSaving() && savingAction() === 'publish') {
                   Publicando...
                 } @else {
                   {{ isEditMode() ? 'Guardar y publicar' : 'Publicar capítulo' }}

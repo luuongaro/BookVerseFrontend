@@ -116,6 +116,7 @@
               placeholder="Título de la historia"
               maxlength="150"
               required
+              (input)="saveLocalDraft()"
             />
 
             @if (form.controls.title.touched && form.controls.title.invalid) {
@@ -132,6 +133,8 @@
                   type="button"
                   aria-label="Negrita"
                   title="Negrita"
+                  [class.active]="toolbarState().bold"
+                  [attr.aria-pressed]="toolbarState().bold"
                   [disabled]="!allowed() || isSaving()"
                   (mousedown)="$event.preventDefault()"
                   (click)="applyFormat('bold')"
@@ -143,6 +146,8 @@
                   type="button"
                   aria-label="Cursiva"
                   title="Cursiva"
+                  [class.active]="toolbarState().italic"
+                  [attr.aria-pressed]="toolbarState().italic"
                   [disabled]="!allowed() || isSaving()"
                   (mousedown)="$event.preventDefault()"
                   (click)="applyFormat('italic')"
@@ -154,6 +159,8 @@
                   type="button"
                   aria-label="Subrayado"
                   title="Subrayado"
+                  [class.active]="toolbarState().underline"
+                  [attr.aria-pressed]="toolbarState().underline"
                   [disabled]="!allowed() || isSaving()"
                   (mousedown)="$event.preventDefault()"
                   (click)="applyFormat('underline')"
@@ -165,35 +172,71 @@
 
                 <button
                   type="button"
-                  aria-label="Alinear a la izquierda"
-                  title="Alinear a la izquierda"
+                  aria-label="Cambiar alineación"
                   [disabled]="!allowed() || isSaving()"
                   (mousedown)="$event.preventDefault()"
-                  (click)="applyFormat('justifyLeft')"
+                  (click)="cycleAlignment()"
                 >
-                  ≡
+                  <span
+                    class="alignment-glyph"
+                    [class.align-center]="toolbarState().alignment === 'center'"
+                    [class.align-right]="toolbarState().alignment === 'right'"
+                    [class.align-justify]="toolbarState().alignment === 'justify'"
+                    aria-hidden="true"
+                  >
+                    <i></i><i></i><i></i>
+                  </span>
                 </button>
 
                 <button
                   type="button"
-                  aria-label="Lista"
-                  title="Lista"
+                  aria-label="Lista con viñetas"
+                  title="Lista con viñetas"
+                  [class.active]="toolbarState().list"
+                  [attr.aria-pressed]="toolbarState().list"
                   [disabled]="!allowed() || isSaving()"
                   (mousedown)="$event.preventDefault()"
-                  (click)="applyFormat('insertUnorderedList')"
+                  (click)="toggleList()"
                 >
-                  ••
+                  <span class="bullet-glyph" aria-hidden="true">
+                    <i></i><i></i><i></i>
+                  </span>
                 </button>
 
                 <button
                   type="button"
                   aria-label="Cita"
                   title="Cita"
+                  [class.active]="toolbarState().quote"
+                  [attr.aria-pressed]="toolbarState().quote"
                   [disabled]="!allowed() || isSaving()"
                   (mousedown)="$event.preventDefault()"
-                  (click)="applyBlockquote()"
+                  (click)="toggleQuote()"
                 >
                   “ ”
+                </button>
+                <span class="toolbar-divider" aria-hidden="true"></span>
+
+                <button
+                  type="button"
+                  aria-label="Deshacer el último cambio"
+                  title="Deshacer"
+                  [disabled]="!allowed() || isSaving()"
+                  (mousedown)="$event.preventDefault()"
+                  (click)="undo()"
+                >
+                  ↶
+                </button>
+
+                <button
+                  type="button"
+                  aria-label="Rehacer el último cambio"
+                  title="Rehacer"
+                  [disabled]="!allowed() || isSaving()"
+                  (mousedown)="$event.preventDefault()"
+                  (click)="redo()"
+                >
+                  ↷
                 </button>
               </div>
 
@@ -207,6 +250,9 @@
                 [attr.contenteditable]="allowed() && !isSaving() ? 'true' : 'false'"
                 [innerHTML]="initialDescription()"
                 (input)="updateDescription()"
+                (focus)="refreshToolbarState()"
+                (keyup)="refreshToolbarState()"
+                (mouseup)="refreshToolbarState()"
                 (paste)="onPaste($event)"
               ></div>
 
@@ -224,7 +270,12 @@
             <div class="access-section">
               <label class="form-label" for="story-access-type"> Tipo de acceso </label>
 
-              <select id="story-access-type" class="access-select" formControlName="accessType">
+              <select
+                id="story-access-type"
+                class="access-select"
+                formControlName="accessType"
+                (change)="saveLocalDraft()"
+              >
                 <option value="FREE">Gratuita</option>
 
                 <option value="PREMIUM">Premium</option>

@@ -1,8 +1,9 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import {
   Component,
   DestroyRef,
   ElementRef,
+  HostListener,
   inject,
   OnInit,
   SecurityContext,
@@ -13,14 +14,44 @@ import {
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
-import { Subscription } from 'rxjs';
+import { finalize, Subscription, TimeoutError, timeout } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { StoryAccessType } from '../../models/story-access-type';
+import { StoryRequest } from '../../models/story-request';
 import { StoryService } from '../../services/story.services';
 import { StoryPermissions } from '../../services/story-permissions.service';
 import { apiError } from '../../../../core/api/api.config';
 
 type StoryFormSection = 'main' | 'description' | 'accessType';
+
+type TextAlignment = 'left' | 'center' | 'right' | 'justify';
+
+type ToolbarState = {
+  bold: boolean;
+  italic: boolean;
+  underline: boolean;
+  list: boolean;
+  quote: boolean;
+  alignment: TextAlignment;
+};
+
+const EMPTY_TOOLBAR_STATE: ToolbarState = {
+  bold: false,
+  italic: false,
+  underline: false,
+  list: false,
+  quote: false,
+  alignment: 'left',
+};
+
+const ALIGNMENT_COMMANDS: Record<TextAlignment, string> = {
+  left: 'justifyLeft',
+  center: 'justifyCenter',
+  right: 'justifyRight',
+  justify: 'justifyFull',
+};
+
+const ALIGNMENT_ORDER: TextAlignment[] = ['left', 'center', 'right', 'justify'];
 
 type StoryFormSnapshot = {
   title: string;
@@ -40,6 +71,7 @@ export class StoryForm implements OnInit {
   private readonly service = inject(StoryService);
   private readonly permissions = inject(StoryPermissions);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly document = inject(DOCUMENT);
   private readonly destroyRef = inject(DestroyRef);
   @ViewChild('descriptionEditor') private descriptionEditor?: ElementRef<HTMLDivElement>;
   readonly isEditMode = signal(false);
@@ -54,6 +86,17 @@ export class StoryForm implements OnInit {
   readonly saveSummary = signal<string | null>(null);
   readonly initialDescription = signal('');
   readonly activeSection = signal<StoryFormSection>('main');
+  readonly toolbarState = signal<ToolbarState>({ ...EMPTY_TOOLBAR_STATE });
+  readonly alignmentLabel = computed(() => {
+    const labels: Record<TextAlignment, string> = {
+      left: 'izquierda',
+      center: 'centrada',
+      right: 'derecha',
+      justify: 'justificada',
+    };
+
+    return labels[this.toolbarState().alignment];
+  });
   private readonly emptySnapshot: StoryFormSnapshot = {
     title: '',
     description: '',
@@ -76,7 +119,6 @@ export class StoryForm implements OnInit {
     };
   });
 
-  private authorId: string | null = null;
   private request?: Subscription;
   @ViewChild('deleteDialog')
   private deleteDialog?: ElementRef<HTMLDialogElement>;
@@ -128,14 +170,17 @@ export class StoryForm implements OnInit {
       this.currentValues.set(this.emptySnapshot);
       this.originalValues.set(this.emptySnapshot);
       this.initialDescription.set('');
+      this.toolbarState.set({ ...EMPTY_TOOLBAR_STATE });
       this.activeSection.set('main');
-      this.authorId = null;
       this.errorMessage.set(null);
       this.loadFailed.set(false);
       this.allowed.set(!id);
       this.isLoading.set(false);
       if (id) this.load();
-      else this.form.enable();
+      else {
+        this.form.enable();
+        this.restoreLocalDraft();
+      }
     });
   }
   load(): void {
@@ -152,7 +197,6 @@ export class StoryForm implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (story) => {
-          this.authorId = story.authorId;
           this.allowed.set(this.permissions.canManage(story));
           this.form.patchValue({
             title: story.title,
@@ -170,8 +214,12 @@ export class StoryForm implements OnInit {
           this.initialDescription.set(story.description);
           this.form.markAsPristine();
           this.isLoading.set(false);
-          if (this.allowed()) this.form.enable();
-          else this.errorMessage.set('No tenés permiso para editar esta historia.');
+          if (this.allowed()) {
+            this.form.enable();
+            this.restoreLocalDraft();
+          } else {
+            this.errorMessage.set('No tenés permiso para editar esta historia.');
+          }
         },
         error: (error) => {
           this.isLoading.set(false);
@@ -260,35 +308,179 @@ export class StoryForm implements OnInit {
       });
   }
 
+  private localDraftKey(): string | null {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return null;
+
+    const storyId = this.storyId() ?? 'new';
+    return `bookverse:draft:story:${userId}:${storyId}`;
+  }
+
+  saveLocalDraft(): void {
+    const key = this.localDraftKey();
+    if (!key) return;
+
+    try {
+      const value = this.form.getRawValue();
+
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          title: value.title,
+          description: value.description,
+          accessType: value.accessType,
+        }),
+      );
+    } catch {
+      // El formulario sigue funcionando si el almacenamiento local no está disponible.
+    }
+  }
+
+  private restoreLocalDraft(): void {
+    const key = this.localDraftKey();
+    if (!key) return;
+
+    try {
+      const saved = localStorage.getItem(key);
+      if (!saved) return;
+
+      const draft = JSON.parse(saved) as {
+        title?: unknown;
+        description?: unknown;
+        accessType?: unknown;
+      };
+
+      if (
+        typeof draft.title !== 'string' ||
+        typeof draft.description !== 'string' ||
+        (draft.accessType !== StoryAccessType.FREE &&
+          draft.accessType !== StoryAccessType.PREMIUM)
+      ) {
+        return;
+      }
+
+      const description =
+        this.sanitizer.sanitize(SecurityContext.HTML, draft.description) ?? '';
+
+      this.form.patchValue({
+        title: draft.title,
+        description,
+        accessType: draft.accessType,
+      });
+
+      this.initialDescription.set(description);
+      this.form.markAsDirty();
+      this.saveSummary.set(
+        'Recuperamos el borrador local. Guardá los cambios para conservarlo.',
+      );
+    } catch {
+      // Un borrador ilegible no debe impedir la edición.
+    }
+  }
+
+  private clearLocalDraft(): void {
+    const key = this.localDraftKey();
+    if (!key) return;
+
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // El guardado en el servidor no depende del almacenamiento local.
+    }
+  }
+
   updateDescription(): void {
     const html = this.descriptionEditor?.nativeElement.innerHTML ?? '';
     const safeHtml = this.sanitizer.sanitize(SecurityContext.HTML, html) ?? '';
 
     this.form.controls.description.setValue(safeHtml);
     this.form.controls.description.markAsDirty();
+    this.saveLocalDraft();
+    this.refreshToolbarState();
   }
-  onPaste(event: ClipboardEvent): void {
-    event.preventDefault();
-    if (!this.allowed() || this.isSaving()) return;
-    document.execCommand('insertText', false, event.clipboardData?.getData('text/plain') ?? '');
-    this.updateDescription();
+
+  @HostListener('document:selectionchange')
+  onDocumentSelectionChange(): void {
+    this.refreshToolbarState();
   }
-  applyFormat(command: string): void {
-    if (!this.allowed() || this.isSaving()) {
+
+  refreshToolbarState(): void {
+    const editor = this.descriptionEditor?.nativeElement;
+    const selection = this.document.getSelection();
+    const node = selection?.anchorNode;
+
+    if (!editor || !node || !editor.contains(node)) {
+      this.toolbarState.set({ ...EMPTY_TOOLBAR_STATE });
       return;
     }
 
-    document.execCommand(command, false);
+    const anchorElement =
+      node.nodeType === 1 ? (node as HTMLElement) : node.parentElement;
+    const alignment =
+      ALIGNMENT_ORDER.find((value) =>
+        this.document.queryCommandState(ALIGNMENT_COMMANDS[value]),
+      ) ??
+      'left';
+
+    this.toolbarState.set({
+      bold: this.document.queryCommandState('bold'),
+      italic: this.document.queryCommandState('italic'),
+      underline: this.document.queryCommandState('underline'),
+      list: this.document.queryCommandState('insertUnorderedList'),
+      quote: !!anchorElement?.closest('blockquote'),
+      alignment,
+    });
+  }
+
+  runEditorCommand(command: string, value?: string): void {
+    const editor = this.descriptionEditor?.nativeElement;
+    if (!editor || !this.allowed() || this.isSaving()) return;
+
+    editor.focus();
+    this.document.execCommand(command, false, value);
     this.updateDescription();
+    this.refreshToolbarState();
+  }
+
+  cycleAlignment(): void {
+    const current = this.toolbarState().alignment;
+    const currentIndex = ALIGNMENT_ORDER.indexOf(current);
+    const next = ALIGNMENT_ORDER[(currentIndex + 1) % ALIGNMENT_ORDER.length];
+
+    this.runEditorCommand(ALIGNMENT_COMMANDS[next]);
+  }
+
+  toggleList(): void {
+    this.runEditorCommand('insertUnorderedList');
+  }
+
+  toggleQuote(): void {
+    const command = this.toolbarState().quote ? 'p' : 'blockquote';
+    this.runEditorCommand('formatBlock', command);
+  }
+
+  undo(): void {
+    this.runEditorCommand('undo');
+  }
+
+  redo(): void {
+    this.runEditorCommand('redo');
+  }
+
+  applyFormat(command: string): void {
+    this.runEditorCommand(command);
   }
 
   applyBlockquote(): void {
-    if (!this.allowed() || this.isSaving()) {
-      return;
-    }
+    this.toggleQuote();
+  }
 
-    document.execCommand('formatBlock', false, 'blockquote');
-    this.updateDescription();
+  onPaste(event: ClipboardEvent): void {
+    event.preventDefault();
+    this.runEditorCommand(
+      'insertText',
+      event.clipboardData?.getData('text/plain') ?? '',
+    );
   }
   onSubmit(): void {
     if (this.isLoading() || this.isSaving() || this.loadFailed() || !this.allowed()) return;
@@ -299,61 +491,75 @@ export class StoryForm implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
-    const authorId = this.isEditMode() ? this.authorId : localStorage.getItem('userId');
-    if (!authorId) {
-      this.errorMessage.set('Volvé a iniciar sesión para guardar la historia.');
-      return;
-    }
-    const request = { ...this.form.getRawValue(), authorId };
+    const request: StoryRequest = this.form.getRawValue();
     const sectionChanges = this.getSectionChanges();
+    this.saveLocalDraft();
     this.saveSummary.set(null);
     this.isSaving.set(true);
     this.errorMessage.set(null);
     this.form.disable();
     const id = this.storyId();
-    const operation = id ? this.service.update(id, request) : this.service.create(request);
-    operation.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (story) => {
-        this.isSaving.set(false);
+    const operation = id
+      ? this.service.update(id, request)
+      : this.service.create(request);
+    operation
+      .pipe(
+        timeout({ first: 60_000 }),
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.isSaving.set(false);
 
-        if (id) {
-          this.form.enable();
-          this.form.patchValue({
-            title: story.title,
-            description: story.description,
-            accessType: story.accessType,
-          });
+          if (this.allowed()) {
+            this.form.enable();
+          }
+        }),
+      )
+      .subscribe({
+        next: (story) => {
+          this.clearLocalDraft();
 
-          this.initialDescription.set(story.description);
+          if (id) {
+            this.form.patchValue({
+              title: story.title,
+              description: story.description,
+              accessType: story.accessType,
+            });
+
+            this.initialDescription.set(story.description);
+            this.form.markAsPristine();
+
+            const savedValues: StoryFormSnapshot = {
+              title: story.title.trim(),
+              description: story.description.trim(),
+              accessType: story.accessType,
+            };
+
+            this.originalValues.set(savedValues);
+            this.currentValues.set(savedValues);
+
+            const changedMessage = sectionChanges.changed.length
+              ? `Se modificó: ${sectionChanges.changed.join(', ')}.`
+              : 'No se detectaron cambios.';
+
+            const unchangedMessage = sectionChanges.unchanged.length
+              ? ` Sin cambios: ${sectionChanges.unchanged.join(', ')}.`
+              : '';
+
+            this.saveSummary.set(changedMessage + unchangedMessage);
+            return;
+          }
+
           this.form.markAsPristine();
-          const savedValues: StoryFormSnapshot = {
-            title: story.title.trim(),
-            description: story.description.trim(),
-            accessType: story.accessType,
-          };
-          this.originalValues.set(savedValues);
-          this.currentValues.set(savedValues);
+          void this.router.navigate(['/writer']);
+        },
 
-          const changedMessage = sectionChanges.changed.length
-            ? `Se modificó: ${sectionChanges.changed.join(', ')}.`
-            : 'No se detectaron cambios.';
-
-          const unchangedMessage = sectionChanges.unchanged.length
-            ? ` Sin cambios: ${sectionChanges.unchanged.join(', ')}.`
-            : '';
-
-          this.saveSummary.set(changedMessage + unchangedMessage);
-          return;
-        }
-
-        this.form.markAsPristine();
-        void this.router.navigate(['/writer']);
-      },
-      error: (error) => {
-        this.isSaving.set(false);
-        this.form.enable();
-        this.errorMessage.set(apiError(error));
-      },
-    });
+        error: (error) => {
+          this.errorMessage.set(
+            error instanceof TimeoutError
+              ? 'La respuesta tardó demasiado. Conservamos el borrador; revisá el Escritorio antes de volver a guardar.'
+              : apiError(error),
+          );
+        },
+      });
   }
 }
