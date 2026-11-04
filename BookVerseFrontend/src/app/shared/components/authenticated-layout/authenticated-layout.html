@@ -3,5 +3,22 @@
 
   <main class="authenticated-content">
     <router-outlet />
+
+    @if (sessionExpired.visible()) {
+      <div class="session-overlay">
+        <section
+          class="session-dialog"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="session-title"
+        >
+          <h2 id="session-title">Tu sesión venció</h2>
+          <p>Iniciá sesión para continuar.</p>
+          <button type="button" (click)="goToLogin()">
+            Iniciar sesión
+          </button>
+        </section>
+      </div>
+    }
   </main>
 </div>

@@ -8,11 +8,16 @@ export function apiError(error: unknown): string {
     return 'Ocurrió un error inesperado.';
   }
 
+  const body = error.error as { message?: unknown } | null;
+  if (typeof body?.message === 'string' && body.message.trim()) {
+    return body.message;
+  }
+
   switch (error.status) {
     case 0:
       return 'No pudimos conectar con BookVerse. Intentá nuevamente.';
     case 401:
-      return 'Tu sesión venció. Volvé a iniciar sesión.';
+      return 'Tu sesión venció. Iniciá sesión para continuar.';
     case 403:
       return 'No tenés permiso para realizar esta operación.';
     case 404:

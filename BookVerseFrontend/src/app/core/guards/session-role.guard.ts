@@ -2,13 +2,15 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { TokenService } from '../services/token.service';
 
-export const authenticatedGuard: CanActivateFn = () => {
+export const authenticatedGuard: CanActivateFn = (_route, state) => {
   const router = inject(Router);
   const tokenService = inject(TokenService);
 
   return tokenService.isAuthenticated()
     ? true
-    : router.parseUrl('/login');
+    : router.createUrlTree(['/login'], {
+        queryParams: { returnUrl: state.url },
+      });
 };
 
 export const moderatorGuard: CanActivateFn = () => {
