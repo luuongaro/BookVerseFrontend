@@ -661,6 +661,11 @@
   margin-top: 14px;
 }
 
+.member-management + app-user-search {
+  display: block;
+  margin-top: 18px;
+}
+
 .invite-form input {
   min-width: 0;
   min-height: 38px;

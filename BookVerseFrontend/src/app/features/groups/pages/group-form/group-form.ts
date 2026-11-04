@@ -2,10 +2,17 @@ import { UserAvatar } from '../../../../shared/components/user-avatar/user-avata
 import {
   ChangeDetectorRef,
   Component,
+  ElementRef,
   inject,
   OnInit,
+  ViewChild,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormsModule,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize, map, Observable, of, switchMap } from 'rxjs';
 
@@ -13,16 +20,22 @@ import { ReadingGroupsService } from '../../services/reading-groups.service';
 import { UserService } from '../../../profile/services/user.service';
 import { LibraryService } from '../../../library/services/library.service';
 import { TokenService } from '../../../../core/services/token.service';
+import { GroupMember } from '../../models/group-member.model';
+import { ReadingGroup } from '../../models/reading-group.model';
+import { GroupMembersService } from '../../services/group-members.service';
 
 type GroupWorkType = 'book' | 'story';
 
 @Component({
   selector: 'app-group-form',
-  imports: [UserAvatar, ReactiveFormsModule, RouterLink],
+  imports: [UserAvatar, FormsModule, ReactiveFormsModule, RouterLink],
   styleUrl: './group-form.css',
   templateUrl: './group-form.html',
 })
 export class GroupForm implements OnInit {
+  @ViewChild('removeMemberDialog')
+  removeMemberDialog?: ElementRef<HTMLDialogElement>;
+
   private readonly formBuilder = inject(FormBuilder);
   private readonly readingGroupsService = inject(ReadingGroupsService);
   private readonly route = inject(ActivatedRoute);
@@ -30,7 +43,8 @@ export class GroupForm implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly userService = inject(UserService);
   private readonly libraryService = inject(LibraryService);
-  private readonly tokens = inject(TokenService);
+  private readonly groupMembersService = inject(GroupMembersService);
+  private readonly tokenService = inject(TokenService);
 
   groupId: string | null = null;
   isLoading = false;
@@ -38,20 +52,120 @@ export class GroupForm implements OnInit {
   errorMessage = '';
   works: { idExternal: string; title: string }[] = [];
   isLoadingWorks = false;
+  group: ReadingGroup | null = null;
+  members: GroupMember[] = [];
+  isLoadingMembers = false;
+  removingUserId: string | null = null;
+  memberMessage = '';
+  memberSearch = '';
+  selectedMemberForRemoval: GroupMember | null = null;
 
   get currentUsername(): string {
     return this.userService.currentUser()?.username ?? 'Usuario';
   }
 
-  private canEditGroup(createdByUserId: string): boolean {
-    const currentUserId =
-      this.userService.currentUser()?.idExternal ??
-      localStorage.getItem('userId');
+  get canManageGroup(): boolean {
+    const currentUserId = localStorage.getItem('userId');
 
-    return (
-      createdByUserId === currentUserId ||
-      this.tokens.hasAnyRole('ROLE_ADMIN', 'ROLE_MODERATOR')
+    return !!this.group && (
+      this.group.createdByUserId === currentUserId ||
+      this.tokenService.hasAnyRole('ROLE_ADMIN', 'ROLE_MODERATOR')
     );
+  }
+
+  get visibleMembers(): GroupMember[] {
+    const currentUserId = localStorage.getItem('userId');
+    const search = this.memberSearch.trim().toLocaleLowerCase();
+
+    return this.members.filter((member) => {
+      const isCreatorViewingOwnRow =
+        this.group?.createdByUserId === currentUserId &&
+        member.userId === currentUserId;
+
+      return (
+        !isCreatorViewingOwnRow &&
+        member.userName.toLocaleLowerCase().includes(search)
+      );
+    });
+  }
+
+  canRemoveMember(member: GroupMember): boolean {
+    const isAdminOrModerator = this.tokenService.hasAnyRole(
+      'ROLE_ADMIN',
+      'ROLE_MODERATOR',
+    );
+
+    return this.canManageGroup &&
+      (member.memberType !== 'CREATOR' || isAdminOrModerator);
+  }
+
+  requestRemoveMember(member: GroupMember): void {
+    if (!this.canRemoveMember(member) || this.removingUserId) {
+      return;
+    }
+
+    this.selectedMemberForRemoval = member;
+    this.removeMemberDialog?.nativeElement.showModal();
+  }
+
+  cancelRemoveMember(): void {
+    this.removeMemberDialog?.nativeElement.close();
+    this.selectedMemberForRemoval = null;
+  }
+
+  confirmRemoveMember(): void {
+    const member = this.selectedMemberForRemoval;
+
+    if (!this.group || !member || !this.canRemoveMember(member)) {
+      return;
+    }
+
+    this.removeMemberDialog?.nativeElement.close();
+    this.selectedMemberForRemoval = null;
+    this.memberMessage = '';
+    this.removingUserId = member.userId;
+
+    this.groupMembersService
+      .removeMember(this.group.idExternal, member.userId)
+      .pipe(
+        finalize(() => {
+          this.removingUserId = null;
+          this.cdr.detectChanges();
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.memberMessage = `@${member.userName} ya no forma parte del grupo.`;
+          this.loadMembers(this.group!.idExternal);
+        },
+        error: (error: unknown) => {
+          console.error('Error removing group member:', error);
+          this.memberMessage =
+            'No se pudo quitar al miembro. Revisá tus permisos e intentá nuevamente.';
+        },
+      });
+  }
+
+  private loadMembers(groupId: string): void {
+    this.isLoadingMembers = true;
+
+    this.groupMembersService
+      .getActiveByGroup(groupId)
+      .pipe(
+        finalize(() => {
+          this.isLoadingMembers = false;
+          this.cdr.detectChanges();
+        }),
+      )
+      .subscribe({
+        next: (members) => {
+          this.members = members;
+        },
+        error: (error: unknown) => {
+          console.error('Error loading group members:', error);
+          this.memberMessage = 'No se pudieron cargar los miembros del grupo.';
+        },
+      });
   }
 
   logout(): void {
@@ -155,10 +269,7 @@ export class GroupForm implements OnInit {
       )
       .subscribe({
         next: (group) => {
-          if (!this.canEditGroup(group.createdByUserId)) {
-            void this.router.navigate(['/groups', groupId]);
-            return;
-          }
+          this.group = group;
 
           this.groupForm.patchValue({
             name: group.name,
@@ -170,6 +281,9 @@ export class GroupForm implements OnInit {
           this.groupForm.controls.workType.disable();
           this.groupForm.controls.referenceId.disable();
 
+          if (this.canManageGroup) {
+            this.loadMembers(group.idExternal);
+          }
           this.cdr.markForCheck();
         },
         error: (error: unknown) => {

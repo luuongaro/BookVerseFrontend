@@ -440,11 +440,11 @@
 
               @if (showInviteForm && canManageMembers) {
                 <app-user-search [selectable]="true" [memberIds]="memberUserIds"
+                  [hidePagination]="true" [hideExistingMembers]="true"
                   [disabled]="isUpdatingMembers" [selectedUserId]="selectedInviteUser?.idExternal ?? null"
                   (userSelected)="selectedInviteUser = $event; memberActionMessage = ''" />
                 @if (selectedInviteUser; as selected) {
                 <form class="invite-form" (ngSubmit)="inviteMember()">
-                  <span>{{ '@' + selected.username }}</span>
                   <button
                     class="button button-primary"
                     type="submit"

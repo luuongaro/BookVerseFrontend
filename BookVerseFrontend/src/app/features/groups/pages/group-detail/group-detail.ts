@@ -554,7 +554,18 @@ export class GroupDetail implements OnInit {
 
     this.groupMembersService.getActiveByGroup(groupId).subscribe({
       next: (members) => {
-        this.members = members;
+        this.members = [...members].sort((a, b) => {
+          const creatorDifference =
+            Number(b.memberType === 'CREATOR') - Number(a.memberType === 'CREATOR');
+
+          if (creatorDifference !== 0) {
+            return creatorDifference;
+          }
+
+          return a.userName.localeCompare(b.userName, 'es', {
+            sensitivity: 'base',
+          });
+        });
         this.isLoadingMembers = false;
         this.changeDetector.markForCheck();
       },
