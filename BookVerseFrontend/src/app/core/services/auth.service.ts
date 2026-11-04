@@ -40,4 +40,12 @@ export class AuthService {
   register(userData: RegisterRequest): Observable<RegisterResponse> {
     return this.http.post<RegisterResponse>(`${this.apiUrl}/register`, userData);
   }
+
+  requestPasswordReset(email: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/forgot-password`, { email });
+  }
+
+  resetPassword(token: string, password: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/reset-password`, { token, password });
+  }
 }
