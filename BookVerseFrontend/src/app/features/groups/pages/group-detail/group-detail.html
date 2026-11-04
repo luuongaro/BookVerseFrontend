@@ -109,13 +109,19 @@
           </div>
 
           <div class="heading-actions">
-            <a
-              class="button button-outline"
-              [routerLink]="['/groups', group.idExternal, 'edit']"
-            >
-              <span aria-hidden="true">✎</span>
-              Editar grupo
-            </a>
+            <p class="edit-permission-note" role="note">
+              Solo el creador, administradores y moderadores pueden modificar el grupo.
+            </p>
+
+            @if (canEditGroup) {
+              <a
+                class="button button-outline"
+                [routerLink]="['/groups', group.idExternal, 'edit']"
+              >
+                <span aria-hidden="true">✎</span>
+                Editar grupo
+              </a>
+            }
           </div>
         </section>
 
@@ -348,43 +354,63 @@
                 Este grupo todavía no tiene miembros.
               </p>
             } @else {
-              <div class="member-avatars" aria-label="Miembros del grupo">
-                @for (
-                  member of members.slice(0, 5);
-                  track member.idExternal;
-                  let i = $index
-                ) {
-                  <app-user-avatar
-                    class="member-avatar"
-                    [class.avatar-lilac]="i % 5 === 0"
-                    [class.avatar-rose]="i % 5 === 1"
-                    [class.avatar-blue]="i % 5 === 2"
-                    [class.avatar-green]="i % 5 === 3"
-                    [class.avatar-pink]="i % 5 === 4"
-                    [title]="member.userName"
-                    [userId]="member.userId"
-                    [username]="member.userName"
-                    [decorative]="false"
-                  />
-                }
+              <div class="member-carousel">
+                <button
+                  class="member-carousel-arrow"
+                  type="button"
+                  aria-label="Ver miembros anteriores"
+                  (click)="scrollMembers(-1)"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m14.5 5-7 7 7 7" />
+                  </svg>
+                </button>
 
-                @if (members.length > 5) {
-                  <span class="member-avatar avatar-more">
-                    +{{ members.length - 5 }}
-                  </span>
+                <div #memberTrack class="member-track" aria-label="Miembros del grupo">
+                @for (member of members; track member.idExternal; let i = $index) {
+                  <article class="member-card">
+                    <a
+                      class="member-profile-link"
+                      [routerLink]="memberProfileLink(member.userId)"
+                      [attr.aria-label]="'Ver perfil de ' + member.userName"
+                    >
+                      <app-user-avatar
+                        class="member-avatar"
+                        [class.avatar-lilac]="i % 5 === 0"
+                        [class.avatar-rose]="i % 5 === 1"
+                        [class.avatar-blue]="i % 5 === 2"
+                        [class.avatar-green]="i % 5 === 3"
+                        [class.avatar-pink]="i % 5 === 4"
+                        [title]="member.userName"
+                        [userId]="member.userId"
+                        [username]="member.userName"
+                        [decorative]="false"
+                      />
+
+                      <span class="member-name">{{ member.userName }}</span>
+                    </a>
+
+                    @if (member.memberType === 'CREATOR') {
+                      <span class="creator-badge">
+                        <span aria-hidden="true">✦</span>
+                        Creador
+                      </span>
+                    }
+                  </article>
                 }
+                </div>
+
+                <button
+                  class="member-carousel-arrow"
+                  type="button"
+                  aria-label="Ver miembros siguientes"
+                  (click)="scrollMembers(1)"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m9.5 5 7 7-7 7" />
+                  </svg>
+                </button>
               </div>
-
-              <ul class="member-name-list" aria-label="Integrantes del grupo">
-                @for (member of members; track member.idExternal) {
-                  <li>
-                    <a [routerLink]="['/users', member.userId]">{{ member.userName }}</a>
-                    <small>
-                      {{ member.memberType === 'CREATOR' ? 'Creador' : '' }}
-                    </small>
-                  </li>
-                }
-              </ul>
             }
 
             @if (!isLoadingMembers && !membersErrorMessage && (canManageMembers || canLeaveGroup)) {
@@ -404,7 +430,7 @@
                   <button
                     class="button button-outline"
                     type="button"
-                    (click)="leaveGroup()"
+                    (click)="requestLeaveGroup()"
                     [disabled]="isUpdatingMembers"
                   >
                     Salir del grupo
@@ -549,3 +575,44 @@
     </main>
   </div>
 </div>
+
+<dialog
+  #leaveGroupDialog
+  class="leave-confirm-dialog"
+  aria-labelledby="leave-group-title"
+  (cancel)="isUpdatingMembers && $event.preventDefault()"
+>
+  <span class="leave-dialog-eyebrow">CONFIRMACIÓN</span>
+  <h2 id="leave-group-title">¿Querés salir del grupo?</h2>
+  <p>
+    Dejarás de participar en <strong>{{ group?.name }}</strong>.
+    ¿Querés continuar?
+  </p>
+
+  @if (memberActionMessage) {
+    <p class="member-state state-error" role="alert">
+      {{ memberActionMessage }}
+    </p>
+  }
+
+  <div class="leave-confirm-actions">
+    <button
+      type="button"
+      class="button button-outline"
+      [disabled]="isUpdatingMembers"
+      (click)="cancelLeaveGroup()"
+      autofocus
+    >
+      Seguir en el grupo
+    </button>
+
+    <button
+      type="button"
+      class="button button-danger"
+      [disabled]="isUpdatingMembers"
+      (click)="leaveGroup()"
+    >
+      {{ isUpdatingMembers ? 'Saliendo…' : 'Sí, salir' }}
+    </button>
+  </div>
+</dialog>
