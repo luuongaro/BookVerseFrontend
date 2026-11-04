@@ -29,6 +29,7 @@ export interface ReviewWork {
   kind: 'book' | 'story';
   title: string;
   author: string;
+  authorId?: string | null;
   genres: string[];
   unavailable: boolean;
   coverUrl?: string | null;
@@ -49,6 +50,7 @@ export class ReviewWorkService {
       kind,
       title: kind === 'book' ? 'Libro no disponible' : 'Historia no disponible',
       author: 'Autor no disponible',
+      authorId: null,
       genres: [],
       unavailable: true,
       coverTheme: storyCover?.theme,
@@ -72,7 +74,7 @@ export class ReviewWorkService {
         catchError(() => of(fallback)),
       );
     return this.http
-      .get<{ title: string; authorUsername: string }>(
+      .get<{ title: string; authorUsername: string; authorId?: string }>(
         `${API_URL}/stories/${encodeURIComponent(id)}`,
       )
       .pipe(
@@ -80,6 +82,7 @@ export class ReviewWorkService {
           ...fallback,
           title: story.title,
           author: story.authorUsername?.trim() || 'Autor desconocido',
+          authorId: story.authorId ?? null,
           unavailable: false,
         })),
         catchError(() => of(fallback)),

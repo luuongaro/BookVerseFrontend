@@ -44,7 +44,7 @@
       <span>Cerrar sesión</span>
     </button>
     <a class="account-link" routerLink="/profile" [attr.aria-label]="'Ir al perfil de ' + userName()">
-      <span class="avatar">{{ userInitials() }}</span>
+      <app-user-avatar class="avatar" />
       <span class="account-info"><strong>{{ userName() }}</strong></span>
       <span class="account-arrow" aria-hidden="true">›</span>
     </a>

@@ -1,3 +1,4 @@
+import { UserAvatar } from '../../../../shared/components/user-avatar/user-avatar';
 import {
   Component,
   DestroyRef,
@@ -27,12 +28,12 @@ import { ReadingGroup } from '../../../groups/models/reading-group.model';
 import { FavoriteStories } from '../../components/favorite-stories/favorite-stories';
 import { UserProfile } from '../../models/user-profile.model';
 import { PROFILE_COVERS } from '../../models/profile-covers';
-import { PROFILE_AVATARS } from '../../models/profile-avatars';
+import { PROFILE_AVATARS, profileAvatar } from '../../models/profile-avatars';
 import { UserService } from '../../services/user.service';
 import { SendTip } from '../../../tips/components/send-tip/send-tip';
 
 @Component({
-  imports: [RouterLink, FormsModule, FavoriteStories, SendTip],
+  imports: [UserAvatar, RouterLink, FormsModule, FavoriteStories, SendTip],
   selector: 'app-profile',
   styleUrls: ['./profile.css', './profile-social.css'],
   templateUrl: './profile.html',
@@ -49,7 +50,7 @@ export class Profile implements OnInit {
   private appearanceRequest?: Subscription;
   private groupRequest?: Subscription;
   private savedCoverIndex = 0;
-  private savedAvatarIndex = 0;
+  private savedAvatarIndex: number | null = null;
   readonly viewedUser = signal<UserProfile | null>(null);
   readonly isPublicView = signal(false);
   readonly isOwnProfile = computed(
@@ -64,7 +65,6 @@ export class Profile implements OnInit {
   readonly appearanceLoading = signal(true);
   readonly savingAvatar = signal(false);
   readonly avatarError = signal('');
-  readonly avatarImageFailed = signal(false);
   readonly readingCounts = signal({ wantToRead: '…', inProgress: '…', finished: '…' });
   readonly createdStoriesCount = signal('…');
   readonly activeGroupsCount = signal('…');
@@ -80,7 +80,7 @@ export class Profile implements OnInit {
   readonly covers = PROFILE_COVERS;
   readonly avatars = PROFILE_AVATARS;
   selectedCoverIndex = 0;
-  selectedAvatarIndex = 0;
+  selectedAvatarIndex: number | null = null;
   @ViewChild('coverPicker') coverPicker?: ElementRef<HTMLDialogElement>;
   @ViewChild('avatarPicker') avatarPicker?: ElementRef<HTMLDialogElement>;
 
@@ -89,13 +89,6 @@ export class Profile implements OnInit {
     const username = this.viewedUser()?.username?.trim() || 'Usuario';
     return {
       name: username,
-      initials: username
-        .split(/\s+/)
-        .filter(Boolean)
-        .map((part) => part[0])
-        .join('')
-        .slice(0, 2)
-        .toUpperCase(),
       username: `@${username}`,
       email: ownUser?.email ?? '',
       accountStatus: ownUser?.status === 'ACTIVE' ? 'ACTIVA' : 'INACTIVA',
@@ -120,7 +113,7 @@ export class Profile implements OnInit {
     return this.covers[this.selectedCoverIndex] ?? this.covers[0];
   }
   get currentAvatar() {
-    return this.avatars[this.selectedAvatarIndex] ?? this.avatars[0];
+    return profileAvatar(this.selectedAvatarIndex);
   }
   ngOnInit(): void {
     combineLatest([this.route.paramMap, this.reload.pipe(startWith(undefined))])
@@ -136,9 +129,8 @@ export class Profile implements OnInit {
           this.activityError.set('');
           this.coverError.set('');
           this.avatarError.set('');
-          this.avatarImageFailed.set(false);
           this.selectedCoverIndex = this.savedCoverIndex = 0;
-          this.selectedAvatarIndex = this.savedAvatarIndex = 0;
+          this.selectedAvatarIndex = this.savedAvatarIndex = null;
           this.readingCounts.set({ wantToRead: '…', inProgress: '…', finished: '…' });
           this.createdStoriesCount.set('…');
           this.activeGroupsCount.set('…');
@@ -212,20 +204,23 @@ export class Profile implements OnInit {
         },
       });
   }
-  loadAppearance(): void {
+  loadAppearance(refresh = false): void {
     const user = this.viewedUser();
     if (!user) return;
     this.appearanceRequest?.unsubscribe();
     this.coverError.set('');
     this.appearanceLoading.set(true);
+    this.selectedAvatarIndex = this.savedAvatarIndex = null;
     this.appearanceRequest = this.users
-      .getProfileAppearance(user.idExternal)
+      .getProfileAppearance(user.idExternal, refresh)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (appearance) => {
           this.appearanceLoading.set(false);
-          this.selectedAvatarIndex = this.savedAvatarIndex = appearance.avatarIndex ?? 0;
-          this.avatarImageFailed.set(false);
+          this.selectedAvatarIndex = this.savedAvatarIndex =
+            appearance.configured && profileAvatar(appearance.avatarIndex)
+              ? appearance.avatarIndex
+              : null;
           const legacy = this.canEditProfile()
             ? localStorage.getItem(`profile-cover:${user.idExternal}`)
             : null;
@@ -284,6 +279,10 @@ export class Profile implements OnInit {
           this.savingCover.set(false);
           if (this.viewedUser()?.idExternal !== user.idExternal) return;
           this.selectedCoverIndex = this.savedCoverIndex = appearance.coverIndex;
+          this.selectedAvatarIndex = this.savedAvatarIndex =
+            appearance.configured && profileAvatar(appearance.avatarIndex)
+              ? appearance.avatarIndex
+              : null;
           localStorage.setItem(`profile-cover:${user.idExternal}`, String(appearance.coverIndex));
           this.coverPicker?.nativeElement.close();
         },
@@ -316,7 +315,6 @@ export class Profile implements OnInit {
       return;
     }
     this.selectedAvatarIndex = this.savedAvatarIndex;
-    this.avatarImageFailed.set(false);
     this.avatarPicker?.nativeElement.close();
   }
 
@@ -324,23 +322,33 @@ export class Profile implements OnInit {
     if (!this.canEditProfile() || this.savingAvatar() || index < 0 || index >= this.avatars.length)
       return;
     this.selectedAvatarIndex = index;
-    this.avatarImageFailed.set(false);
   }
 
   saveAvatar(): void {
     const user = this.viewedUser();
-    if (!user || !this.canEditProfile() || this.savingAvatar() || this.savingCover()) return;
+    const avatarIndex = this.selectedAvatarIndex;
+    if (
+      !user ||
+      avatarIndex === null ||
+      !profileAvatar(avatarIndex) ||
+      !this.canEditProfile() ||
+      this.savingAvatar() ||
+      this.savingCover()
+    )
+      return;
     this.savingAvatar.set(true);
     this.avatarError.set('');
     this.users
-      .updateProfileAvatar(this.selectedAvatarIndex)
+      .updateProfileAvatar(avatarIndex)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (appearance) => {
           this.savingAvatar.set(false);
           if (this.viewedUser()?.idExternal !== user.idExternal) return;
-          this.selectedAvatarIndex = this.savedAvatarIndex = appearance.avatarIndex;
-          this.avatarImageFailed.set(false);
+          this.selectedAvatarIndex = this.savedAvatarIndex =
+            appearance.configured && profileAvatar(appearance.avatarIndex)
+              ? appearance.avatarIndex
+              : null;
           this.avatarPicker?.nativeElement.close();
         },
         error: () => {

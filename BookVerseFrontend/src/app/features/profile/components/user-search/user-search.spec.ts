@@ -25,7 +25,13 @@ describe('User discovery and selection', () => {
     };
   }
 
-  afterEach(() => TestBed.inject(HttpTestingController).verify({ ignoreCancelled: true }));
+  afterEach(() => {
+    const http = TestBed.inject(HttpTestingController);
+    http
+      .match((request) => request.url.endsWith('/appearance'))
+      .forEach((request) => request.flush({ coverIndex: 0, avatarIndex: 0, configured: false }));
+    http.verify({ ignoreCancelled: true });
+  });
 
   it('uses the public endpoint and links to profiles without rendering email', async () => {
     const { fixture, http } = setup();

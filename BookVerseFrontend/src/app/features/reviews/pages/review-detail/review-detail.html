@@ -17,18 +17,11 @@
     <article class="review-detail-card">
       <header class="review-detail-head">
         <div class="reviewer">
-          @if (reviewerAvatar(); as avatarUrl) {
-            <img
-              class="reviewer-avatar reviewer-avatar--image"
-              [src]="avatarUrl"
-              [alt]="'Foto de perfil de ' + (review.reviewerName?.trim() || 'Usuario')"
-              loading="lazy"
-            />
-          } @else {
-            <span class="reviewer-avatar" aria-hidden="true">
-              {{ review.reviewerName?.trim()?.slice(0, 1)?.toUpperCase() || 'U' }}
-            </span>
-          }
+          <app-user-avatar
+            class="reviewer-avatar"
+            [userId]="review.reviewerId"
+            [username]="review.reviewerName || 'Usuario'"
+          />
 
           <div class="reviewer-info">
             <a [routerLink]="['/users', review.reviewerId]">

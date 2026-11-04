@@ -1,3 +1,4 @@
+import { UserAvatar } from '../../../../shared/components/user-avatar/user-avatar';
 import { Component, DestroyRef, inject, signal, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map, switchMap } from 'rxjs';
@@ -16,7 +17,7 @@ import {
 import { ReviewWork, ReviewWorkService } from '../../services/review-work.service';
 @Component({
   selector: 'app-review-form',
-  imports: [RouterLink, ReactiveFormsModule],
+  imports: [UserAvatar, RouterLink, ReactiveFormsModule],
   templateUrl: './review-form.html',
   styleUrl: './review-form.css',
 })
@@ -49,15 +50,6 @@ export class ReviewForm implements OnInit {
     rating: [5, [Validators.required, Validators.min(1), Validators.max(5)]],
     content: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(5000)]],
   });
-
-  authorInitials(author: string): string {
-    const words = author.trim().split(/\s+/).filter(Boolean);
-
-    if (words.length === 0) return '?';
-    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
-
-    return `${words[0][0]}${words[words.length - 1][0]}`.toUpperCase();
-  }
 
   ngOnInit(): void {
     this.load();

@@ -151,9 +151,7 @@
               <tr>
                 <td>
                   <div class="user-cell">
-                    <span class="user-avatar" aria-hidden="true">
-                      {{ user.username.substring(0, 2).toLocaleUpperCase() }}
-                    </span>
+                    <app-user-avatar class="user-avatar" [userId]="user.idExternal" [username]="user.username" />
                     <span>
                       <strong>{{ user.username }}</strong>
 

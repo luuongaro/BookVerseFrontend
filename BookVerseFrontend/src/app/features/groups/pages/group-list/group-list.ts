@@ -1,3 +1,4 @@
+import { UserAvatar } from '../../../../shared/components/user-avatar/user-avatar';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -16,7 +17,7 @@ import { UserService } from '../../../profile/services/user.service';
 
 @Component({
   selector: 'app-group-list',
-  imports: [DatePipe, FormsModule, RouterLink],
+  imports: [UserAvatar, DatePipe, FormsModule, RouterLink],
   styleUrl: './group-list.css',
   templateUrl: './group-list.html',
 })
@@ -35,11 +36,6 @@ export class GroupList implements OnInit {
 
   get currentUsername(): string {
     return this.userService.currentUser()?.username ?? 'Usuario';
-  }
-
-  get currentUserInitials(): string {
-    const username = this.userService.currentUser()?.username?.trim();
-    return username ? username.slice(0, 2).toUpperCase() : 'BV';
   }
 
   logout(): void {

@@ -37,11 +37,11 @@ describe('Review work metadata', () => {
   it('resolves story authors and does not invent a genre', () => {
     service.resolve({ bookId: null, storyId: 'story' } as Review).subscribe((work) => {
       expect(work.author).toBe('Escritora');
+      expect(work.authorId).toBe('author');
       expect(work.genres).toEqual([]);
     });
     http
       .expectOne('http://localhost:8080/api/stories/story')
-      .flush({ title: 'Historia', authorId: 'author' });
-    http.expectOne('http://localhost:8080/api/users/author').flush({ username: 'Escritora' });
+      .flush({ title: 'Historia', authorId: 'author', authorUsername: 'Escritora' });
   });
 });

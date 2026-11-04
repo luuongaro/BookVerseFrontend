@@ -24,9 +24,11 @@
       <span class="eyebrow">{{ work.kind === 'book' ? 'LIBRO' : 'HISTORIA' }}</span>
       <h2>{{ work.title }}</h2>
       <div class="review-author">
-        <span class="review-author__avatar" aria-hidden="true">
-          {{ authorInitials(work.author) }}
-        </span>
+        <app-user-avatar
+          class="review-author__avatar"
+          [userId]="work.authorId ?? null"
+          [username]="work.author"
+        />
 
         <div class="review-author__info">
           <span class="review-author__label">

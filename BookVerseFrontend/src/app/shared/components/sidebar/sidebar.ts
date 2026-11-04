@@ -1,3 +1,4 @@
+import { UserAvatar } from '../user-avatar/user-avatar';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { UserService } from '../../../features/profile/services/user.service';
@@ -11,7 +12,7 @@ interface SidebarLink {
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [UserAvatar, RouterLink, RouterLinkActive],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.css',
 })
@@ -28,8 +29,6 @@ export class Sidebar implements OnInit {
   );
 
   readonly userName = computed(() => this.userService.currentUser()?.username ?? 'Usuario');
-
-  readonly userInitials = computed(() => this.userName().slice(0, 2).toUpperCase());
 
   readonly commonLinks: SidebarLink[] = [
     { label: 'Mi espacio', route: '/dashboard', icon: 'home' },

@@ -1,3 +1,4 @@
+import { UserAvatar } from '../../../../shared/components/user-avatar/user-avatar';
 import { Subscription, switchMap, map } from 'rxjs';
 import { ReviewWork, ReviewWorkService } from '../../services/review-work.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -10,11 +11,9 @@ import { apiError } from '../../../../core/api/api.config';
 import { ReviewsService } from '../../services/reviews.service';
 import { Review } from '../../models/review.model';
 import { ReviewSessionService } from '../../services/review-session.service';
-import { UserService } from '../../../profile/services/user.service';
-import { PROFILE_AVATARS } from '../../../profile/models/profile-avatars';
 @Component({
   selector: 'app-review-detail',
-  imports: [RouterLink, ReactiveFormsModule, DatePipe],
+  imports: [UserAvatar, RouterLink, ReactiveFormsModule, DatePipe],
   templateUrl: './review-detail.html',
   styleUrl: './review-detail.css',
 })
@@ -29,21 +28,16 @@ export class ReviewDetail implements OnInit {
   deleted = signal(false);
   readonly session = inject(ReviewSessionService);
   private readonly works = inject(ReviewWorkService);
-  private readonly users = inject(UserService);
   work = signal<ReviewWork | null>(null);
   review = signal<Review | null>(null);
-  reviewerAvatar = signal<string | null>(null);
   loading = signal(true);
   error = signal('');
   private request?: Subscription;
-  private avatarRequest?: Subscription;
   ngOnInit(): void {
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.load());
   }
   load(): void {
     this.request?.unsubscribe();
-    this.avatarRequest?.unsubscribe();
-    this.reviewerAvatar.set(null);
     this.loading.set(true);
     this.error.set('');
     this.request = this.service
@@ -56,17 +50,6 @@ export class ReviewDetail implements OnInit {
         next: ({ review, work }) => {
           this.work.set(work);
           this.review.set(review);
-          this.avatarRequest = this.users
-            .getProfileAppearance(review.reviewerId)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-              next: (appearance) => {
-                this.reviewerAvatar.set(
-                  PROFILE_AVATARS[appearance.avatarIndex]?.src ?? null,
-                );
-              },
-              error: () => this.reviewerAvatar.set(null),
-            });
           this.loading.set(false);
         },
         error: (error) => {
