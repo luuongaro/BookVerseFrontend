@@ -459,3 +459,10 @@
     padding-bottom: 0;
   }
 }
+.forgot-password {
+  align-self: flex-end;
+  color: var(--violet);
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

@@ -20,6 +20,16 @@ export const routes: Routes = [
   { path: '', component: Home, pathMatch: 'full' },
   { path: 'login', component: Login },
   { path: 'register', component: Register },
+  {
+    path: 'forgot-password',
+    loadComponent: () => import('./features/auth/pages/password-recovery/password-recovery').then(m => m.PasswordRecovery),
+    data: { mode: 'request' },
+  },
+  {
+    path: 'reset-password',
+    loadComponent: () => import('./features/auth/pages/password-recovery/password-recovery').then(m => m.PasswordRecovery),
+    data: { mode: 'reset' },
+  },
 
   {
     path: '',
