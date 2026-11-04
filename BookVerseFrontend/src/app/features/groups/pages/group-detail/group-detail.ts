@@ -1,7 +1,14 @@
 import { UserAvatar } from '../../../../shared/components/user-avatar/user-avatar';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  inject,
+  OnInit,
+  viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
@@ -46,6 +53,11 @@ export class GroupDetail implements OnInit {
   private readonly userService = inject(UserService);
   private readonly tokens = inject(TokenService);
 
+  readonly leaveGroupDialog =
+    viewChild.required<ElementRef<HTMLDialogElement>>('leaveGroupDialog');
+  readonly memberTrack =
+    viewChild<ElementRef<HTMLDivElement>>('memberTrack');
+
   group: ReadingGroup | null = null;
   members: GroupMember[] = [];
   goals: GroupGoal[] = [];
@@ -88,6 +100,54 @@ export class GroupDetail implements OnInit {
 
   get currentUsername(): string {
     return this.userService.currentUser()?.username ?? 'Usuario';
+  }
+
+  get canEditGroup(): boolean {
+    const currentUserId =
+      this.userService.currentUser()?.idExternal ??
+      localStorage.getItem('userId');
+
+    return (
+      !!this.group &&
+      (
+        this.group.createdByUserId === currentUserId ||
+        this.tokens.hasAnyRole('ROLE_ADMIN', 'ROLE_MODERATOR')
+      )
+    );
+  }
+
+  requestLeaveGroup(): void {
+    if (!this.group || !this.canLeaveGroup || this.isUpdatingMembers) return;
+
+    this.memberActionMessage = '';
+    this.leaveGroupDialog().nativeElement.showModal();
+  }
+
+  cancelLeaveGroup(): void {
+    if (this.isUpdatingMembers) return;
+
+    this.memberActionMessage = '';
+    this.leaveGroupDialog().nativeElement.close();
+  }
+
+  scrollMembers(direction: -1 | 1): void {
+    const track = this.memberTrack()?.nativeElement;
+    if (!track) return;
+
+    track.scrollBy({
+      left: direction * track.clientWidth * 0.8,
+      behavior: 'smooth',
+    });
+  }
+
+  memberProfileLink(userId: string): string[] {
+    const currentUserId =
+      this.userService.currentUser()?.idExternal ??
+      localStorage.getItem('userId');
+
+    return userId === currentUserId
+      ? ['/profile']
+      : ['/users', userId];
   }
 
   private getTomorrowDate(): string {
@@ -190,19 +250,29 @@ export class GroupDetail implements OnInit {
     );
   }
 
-  get canLeaveGroup(): boolean {
+  get isCurrentUserActiveMember(): boolean {
+    const currentUserId =
+      this.userService.currentUser()?.idExternal ??
+      localStorage.getItem('userId');
+
     return (
-      !!this.group &&
-      localStorage.getItem('userId') !== this.group.createdByUserId &&
-      this.members.some((member) => member.userId === localStorage.getItem('userId'))
+      !!currentUserId &&
+      this.members.some((member) => member.userId === currentUserId)
     );
   }
 
   get canManageMembers(): boolean {
-    return !!this.group?.isActive && (
-      this.group.createdByUserId === localStorage.getItem('userId') ||
-      this.tokens.hasAnyRole('ROLE_ADMIN', 'ROLE_MODERATOR')
+    return (
+      !!this.group?.isActive &&
+      (
+        this.isCurrentUserActiveMember ||
+        this.tokens.hasAnyRole('ROLE_ADMIN', 'ROLE_MODERATOR')
+      )
     );
+  }
+
+  get canLeaveGroup(): boolean {
+    return !!this.group?.isActive && this.isCurrentUserActiveMember;
   }
 
   get memberUserIds(): string[] {
@@ -265,6 +335,7 @@ export class GroupDetail implements OnInit {
     this.groupMembersService.leaveGroup(this.group.idExternal).subscribe({
       next: () => {
         this.isUpdatingMembers = false;
+        this.leaveGroupDialog().nativeElement.close();
         void this.router.navigate(['/groups']);
       },
       error: (error: unknown) => {

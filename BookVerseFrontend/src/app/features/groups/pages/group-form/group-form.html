@@ -19,7 +19,12 @@
     </header>
 
     <main class="workspace">
-      <a class="back-link" routerLink="/groups">← Volver a grupos</a>
+      <a
+        class="back-link"
+        [routerLink]="isEditing && groupId ? ['/groups', groupId] : ['/groups']"
+      >
+        {{ isEditing ? '← Volver al detalle' : '← Volver a grupos' }}
+      </a>
 
       <section class="form-card">
         <div class="form-heading">
@@ -157,7 +162,12 @@
             }
 
             <div class="form-actions">
-              <a class="secondary-button" routerLink="/groups">Cancelar</a>
+              <a
+                class="secondary-button"
+                [routerLink]="isEditing && groupId ? ['/groups', groupId] : ['/groups']"
+              >
+                Cancelar
+              </a>
 
               <button
                 class="primary-button"

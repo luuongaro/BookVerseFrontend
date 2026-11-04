@@ -12,6 +12,7 @@ import { finalize, map, Observable, of, switchMap } from 'rxjs';
 import { ReadingGroupsService } from '../../services/reading-groups.service';
 import { UserService } from '../../../profile/services/user.service';
 import { LibraryService } from '../../../library/services/library.service';
+import { TokenService } from '../../../../core/services/token.service';
 
 type GroupWorkType = 'book' | 'story';
 
@@ -29,6 +30,7 @@ export class GroupForm implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly userService = inject(UserService);
   private readonly libraryService = inject(LibraryService);
+  private readonly tokens = inject(TokenService);
 
   groupId: string | null = null;
   isLoading = false;
@@ -39,6 +41,17 @@ export class GroupForm implements OnInit {
 
   get currentUsername(): string {
     return this.userService.currentUser()?.username ?? 'Usuario';
+  }
+
+  private canEditGroup(createdByUserId: string): boolean {
+    const currentUserId =
+      this.userService.currentUser()?.idExternal ??
+      localStorage.getItem('userId');
+
+    return (
+      createdByUserId === currentUserId ||
+      this.tokens.hasAnyRole('ROLE_ADMIN', 'ROLE_MODERATOR')
+    );
   }
 
   logout(): void {
@@ -142,6 +155,11 @@ export class GroupForm implements OnInit {
       )
       .subscribe({
         next: (group) => {
+          if (!this.canEditGroup(group.createdByUserId)) {
+            void this.router.navigate(['/groups', groupId]);
+            return;
+          }
+
           this.groupForm.patchValue({
             name: group.name,
             workType: group.storyId ? 'story' : 'book',
