@@ -1,0 +1,9 @@
+@if (source(); as image) {
+  @if (!imageFailed()) {
+    <img [src]="image" alt="" loading="lazy" decoding="async" (error)="imageFailed.set(true)" />
+  } @else {
+    {{ initials() }}
+  }
+} @else {
+  {{ initials() }}
+}

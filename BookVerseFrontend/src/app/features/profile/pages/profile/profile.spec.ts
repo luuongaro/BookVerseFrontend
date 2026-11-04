@@ -6,6 +6,7 @@ import { Profile } from './profile';
 import { UserService } from '../../services/user.service';
 import { ReadingGroupsService } from '../../../groups/services/reading-groups.service';
 import { GroupMembersService } from '../../../groups/services/group-members.service';
+import { PROFILE_AVATARS } from '../../models/profile-avatars';
 
 describe('Preserving the profile layout and personal appearance', () => {
   async function setup() {
@@ -48,7 +49,11 @@ describe('Preserving the profile layout and personal appearance', () => {
   it('keeps the cover, avatar, username and all five activity counters', async () => {
     const { component, harness } = await setup();
     expect(harness.routeNativeElement!.querySelector('.cover')).not.toBeNull();
-    expect(harness.routeNativeElement!.querySelector('.profile-avatar img')).not.toBeNull();
+    for (const selector of ['.profile-avatar img', '.topbar-avatar img']) {
+      expect(harness.routeNativeElement!.querySelector(selector)!.getAttribute('src')).toBe(
+        PROFILE_AVATARS[1].src,
+      );
+    }
     expect(harness.routeNativeElement!.querySelector('h1')!.textContent).toContain('Lu');
     expect(component.readingCounts()).toEqual({ wantToRead: '1', inProgress: '2', finished: '3' });
     expect(component.createdStoriesCount()).toBe('4');
@@ -80,7 +85,7 @@ describe('Preserving the profile layout and personal appearance', () => {
     expect(users.updateProfileAvatar).toHaveBeenCalledExactlyOnceWith(5);
     pending.next({ coverIndex: 2, avatarIndex: 5, configured: true });
     pending.complete();
-    expect(component.currentAvatar.name).toBe('Misterio');
+    expect(component.currentAvatar?.name).toBe('Misterio');
     expect(close).toHaveBeenCalled();
     expect(users.updateProfileAppearance).not.toHaveBeenCalled();
   });

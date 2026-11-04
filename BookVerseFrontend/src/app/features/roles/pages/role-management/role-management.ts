@@ -1,3 +1,4 @@
+import { UserAvatar } from '../../../../shared/components/user-avatar/user-avatar';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -8,7 +9,7 @@ import { RoleManagementService } from '../../services/role-management.service';
 @Component({
   selector: 'app-role-management',
   standalone: true,
-  imports: [FormsModule],
+  imports: [UserAvatar, FormsModule],
   templateUrl: './role-management.html',
   styleUrl: './role-management.css',
 })

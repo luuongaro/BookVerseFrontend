@@ -260,16 +260,11 @@
   <article class="review-card">
     <div class="card-head">
       <div class="person">
-        @if (reviewerAvatars()[review.reviewerId]; as avatarUrl) {
-          <img
-            class="avatar profile-avatar"
-            [src]="avatarUrl"
-            [alt]="'Foto de perfil de ' + readerName(review)"
-            loading="lazy"
-          />
-        } @else {
-          <span class="avatar" aria-hidden="true">{{ initials(review) }}</span>
-        }
+        <app-user-avatar
+          class="avatar profile-avatar"
+          [userId]="review.reviewerId"
+          [username]="readerName(review)"
+        />
         <div class="person-info">
           <a class="reviewer-profile" [routerLink]="['/users', review.reviewerId]">
             {{ readerName(review) }}

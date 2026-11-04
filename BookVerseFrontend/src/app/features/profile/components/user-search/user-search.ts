@@ -1,3 +1,4 @@
+import { UserAvatar } from '../../../../shared/components/user-avatar/user-avatar';
 import {
   Component,
   DestroyRef,
@@ -13,11 +14,10 @@ import { RouterLink } from '@angular/router';
 import { BehaviorSubject, EMPTY, catchError, switchMap, timer } from 'rxjs';
 import { UserProfile } from '../../models/user-profile.model';
 import { UserService } from '../../services/user.service';
-import { PROFILE_AVATARS } from '../../models/profile-avatars';
 
 @Component({
   selector: 'app-user-search',
-  imports: [RouterLink],
+  imports: [UserAvatar, RouterLink],
   templateUrl: './user-search.html',
   styleUrl: './user-search.css',
 })
@@ -34,7 +34,6 @@ export class UserSearch implements OnInit {
   @Output() userSelected = new EventEmitter<UserProfile>();
 
   readonly profiles = signal<UserProfile[]>([]);
-  readonly failedAvatars = signal(new Set<string>());
   readonly loading = signal(true);
   readonly error = signal('');
   readonly page = signal(0);
@@ -90,15 +89,4 @@ export class UserSearch implements OnInit {
     if (!this.disabled && !this.memberIds.includes(user.idExternal)) this.userSelected.emit(user);
   }
 
-  initials(username: string): string {
-    return username.slice(0, 2).toLocaleUpperCase();
-  }
-
-  avatar(user: UserProfile): string {
-    return (PROFILE_AVATARS[user.avatarIndex ?? 0] ?? PROFILE_AVATARS[0]).src;
-  }
-
-  avatarFailed(id: string): void {
-    this.failedAvatars.update((failed) => new Set([...failed, id]));
-  }
 }

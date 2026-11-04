@@ -1,3 +1,4 @@
+import { UserAvatar } from '../../../../shared/components/user-avatar/user-avatar';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
@@ -27,7 +28,7 @@ import { StoryService } from '../../../stories/services/story.services';
 
 @Component({
   selector: 'app-group-detail',
-  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, UserSearch],
+  imports: [UserAvatar, DatePipe, DecimalPipe, FormsModule, RouterLink, UserSearch],
   styleUrl: './group-detail.css',
   templateUrl: './group-detail.html',
 })
@@ -87,11 +88,6 @@ export class GroupDetail implements OnInit {
 
   get currentUsername(): string {
     return this.userService.currentUser()?.username ?? 'Usuario';
-  }
-
-  get currentUserInitials(): string {
-    const username = this.userService.currentUser()?.username?.trim();
-    return username ? username.slice(0, 2).toUpperCase() : 'BV';
   }
 
   private getTomorrowDate(): string {

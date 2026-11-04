@@ -212,8 +212,3 @@ main > p {
     box-sizing: border-box;
   }
 }
-
-.reviewer-avatar--image {
-  display: block;
-  object-fit: cover;
-}

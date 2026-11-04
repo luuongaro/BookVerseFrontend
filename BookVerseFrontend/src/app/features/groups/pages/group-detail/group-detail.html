@@ -15,7 +15,7 @@
 
       <div class="topbar-right">
         <span class="topbar-message">☾ &nbsp; Un buen día para un nuevo capítulo</span>
-        <span class="avatar topbar-avatar">{{ currentUserInitials }}</span>
+        <app-user-avatar class="avatar topbar-avatar" />
       </div>
     </header>
 
@@ -354,18 +354,18 @@
                   track member.idExternal;
                   let i = $index
                 ) {
-                  <span
+                  <app-user-avatar
                     class="member-avatar"
                     [class.avatar-lilac]="i % 5 === 0"
                     [class.avatar-rose]="i % 5 === 1"
                     [class.avatar-blue]="i % 5 === 2"
                     [class.avatar-green]="i % 5 === 3"
                     [class.avatar-pink]="i % 5 === 4"
-                    [attr.aria-label]="member.userName"
                     [title]="member.userName"
-                  >
-                    {{ member.userName.slice(0, 2).toUpperCase() }}
-                  </span>
+                    [userId]="member.userId"
+                    [username]="member.userName"
+                    [decorative]="false"
+                  />
                 }
 
                 @if (members.length > 5) {
@@ -464,14 +464,14 @@
             } @else {
               @for (comment of comments; track comment.idExternal; let i = $index) {
                 <article class="comment">
-                  <span
+                  <app-user-avatar
                     class="comment-avatar"
                     [class.avatar-rose]="i % 3 === 0"
                     [class.avatar-blue]="i % 3 === 1"
                     [class.avatar-green]="i % 3 === 2"
-                  >
-                    {{ (comment.userName || 'Lector').slice(0, 2).toUpperCase() }}
-                  </span>
+                    [userId]="comment.userId"
+                    [username]="comment.userName || 'Lector'"
+                  />
 
                   <div class="comment-content">
                     <div class="comment-author">
@@ -490,7 +490,7 @@
 
           @if (!isStoryGroup) {
             <form class="comment-form" (ngSubmit)="publishComment()">
-              <span class="comment-avatar avatar-lilac">{{ currentUserInitials }}</span>
+              <app-user-avatar class="comment-avatar avatar-lilac" />
 
               <label class="visually-hidden" for="newComment">
                 Escribí un comentario

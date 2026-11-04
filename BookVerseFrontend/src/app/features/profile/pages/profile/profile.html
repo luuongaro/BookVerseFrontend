@@ -12,7 +12,12 @@
       <div class="topbar-note">
         <span aria-hidden="true">☾</span>
         <span>Un buen día para un nuevo capítulo</span>
-        <span class="topbar-avatar">{{ profile.initials }}</span>
+        <app-user-avatar
+          class="topbar-avatar"
+          [userId]="viewedUser()?.idExternal ?? null"
+          [username]="profile.name"
+          [avatarIndex]="selectedAvatarIndex"
+        />
       </div>
     </header>
 
@@ -121,15 +126,12 @@
 
         <section class="identity" aria-label="Información del perfil">
           <div class="profile-avatar">
-            @if (!avatarImageFailed()) {
-              <img
-                [src]="currentAvatar.src"
-                [alt]="'Avatar de ' + profile.name"
-                (error)="avatarImageFailed.set(true)"
-              />
-            } @else {
-              <span aria-hidden="true">{{ profile.initials }}</span>
-            }
+            <app-user-avatar
+              [userId]="user.idExternal"
+              [username]="profile.name"
+              [avatarIndex]="selectedAvatarIndex"
+              [decorative]="false"
+            />
             @if (canEditProfile()) {
               <button
                 class="avatar-edit"
@@ -221,11 +223,10 @@
                   [disabled]="savingAvatar()"
                   (click)="selectAvatar(index)"
                 >
-                  <img
-                    loading="lazy"
-                    decoding="async"
-                    [src]="avatar.src"
-                    [alt]="avatar.name"
+                  <app-user-avatar
+                    [userId]="null"
+                    [username]="profile.name"
+                    [avatarIndex]="index"
                   /><span>{{ avatar.name }}</span>
                 </button>
               }
@@ -245,7 +246,7 @@
                 class="profile-button profile-primary"
                 type="button"
                 (click)="saveAvatar()"
-                [disabled]="savingAvatar()"
+                [disabled]="savingAvatar() || selectedAvatarIndex === null"
               >
                 {{ savingAvatar() ? 'Guardando…' : 'Guardar avatar' }}
               </button>
@@ -255,7 +256,8 @@
 
         @if (coverError()) {
           <div class="profile-state profile-error" role="alert">
-            {{ coverError() }} <button type="button" (click)="loadAppearance()">Reintentar</button>
+            {{ coverError() }}
+            <button type="button" (click)="loadAppearance(true)">Reintentar</button>
           </div>
         }
         @if (groupMessage()) {

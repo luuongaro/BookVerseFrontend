@@ -26,13 +26,7 @@
       @for (user of profiles(); track user.idExternal) {
         <article class="user-card" [class.selected]="selectedUserId === user.idExternal">
           <a class="user-identity" [routerLink]="['/users', user.idExternal]">
-            <span class="avatar" aria-hidden="true">
-              @if (failedAvatars().has(user.idExternal)) {
-                {{ initials(user.username) }}
-              } @else {
-                <img [src]="avatar(user)" alt="" (error)="avatarFailed(user.idExternal)" />
-              }
-            </span>
+            <app-user-avatar class="avatar" [userId]="user.idExternal" [username]="user.username" />
             <span class="user-name">{{ '@' + user.username }}</span>
           </a>
           @if (selectable) {

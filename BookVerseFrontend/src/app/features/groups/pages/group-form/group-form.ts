@@ -1,3 +1,4 @@
+import { UserAvatar } from '../../../../shared/components/user-avatar/user-avatar';
 import {
   ChangeDetectorRef,
   Component,
@@ -16,7 +17,7 @@ type GroupWorkType = 'book' | 'story';
 
 @Component({
   selector: 'app-group-form',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [UserAvatar, ReactiveFormsModule, RouterLink],
   styleUrl: './group-form.css',
   templateUrl: './group-form.html',
 })
@@ -38,11 +39,6 @@ export class GroupForm implements OnInit {
 
   get currentUsername(): string {
     return this.userService.currentUser()?.username ?? 'Usuario';
-  }
-
-  get currentUserInitials(): string {
-    const username = this.userService.currentUser()?.username?.trim();
-    return username ? username.slice(0, 2).toUpperCase() : 'BV';
   }
 
   logout(): void {

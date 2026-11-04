@@ -1,10 +1,9 @@
+import { UserAvatar } from '../../../../shared/components/user-avatar/user-avatar';
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { BookCover } from '../../../../shared/components/book-cover/book-cover';
-import { Observable, Subscription, catchError, forkJoin, map, of, switchMap } from 'rxjs';
+import { Subscription, map, switchMap } from 'rxjs';
 import { ReviewWork, ReviewWorkService } from '../../services/review-work.service';
 import { ReviewSessionService } from '../../services/review-session.service';
-import { UserService } from '../../../profile/services/user.service';
-import { PROFILE_AVATARS } from '../../../profile/models/profile-avatars';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DestroyRef } from '@angular/core';
 import { Component, inject, signal, computed, linkedSignal, OnInit } from '@angular/core';
@@ -15,14 +14,13 @@ import { ReviewsService } from '../../services/reviews.service';
 import { Review } from '../../models/review.model';
 @Component({
   selector: 'app-review-list',
-  imports: [RouterLink, ReactiveFormsModule, DatePipe, BookCover, NgTemplateOutlet],
+  imports: [UserAvatar, RouterLink, ReactiveFormsModule, DatePipe, BookCover, NgTemplateOutlet],
   templateUrl: './review-list.html',
   styleUrl: './review-list.css',
 })
 export class ReviewList implements OnInit {
   private readonly service = inject(ReviewsService);
   private readonly worksService = inject(ReviewWorkService);
-  private readonly users = inject(UserService);
   readonly session = inject(ReviewSessionService);
   view = signal('cards');
   readonly pageSize = 8;
@@ -71,15 +69,6 @@ export class ReviewList implements OnInit {
   }
   readerName(review: Review): string {
     return review.reviewerName?.trim() || 'Usuario';
-  }
-  initials(review: Review): string {
-    return this.readerName(review)
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0])
-      .join('')
-      .toLocaleUpperCase();
   }
   ratingPercent(rating: number): number {
     const reviews = this.featuredReviews();
@@ -191,7 +180,6 @@ export class ReviewList implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private request?: Subscription;
   reviews = signal<Review[]>([]);
-  reviewerAvatars = signal<Record<string, string>>({});
   loading = signal(true);
   error = signal('');
   bookId = this.route.snapshot.queryParamMap.get('bookId');
@@ -212,35 +200,6 @@ export class ReviewList implements OnInit {
     });
   }
 
-  private loadReviewerAvatars(
-    reviews: Review[],
-  ): Observable<Record<string, string>> {
-    const reviewerIds = [
-      ...new Set(reviews.map((review) => review.reviewerId).filter(Boolean)),
-    ];
-
-    if (!reviewerIds.length) return of({});
-
-    return forkJoin(
-      reviewerIds.map((reviewerId) =>
-        this.users.getProfileAppearance(reviewerId).pipe(
-          map((appearance) => ({
-            reviewerId,
-            src: PROFILE_AVATARS[appearance.avatarIndex]?.src ?? null,
-          })),
-          catchError(() => of({ reviewerId, src: null })),
-        ),
-      ),
-    ).pipe(
-      map((avatars) =>
-        avatars.reduce<Record<string, string>>((result, avatar) => {
-          if (avatar.src) result[avatar.reviewerId] = avatar.src;
-          return result;
-        }, {}),
-      ),
-    );
-  }
-
   load(): void {
     this.request?.unsubscribe();
     this.loading.set(true);
@@ -258,18 +217,14 @@ export class ReviewList implements OnInit {
     this.request = request
       .pipe(
         switchMap((reviews) =>
-          forkJoin({
-            works: this.worksService.resolveAll(reviews),
-            avatars: this.loadReviewerAvatars(reviews),
-          }).pipe(map(({ works, avatars }) => ({ reviews, works, avatars }))),
+          this.worksService.resolveAll(reviews).pipe(map((works) => ({ reviews, works }))),
         ),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: ({ reviews, works, avatars }) => {
+        next: ({ reviews, works }) => {
           this.reviews.set(reviews);
           this.works.set(works);
-          this.reviewerAvatars.set(avatars);
           this.loading.set(false);
         },
         error: (error) => {

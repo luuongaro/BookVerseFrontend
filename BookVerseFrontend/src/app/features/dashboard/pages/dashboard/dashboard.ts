@@ -1,3 +1,4 @@
+import { UserAvatar } from '../../../../shared/components/user-avatar/user-avatar';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -17,7 +18,7 @@ import { StoryDetailResponse } from '../../../stories/models/story-detail-respon
 import { StoryService } from '../../../stories/services/story.services';
 
 @Component({
-  imports: [DatePipe, DecimalPipe, RouterLink],
+  imports: [UserAvatar, DatePipe, DecimalPipe, RouterLink],
   selector: 'app-dashboard',
   styleUrl: './dashboard.css',
   templateUrl: './dashboard.html',
@@ -83,15 +84,6 @@ export class Dashboard implements OnInit {
 
   get fullName(): string {
     return this.userService.currentUser()?.username ?? 'Usuario';
-  }
-
-  get initials(): string {
-    return this.getInitials(this.userService.currentUser()?.username);
-  }
-
-  private getInitials(name?: string): string {
-    const value = name?.trim();
-    return value ? value.slice(0, 2).toUpperCase() : 'BV';
   }
 
   logout(): void {
