@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { UserService } from '../../../profile/services/user.service';
 
@@ -14,6 +14,7 @@ export class Login {
   private formBuilder = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private userService = inject(UserService);
 
   showPassword = false;
@@ -25,6 +26,14 @@ export class Login {
 
   togglePasswordVisibility(): void {
     this.showPassword = !this.showPassword;
+  }
+
+  private getReturnUrl(): string {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+
+    return returnUrl?.startsWith('/') && !returnUrl.startsWith('//')
+      ? returnUrl
+      : '/dashboard';
   }
 
   onSubmit(): void {
@@ -41,7 +50,7 @@ export class Login {
         this.userService.getByIdExternal(response.userId).subscribe({
           next: (user) => {
             this.userService.setCurrentUser(user);
-            void this.router.navigate(['/dashboard']);
+            void this.router.navigateByUrl(this.getReturnUrl());
           },
           error: () => {
             localStorage.removeItem('token');
