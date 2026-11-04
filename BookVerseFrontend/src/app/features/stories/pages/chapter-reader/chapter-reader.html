@@ -166,9 +166,42 @@
         </div>
 
         <div
-          class="chapter-body"
-          [innerHTML]="currentChapter.content"
-        ></div>
+          #pageWindow
+          class="page-window"
+          [class.turning-next]="pageTurn() === 'next'"
+          [class.turning-previous]="pageTurn() === 'previous'"
+        >
+          <div
+            class="chapter-body"
+            [innerHTML]="currentChapter.content"
+          ></div>
+        </div>
+
+        @if (totalPages() > 1) {
+          <nav class="page-controls" aria-label="Paginación del capítulo">
+            <button
+              type="button"
+              class="page-button"
+              [disabled]="currentPage() === 0"
+              (click)="turnPage(-1)"
+            >
+              ← Anterior
+            </button>
+
+            <span aria-live="polite">
+              Página {{ currentPage() + 1 }} de {{ totalPages() }}
+            </span>
+
+            <button
+              type="button"
+              class="page-button"
+              [disabled]="currentPage() >= totalPages() - 1"
+              (click)="turnPage(1)"
+            >
+              Siguiente →
+            </button>
+          </nav>
+        }
 <nav
   class="chapter-navigation"
   aria-label="Navegación entre capítulos"
@@ -214,67 +247,54 @@
   </div>
 
   <div class="chapter-nav-side next-side">
-
-    @if (nextChapter(); as next) {
-
-      <a
-        class="chapter-nav-link next"
-        [routerLink]="[
-          section,
-          storyId(),
-          'chapters',
-          next.idExternal
-        ]"
-      >
-
-        <span>
-
-          <small>
-            SIGUIENTE CAPÍTULO
-          </small>
-
-          <strong>
-            {{ next.title }}
-          </strong>
-
-        </span>
-
-        <span
-          class="nav-arrow"
-          aria-hidden="true"
+    @if (currentPage() === totalPages() - 1) {
+      @if (nextChapter(); as next) {
+        <a
+          class="chapter-nav-link next"
+          [routerLink]="[
+            section,
+            storyId(),
+            'chapters',
+            next.idExternal
+          ]"
         >
-          →
-        </span>
+          <span>
+            <small>SIGUIENTE CAPÍTULO</small>
+            <strong>{{ next.title }}</strong>
+          </span>
 
-      </a>
-
+          <span class="nav-arrow" aria-hidden="true">→</span>
+        </a>
+      }
     }
-
   </div>
 
 </nav>
-        <div
-          class="paper-divider end-mark"
-          aria-hidden="true"
-        >
+        <div class="paper-divider end-mark" aria-hidden="true">
           ✧
         </div>
 
-        <div class="reader-end">
+        @if (currentPage() === totalPages() - 1) {
+          <div class="reader-end">
+            <p>
+              {{
+                isLastPublishedChapter()
+                  ? 'Por ahora, este es el último capítulo publicado'
+                  : 'Llegaste al final de este capítulo.'
+              }}
+            </p>
 
-          <p>
-            Llegaste al final de este capítulo.
-          </p>
-
-          <a
-            class="return-link"
-            [routerLink]="writing ? '/writer' : [section, storyId()]"
-          >
-            Volver a la historia
-            <span aria-hidden="true">→</span>
-          </a>
-
-        </div>
+            @if (isLastPublishedChapter()) {
+              <a
+                class="return-link"
+                [routerLink]="writing ? '/writer' : [section, storyId()]"
+              >
+                Volver a la historia
+                <span aria-hidden="true">→</span>
+              </a>
+            }
+          </div>
+        }
 
       </article>
 

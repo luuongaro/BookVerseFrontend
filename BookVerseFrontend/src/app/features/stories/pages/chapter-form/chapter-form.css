@@ -851,3 +851,71 @@ textarea {
     width: 100%;
   }
 }
+.format-toolbar button.active,
+.format-toolbar button[aria-pressed='true'] {
+  border-color: #c9b9d8;
+  background: #f0eaf6;
+  color: var(--lavender);
+}
+
+.format-toolbar .toolbar-context {
+  margin-left: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.alignment-glyph,
+.bullet-glyph {
+  display: inline-flex;
+  width: 18px;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.alignment-glyph i,
+.bullet-glyph i {
+  display: block;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.alignment-glyph i:nth-child(1) {
+  width: 18px;
+}
+
+.alignment-glyph i:nth-child(2) {
+  width: 14px;
+}
+
+.alignment-glyph i:nth-child(3) {
+  width: 18px;
+}
+
+.alignment-glyph.align-center {
+  align-items: center;
+}
+
+.alignment-glyph.align-right {
+  align-items: flex-end;
+}
+
+.alignment-glyph.align-justify i {
+  width: 18px;
+}
+
+.bullet-glyph {
+  position: relative;
+  gap: 4px;
+  padding-left: 6px;
+}
+
+.bullet-glyph::before {
+  position: absolute;
+  top: 1px;
+  left: 0;
+  content: '•\A•\A•';
+  white-space: pre;
+  font-size: 8px;
+  line-height: 5px;
+}

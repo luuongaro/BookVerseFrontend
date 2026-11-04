@@ -1,6 +1,16 @@
 import { CommonModule } from '@angular/common';
 
-import {Component,computed,DestroyRef,inject,OnInit,signal} from '@angular/core';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  ElementRef,
+  HostListener,
+  inject,
+  OnInit,
+  signal,
+  ViewChild,
+} from '@angular/core';
 
 import {
   ActivatedRoute,
@@ -33,6 +43,13 @@ import { isPremiumStoryPlanError } from '../../services/reading-status-errors';
   styleUrl: './chapter-reader.css'
 })
 export class ChapterReader implements OnInit {
+
+  @ViewChild('pageWindow')
+  private pageWindow?: ElementRef<HTMLDivElement>;
+
+  readonly currentPage = signal(0);
+  readonly totalPages = signal(1);
+  readonly pageTurn = signal<'next' | 'previous' | null>(null);
 
   private readonly route = inject(ActivatedRoute);
   readonly writing = this.route.snapshot.data['writing'] === true;
@@ -126,6 +143,24 @@ readonly nextChapter = computed(() => {
   ];
 });
 
+readonly isLastPublishedChapter = computed(() => {
+  const currentStory = this.story();
+  const currentChapter = this.chapter();
+
+  if (!currentStory || !currentChapter || !currentChapter.published) {
+    return false;
+  }
+
+  const publishedChapters = currentStory.chapters
+    .filter((chapter) => chapter.published)
+    .sort((a, b) => a.chapterNumber - b.chapterNumber);
+
+  const lastPublishedChapter =
+    publishedChapters[publishedChapters.length - 1];
+
+  return lastPublishedChapter?.idExternal === currentChapter.idExternal;
+});
+
 ngOnInit(): void {
 
 this.userService.loadCurrentUser().subscribe({
@@ -192,6 +227,11 @@ this.userService.loadCurrentUser().subscribe({
             return;
           }
           this.chapter.set(chapter);
+          this.currentPage.set(0);
+          this.totalPages.set(1);
+
+          requestAnimationFrame(() => this.recalculatePages());
+
           if (!this.writing) this.registerReadingProgress(chapter);
         },
         error: error => {
@@ -199,6 +239,64 @@ this.userService.loadCurrentUser().subscribe({
           this.errorMessage.set(apiError(error));
         }
       });
+  }
+
+  private recalculatePages(): void {
+    const viewport = this.pageWindow?.nativeElement;
+    if (!viewport) return;
+
+    const pageWidth = viewport.clientWidth;
+    if (pageWidth <= 0) return;
+
+    viewport.style.setProperty('--reader-page-width', `${pageWidth}px`);
+
+    requestAnimationFrame(() => {
+      const currentViewport = this.pageWindow?.nativeElement;
+      if (!currentViewport || currentViewport.clientWidth <= 0) return;
+
+      const width = currentViewport.clientWidth;
+      const pages = Math.max(
+        1,
+        Math.ceil(currentViewport.scrollWidth / width),
+      );
+
+      this.totalPages.set(pages);
+      this.currentPage.update((page) => Math.min(page, pages - 1));
+
+      currentViewport.scrollTo({
+        left: this.currentPage() * width,
+        behavior: 'auto',
+      });
+    });
+  }
+
+  turnPage(direction: -1 | 1): void {
+    const nextPage = this.currentPage() + direction;
+
+    if (nextPage < 0 || nextPage >= this.totalPages()) {
+      return;
+    }
+
+    const viewport = this.pageWindow?.nativeElement;
+
+    if (!viewport) {
+      return;
+    }
+
+    this.currentPage.set(nextPage);
+    this.pageTurn.set(direction > 0 ? 'next' : 'previous');
+
+    viewport.scrollTo({
+      left: nextPage * viewport.clientWidth,
+      behavior: 'smooth',
+    });
+
+    window.setTimeout(() => this.pageTurn.set(null), 450);
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    requestAnimationFrame(() => this.recalculatePages());
   }
 
   private loadStory(storyId: string): void {
