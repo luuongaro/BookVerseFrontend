@@ -5,7 +5,10 @@
     </div>
     <div class="actions">
       <a class="button" routerLink="/books">Buscar libros</a
-      ><a class="button secondary" routerLink="/stories">Explorar historias</a>
+      ><a class="button secondary" routerLink="/stories">
+        Explorar historias
+        <span aria-hidden="true">→</span>
+      </a>
     </div>
   </div>
   @if (loading()) {
@@ -185,7 +188,10 @@
                     : 'Todavía no guardaste historias.'
                 }}
               </h2>
-              <a routerLink="/stories">Explorar historias →</a>
+              <a class="button secondary" routerLink="/stories">
+                Explorar historias
+                <span aria-hidden="true">→</span>
+              </a>
             </div>
             <div class="wood-shelf" aria-hidden="true"></div>
           </section>
