@@ -77,6 +77,9 @@ export class GroupDetail implements OnInit {
   commentContent = '';
   commentProgress = 0;
   selectedInviteUser: UserProfile | null = null;
+  selectedLeaveCreator: GroupMember | null = null;
+  leaveCreatorSearch = '';
+  leaveCreatorListOpen = false;
   showInviteForm = false;
 
   isLoading = true;
@@ -121,6 +124,15 @@ export class GroupDetail implements OnInit {
     if (!this.group || !this.canLeaveGroup || this.isUpdatingMembers) return;
 
     this.memberActionMessage = '';
+    this.leaveCreatorSearch = '';
+    this.leaveCreatorListOpen = false;
+
+    if (this.isCurrentUserCreator) {
+      this.selectedLeaveCreator = this.leaveCreatorCandidates[0] ?? null;
+    } else {
+      this.selectedLeaveCreator = null;
+    }
+
     this.leaveGroupDialog().nativeElement.showModal();
   }
 
@@ -128,7 +140,53 @@ export class GroupDetail implements OnInit {
     if (this.isUpdatingMembers) return;
 
     this.memberActionMessage = '';
+    this.selectedLeaveCreator = null;
+    this.leaveCreatorSearch = '';
+    this.leaveCreatorListOpen = false;
     this.leaveGroupDialog().nativeElement.close();
+  }
+
+  openLeaveCreatorCandidates(): void {
+    this.leaveCreatorListOpen = true;
+  }
+
+  closeLeaveCreatorCandidates(): void {
+    this.leaveCreatorListOpen = false;
+  }
+
+  get isCurrentUserCreator(): boolean {
+    const currentUserId =
+      this.userService.currentUser()?.idExternal ?? localStorage.getItem('userId');
+
+    return this.members.some(
+      (member) =>
+        member.userId === currentUserId && member.memberType === 'CREATOR',
+    );
+  }
+
+  get leaveCreatorCandidates(): GroupMember[] {
+    const currentUserId =
+      this.userService.currentUser()?.idExternal ?? localStorage.getItem('userId');
+
+    return this.members
+      .filter(
+        (member) => member.userId !== currentUserId && member.status === 'ACTIVE',
+      )
+      .sort((a, b) => Date.parse(a.joinedAt) - Date.parse(b.joinedAt));
+  }
+
+  get filteredLeaveCreatorCandidates(): GroupMember[] {
+    const search = this.leaveCreatorSearch.trim().toLocaleLowerCase();
+
+    return this.leaveCreatorCandidates.filter((member) =>
+      member.userName.toLocaleLowerCase().includes(search),
+    );
+  }
+
+  selectLeaveCreator(member: GroupMember): void {
+    this.selectedLeaveCreator = member;
+    this.leaveCreatorSearch = '';
+    this.closeLeaveCreatorCandidates();
   }
 
   scrollMembers(direction: -1 | 1): void {
@@ -343,20 +401,27 @@ export class GroupDetail implements OnInit {
     this.memberActionMessage = '';
     this.isUpdatingMembers = true;
 
-    this.groupMembersService.leaveGroup(this.group.idExternal).subscribe({
-      next: () => {
-        this.isUpdatingMembers = false;
-        this.leaveGroupDialog().nativeElement.close();
-        void this.router.navigate(['/groups']);
-      },
-      error: (error: unknown) => {
-        console.error('Error leaving reading group:', error);
-        this.memberActionMessage =
-          'No se pudo salir del grupo. Puede que tu membresía ya no esté activa.';
-        this.isUpdatingMembers = false;
-        this.changeDetector.markForCheck();
-      },
-    });
+    this.groupMembersService
+      .leaveGroup(
+        this.group.idExternal,
+        this.isCurrentUserCreator
+          ? { newCreatorUserId: this.selectedLeaveCreator?.userId ?? null }
+          : undefined,
+      )
+      .subscribe({
+        next: () => {
+          this.isUpdatingMembers = false;
+          this.leaveGroupDialog().nativeElement.close();
+          void this.router.navigate(['/groups']);
+        },
+        error: (error: unknown) => {
+          console.error('Error leaving reading group:', error);
+          this.memberActionMessage =
+            'No se pudo salir del grupo. Puede que tu membresía ya no esté activa.';
+          this.isUpdatingMembers = false;
+          this.changeDetector.markForCheck();
+        },
+      });
   }
 
   createGoal(): void {
