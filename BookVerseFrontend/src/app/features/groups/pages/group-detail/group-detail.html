@@ -605,6 +605,9 @@
 <dialog
   #leaveGroupDialog
   class="leave-confirm-dialog"
+  [class.leave-confirm-dialog--creator]="
+    isCurrentUserCreator && leaveCreatorCandidates.length > 0
+  "
   aria-labelledby="leave-group-title"
   (cancel)="isUpdatingMembers && $event.preventDefault()"
 >
@@ -612,8 +615,80 @@
   <h2 id="leave-group-title">¿Querés salir del grupo?</h2>
   <p>
     Dejarás de participar en <strong>{{ group?.name }}</strong>.
-    ¿Querés continuar?
+    @if (isCurrentUserCreator && leaveCreatorCandidates.length === 0) {
+      Como sos la única persona integrante, el grupo se eliminará al salir.
+    } @else if (isCurrentUserCreator) {
+      Elegí quién será el nuevo creador para que el grupo continúe activo.
+    } @else {
+      ¿Querés continuar?
+    }
   </p>
+
+  @if (isCurrentUserCreator && leaveCreatorCandidates.length > 0) {
+    <section class="leave-creator-section">
+      <h3>Nuevo creador</h3>
+
+      <div class="leave-creator-search-container">
+        <div class="leave-creator-search">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="10.8" cy="10.8" r="6.8" />
+            <path d="m16 16 5 5" />
+          </svg>
+          <input
+            type="search"
+            [(ngModel)]="leaveCreatorSearch"
+            placeholder="Buscar por nombre de usuario"
+            aria-label="Buscar nuevo creador por nombre de usuario"
+            (focus)="openLeaveCreatorCandidates()"
+            (click)="openLeaveCreatorCandidates()"
+            (keydown.escape)="closeLeaveCreatorCandidates()"
+          />
+        </div>
+
+        @if (leaveCreatorListOpen) {
+          <div class="leave-creator-list" aria-label="Integrantes disponibles para ser creador">
+            @for (member of filteredLeaveCreatorCandidates; track member.idExternal) {
+              <button
+                type="button"
+                class="leave-creator-option"
+                [class.is-selected]="selectedLeaveCreator?.userId === member.userId"
+                [attr.aria-pressed]="selectedLeaveCreator?.userId === member.userId"
+                (click)="selectLeaveCreator(member)"
+              >
+                <app-user-avatar
+                  class="leave-creator-avatar"
+                  [userId]="member.userId"
+                  [username]="member.userName"
+                  [decorative]="false"
+                />
+                <span>{{ '@' + member.userName }}</span>
+                <strong>
+                  {{ selectedLeaveCreator?.userId === member.userId ? 'Seleccionado' : 'Seleccionar' }}
+                </strong>
+              </button>
+            } @empty {
+              <p>No encontramos integrantes con ese nombre.</p>
+            }
+          </div>
+        }
+      </div>
+
+      @if (selectedLeaveCreator; as selectedCreator) {
+        <div class="leave-creator-selected">
+          <app-user-avatar
+            class="leave-creator-avatar"
+            [userId]="selectedCreator.userId"
+            [username]="selectedCreator.userName"
+            [decorative]="false"
+          />
+          <span>{{ '@' + selectedCreator.userName }}</span>
+          <strong>Seleccionado</strong>
+        </div>
+      }
+
+      <small>Por defecto está seleccionado quien se unió primero.</small>
+    </section>
+  }
 
   @if (memberActionMessage) {
     <p class="member-state state-error" role="alert">

@@ -9,6 +9,10 @@ type AddGroupMemberRequest =
   | { userId: string; email?: never }
   | { email: string; userId?: never };
 
+export interface LeaveGroupRequest {
+  newCreatorUserId?: string | null;
+}
+
 @Service()
 export class GroupMembersService {
   private readonly http = inject(HttpClient);
@@ -48,9 +52,13 @@ export class GroupMembersService {
     );
   }
 
-  leaveGroup(groupId: string): Observable<void> {
+  leaveGroup(
+    groupId: string,
+    request?: LeaveGroupRequest,
+  ): Observable<void> {
     return this.http.delete<void>(
       `${this.url}/group/${groupId}/leave`,
+      request ? { body: request } : {},
     );
   }
 }
