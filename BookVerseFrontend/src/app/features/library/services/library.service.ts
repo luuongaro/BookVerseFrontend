@@ -22,6 +22,14 @@ export function libraryError(error: unknown): string {
   if (isPremiumStoryPlanError(error)) {
     return 'Esta historia es Premium. Tu plan actual solo permite guardar historias gratuitas.';
   }
+  if (
+    error instanceof HttpErrorResponse &&
+    error.status === 400 &&
+    error.error?.message ===
+      'You have reached the maximum number of active stories allowed by your current subscription'
+  ) {
+    return 'Alcanzaste el límite de historias en curso de tu plan.';
+  }
   return apiError(error);
 }
 @Injectable({ providedIn: 'root' })
@@ -39,6 +47,11 @@ export class LibraryService {
   getBookStatus(bookId: string): Observable<ReadingStatus | null> {
     return this.getMyStatuses().pipe(
       map((statuses) => statuses.find((status) => status.bookId === bookId) ?? null),
+    );
+  }
+  getStoryStatus(storyId: string): Observable<ReadingStatus | null> {
+    return this.getMyStatuses().pipe(
+      map((statuses) => statuses.find((status) => status.storyId === storyId) ?? null),
     );
   }
   getMyBooks(): Observable<LibraryResult> {
@@ -108,7 +121,7 @@ export class LibraryService {
       }),
     );
   }
-  saveStory(storyId: string): Observable<ReadingStatus> {
+  saveStory(storyId: string, status: ReadingState = 'WANT_TO_READ'): Observable<ReadingStatus> {
     return this.getMyStatuses().pipe(
       switchMap((statuses) => {
         const existing = statuses.find((reading) => reading.storyId === storyId);
@@ -117,7 +130,7 @@ export class LibraryService {
           : this.http.post<ReadingStatus>(`${API_URL}/reading-statuses`, {
               bookId: null,
               storyId,
-              status: 'WANT_TO_READ',
+              status,
               startedAt: null,
               finishedAt: null,
               progressType: null,
@@ -157,7 +170,7 @@ export class LibraryService {
       },
     );
   }
-  saveBook(bookId: string): Observable<ReadingStatus> {
+  saveBook(bookId: string, status: ReadingState = 'WANT_TO_READ'): Observable<ReadingStatus> {
     // Importing a Google volume into the shared catalog does not save it for a user.
     return this.getBookStatus(bookId).pipe(
       switchMap((existing) =>
@@ -166,7 +179,7 @@ export class LibraryService {
           : this.http.post<ReadingStatus>(`${API_URL}/reading-statuses`, {
               bookId,
               storyId: null,
-              status: 'WANT_TO_READ',
+              status,
               startedAt: null,
               finishedAt: null,
               progressType: null,

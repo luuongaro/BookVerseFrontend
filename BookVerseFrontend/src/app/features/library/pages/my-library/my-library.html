@@ -34,11 +34,22 @@
           <option value="all">Todas mis lecturas</option>
           <option value="WANT_TO_READ">Quiero leer</option>
           <option value="IN_PROGRESS">Leyendo</option>
-          <option value="FINISHED">Leídos</option>
+          <option value="FINISHED">Finalizados</option>
           <option value="RE_READING">Releyendo</option>
           <option value="ABANDONED">Abandonados</option>
         </select>
       </div>
+    </div>
+    @if (addedReading(); as added) {
+      <div class="added-reading" role="status" aria-live="polite">
+        <strong>En tu biblioteca: {{ titleOf(added) }}</strong>
+        <app-reading-state-badge [state]="added.reading.status" prefix="Estado actual" />
+      </div>
+    }
+    <div class="reading-legend" aria-label="Estados de lectura">
+      @for (state of readingStates; track state) {
+        <app-reading-state-badge [state]="state" />
+      }
     </div>
     <p class="save-confirmation" role="status" aria-live="polite">{{ confirmation() }}</p>
     @if (unavailableCount()) {
@@ -87,7 +98,9 @@
                         [title]="entry.book.title + ' · ' + statusLabel(entry.reading.status)"
                         ><span class="spine-mark" aria-hidden="true">✦</span
                         ><strong>{{ entry.book.title }}</strong
-                        ><span class="spine-status"
+                        ><span
+                          class="spine-status reading-state"
+                          [attr.data-state]="entry.reading.status"
                           >{{ statusLabel(entry.reading.status) }}
                           @if (readingPercentage(entry.reading) !== null) {
                             · {{ readingPercentage(entry.reading) }}%
@@ -162,7 +175,11 @@
                   >
                     <span class="spine-mark" aria-hidden="true">✎</span
                     ><strong>{{ entry.story.title }}</strong>
-                    <span class="spine-status">{{ statusLabel(entry.reading.status) }}</span>
+                    <span
+                      class="spine-status reading-state"
+                      [attr.data-state]="entry.reading.status"
+                      >{{ statusLabel(entry.reading.status) }}</span
+                    >
                   </a>
                   <button
                     type="button"
@@ -213,18 +230,14 @@
       <span class="eyebrow">MI BIBLIOTECA</span>
       <h2 id="status-heading">Tu lectura</h2>
       <p class="selected-title">{{ titleOf(entry) }}</p>
-      <label for="book-reading-status">Estado de lectura</label>
-      <select
-        id="book-reading-status"
-        #newStatus
+      <app-reading-state-badge [state]="entry.reading.status" prefix="Estado actual" />
+      <app-reading-state-select
+        controlId="book-reading-status"
+        label="Cambiar estado"
         [value]="draftStatus()"
         [disabled]="saving()"
-        (change)="chooseStatus(newStatus.value)"
-      >
-        @for (state of readingStates; track state) {
-          <option [value]="state">{{ statusLabel(state) }}</option>
-        }
-      </select>
+        (valueChange)="chooseStatus($event)"
+      />
       @if (canEditPercentage()) {
         <label for="book-reading-percentage">Porcentaje leído</label>
         <div class="percentage-field">

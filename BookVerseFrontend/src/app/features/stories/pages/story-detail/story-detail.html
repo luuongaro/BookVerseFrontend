@@ -43,6 +43,9 @@
       </div>
     }
 
+    @if (!writing) {
+      <app-library-save-control kind="story" [contentId]="currentStory.idExternal" />
+    }
     <div class="story-actions">
       <div class="reading-actions">
         @if (writing) {
@@ -77,26 +80,6 @@
               favoriteSaving() ? 'Guardando…' : favorite() ? 'En favoritas' : 'Agregar a favoritas'
             }}
           </button>
-          <button
-            class="button secondary save-button"
-            type="button"
-            [disabled]="saving() || saved()"
-            (click)="saveToLibrary()"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M6 4h12v17l-6-4-6 4z" />
-            </svg>
-            {{ saving() ? 'Guardando…' : saved() ? 'En tu biblioteca' : 'Guardar en biblioteca' }}
-          </button>
-
           <div class="related-links">
             <a
               class="button secondary"
@@ -134,9 +117,6 @@
         </details>
       }
     </div>
-    @if (saveError()) {
-      <p class="validation" role="alert">{{ saveError() }}</p>
-    }
     @if (favoriteError()) {
       <p class="validation" role="alert">
         {{ favoriteError() }}
@@ -144,9 +124,6 @@
           <button type="button" (click)="loadFavorite(currentStory.idExternal)">Reintentar</button>
         }
       </p>
-    }
-    @if (saved()) {
-      <p role="status">Historia guardada en tu biblioteca.</p>
     }
     <div class="chapter-section">
       <span class="chapter-ornament" aria-hidden="true">✦</span>

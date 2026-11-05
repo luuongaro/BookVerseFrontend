@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of, throwError, Subject } from 'rxjs';
 import { MyLibrary } from './my-library';
 import { LibraryService } from '../../services/library.service';
@@ -38,7 +38,7 @@ function savedEntry(): LibraryResult['entries'][number] {
   };
 }
 describe('Personal bookshelf screen', () => {
-  async function setup(result: LibraryResult) {
+  async function setup(result: LibraryResult, savedId: string | null = null) {
     TestBed.resetTestingModule();
     const updateStatus = vi.fn();
     const getMyBooks = vi.fn(() => of(result));
@@ -46,6 +46,10 @@ describe('Personal bookshelf screen', () => {
       imports: [MyLibrary],
       providers: [
         provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { queryParamMap: of(convertToParamMap(savedId ? { saved: savedId } : {})) },
+        },
         { provide: LibraryService, useValue: { getMyLibrary: getMyBooks, updateStatus } },
       ],
     });
@@ -67,6 +71,36 @@ describe('Personal bookshelf screen', () => {
     expect(el.querySelector('.shelf-room')).not.toBeNull();
     expect(el.querySelectorAll('.book-spine')).toHaveLength(0);
     expect(el.querySelector('a[href="/books"]')).not.toBeNull();
+  });
+  it('shows the server state of the imported reading rather than an assumed default', async () => {
+    const entry = savedEntry();
+    entry.reading.status = 'IN_PROGRESS';
+    const { fixture } = await setup({ entries: [entry], unavailableCount: 0 }, 'reading');
+    const banner: HTMLElement = fixture.nativeElement.querySelector('.added-reading');
+    expect(banner.textContent).toContain('Mi libro');
+    expect(banner.querySelector('app-reading-state-badge')?.getAttribute('data-state')).toBe(
+      'IN_PROGRESS',
+    );
+    expect(banner.textContent).toContain('Estado actual: Leyendo');
+  });
+  it('does not claim a reading was saved if the requested record is not in the library', async () => {
+    const { fixture } = await setup({ entries: [savedEntry()], unavailableCount: 0 }, 'missing');
+    expect(fixture.nativeElement.querySelector('.added-reading')).toBeNull();
+  });
+  it('keeps the saved state visible while another state is only a draft', async () => {
+    const entry = savedEntry();
+    const { fixture, updateStatus } = await setup({ entries: [entry], unavailableCount: 0 });
+    fixture.componentInstance.editStatus(entry);
+    fixture.componentInstance.chooseStatus('FINISHED');
+    fixture.detectChanges();
+    const dialog: HTMLElement = fixture.nativeElement.querySelector('dialog');
+    expect(dialog.querySelector('app-reading-state-badge')?.getAttribute('data-state')).toBe(
+      'WANT_TO_READ',
+    );
+    expect((dialog.querySelector('#book-reading-status') as HTMLSelectElement).value).toBe(
+      'FINISHED',
+    );
+    expect(updateStatus).not.toHaveBeenCalled();
   });
   it('renders saved books and filters by reading status', async () => {
     const entries = [
@@ -164,7 +198,7 @@ describe('Personal bookshelf screen', () => {
     component.filter.set('FINISHED');
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('.book-spine')).toHaveLength(1);
-    expect(component.confirmation()).toBe('Mi libro: Leído.');
+    expect(component.confirmation()).toBe('Mi libro: Finalizado.');
   });
   it('keeps the original state on error, lets the user retry and makes cancel a no-op', async () => {
     const entry = savedEntry();

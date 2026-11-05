@@ -1,0 +1,25 @@
+@import '../../styles/reading-state.css';
+:host {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 100%;
+  padding: 7px 11px;
+  border: 1px solid var(--reading-border);
+  border-radius: 10px;
+  background: var(--reading-background);
+  color: var(--reading-color);
+  font:
+    500 13px/1.4 'DM Sans',
+    sans-serif;
+}
+svg {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+}
+strong {
+  font-weight: 700;
+}

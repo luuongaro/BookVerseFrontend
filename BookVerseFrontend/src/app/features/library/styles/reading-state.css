@@ -1,0 +1,30 @@
+:host([data-state='WANT_TO_READ']),
+.reading-state[data-state='WANT_TO_READ'] {
+  --reading-color: #665498;
+  --reading-background: #f0eafa;
+  --reading-border: #c2aedf;
+}
+:host([data-state='IN_PROGRESS']),
+.reading-state[data-state='IN_PROGRESS'] {
+  --reading-color: #2b5e86;
+  --reading-background: #edf4fb;
+  --reading-border: #9ebbd5;
+}
+:host([data-state='FINISHED']),
+.reading-state[data-state='FINISHED'] {
+  --reading-color: #276043;
+  --reading-background: #edf5ef;
+  --reading-border: #9cbea5;
+}
+:host([data-state='RE_READING']),
+.reading-state[data-state='RE_READING'] {
+  --reading-color: #805c24;
+  --reading-background: #fbf2df;
+  --reading-border: #d1b57e;
+}
+:host([data-state='ABANDONED']),
+.reading-state[data-state='ABANDONED'] {
+  --reading-color: #8d4356;
+  --reading-background: #f9edf0;
+  --reading-border: #d3a4b0;
+}

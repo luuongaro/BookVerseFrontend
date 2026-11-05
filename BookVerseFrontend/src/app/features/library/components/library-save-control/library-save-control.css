@@ -1,0 +1,81 @@
+:host {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  max-width: 600px;
+  margin: 24px 0;
+}
+.library-control {
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 22px;
+  border: 1px solid #d9cfe5;
+  border-left: 4px solid #7465ad;
+  border-radius: 14px;
+  background: #fff;
+}
+h2 {
+  width: 100%;
+  margin: 0;
+  color: #302b43;
+  font:
+    600 17px/1.4 'DM Sans',
+    sans-serif;
+}
+app-reading-state-select {
+  flex: 1 1 200px;
+}
+button {
+  box-sizing: border-box;
+  min-height: 48px;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 10px;
+  background: #7465ad;
+  color: #fff;
+  font:
+    500 14px/1.4 'DM Sans',
+    sans-serif;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+a {
+  color: #665498;
+  font:
+    500 14px/1.5 'DM Sans',
+    sans-serif;
+  text-underline-offset: 3px;
+}
+p {
+  width: 100%;
+  margin: 0;
+  color: #797486;
+  font:
+    14px/1.5 'DM Sans',
+    sans-serif;
+  overflow-wrap: anywhere;
+}
+.error {
+  color: #933c4a;
+}
+.confirmation:empty {
+  display: none;
+}
+:is(button, a):focus-visible {
+  outline: 3px solid #8e9fe1;
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .library-control {
+    padding: 18px;
+  }
+  button {
+    width: 100%;
+  }
+}

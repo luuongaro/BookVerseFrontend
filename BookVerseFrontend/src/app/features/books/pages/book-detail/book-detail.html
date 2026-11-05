@@ -16,12 +16,7 @@
         <p>{{ book.authors?.join(', ') || 'Autor desconocido' }}</p>
         <p>{{ book.categories }}</p>
         <div class="prose" [innerHTML]="book.description || 'Sin descripción.'"></div>
-        @if (saveError()) {
-          <p class="state error" role="alert">{{ saveError() }}</p>
-        }
-        @if (saved()) {
-          <p role="status">Este libro ya está en tu biblioteca.</p>
-        }
+        <app-library-save-control [contentId]="book.idExternal" />
         <dl>
           <dt>Editorial</dt>
           <dd>{{ book.publisher || 'Sin información' }}</dd>
@@ -33,16 +28,6 @@
           <dd>{{ book.language || 'Sin información' }}</dd>
         </dl>
         <div class="actions">
-          <button type="button" [disabled]="saving() || saved()" (click)="saveToLibrary()">
-            {{
-              saving()
-                ? 'Guardando…'
-                : saved()
-                  ? 'Guardado en mi biblioteca'
-                  : 'Guardar en mi biblioteca'
-            }}
-          </button>
-          <a routerLink="/library">Ver mi biblioteca</a>
           <a class="button" routerLink="/reviews" [queryParams]="{ bookId: book.idExternal }"
             >Ver reseñas</a
           ><a

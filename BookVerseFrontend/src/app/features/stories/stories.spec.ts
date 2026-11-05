@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { LibrarySaveControl } from '../library/components/library-save-control/library-save-control';
 import { provideHttpClient, withInterceptors, HttpErrorResponse } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { provideRouter, Router } from '@angular/router';
@@ -166,7 +168,7 @@ describe('Story form and details', () => {
     const update = vi.fn();
     const create = vi.fn();
     const remove = vi.fn();
-    const saveStory = vi.fn(() => of({ idExternal: 'saved' }));
+    const saveStory = vi.fn(() => of({ idExternal: 'saved', status: 'WANT_TO_READ' }));
     const getByStory = vi.fn((id: string, number = 0, publishedOnly = false) =>
       response.pipe(
         map((current) => {
@@ -197,7 +199,7 @@ describe('Story form and details', () => {
         ]),
         { provide: StoryService, useValue: { getById, update, create, delete: remove } },
         { provide: StoryPermissions, useValue: { canManage: () => role } },
-        { provide: LibraryService, useValue: { saveStory } },
+        { provide: LibraryService, useValue: { saveStory, getStoryStatus: () => of(null) } },
         { provide: UserService, useValue: favorites },
         { provide: ChapterService, useValue: { getByStory } },
       ],
@@ -221,7 +223,7 @@ describe('Story form and details', () => {
       getByStory,
     };
   }
-  it('sanitizes stored description markup and preserves the original author for an administrator edit', async () => {
+  it('sanitizes stored description markup and leaves author ownership to the backend', async () => {
     const { harness, instance, update } = await setup(
       StoryForm,
       true,
@@ -233,7 +235,7 @@ describe('Story form and details', () => {
     form.form.controls.title.setValue('  Título cambiado  ');
     update.mockReturnValue(of(story));
     form.onSubmit();
-    expect(update.mock.calls[0][1].authorId).toBe('owner');
+    expect(update.mock.calls[0][1].authorId).toBeUndefined();
     expect(update.mock.calls[0][1].title).toBe('Título cambiado');
   });
   it('keeps a failed edit disabled until the story can be reloaded', async () => {
@@ -307,16 +309,17 @@ describe('Story form and details', () => {
     const pending = new Subject<StoryResponse>();
     create.mockReturnValue(pending);
     form.form.controls.title.setValue('  Nueva historia  ');
-    harness.routeNativeElement!.querySelector('#story-description')!.textContent =
+    harness.routeNativeElement!.querySelector('#descriptionEditor')!.textContent =
       'Descripción nueva';
+    form.updateDescription();
     form.onSubmit();
     form.onSubmit();
     expect(create).toHaveBeenCalledTimes(1);
     expect(create.mock.calls[0][0]).toMatchObject({
-      authorId: 'owner',
       title: 'Nueva historia',
       accessType: StoryAccessType.FREE,
     });
+    expect(create.mock.calls[0][0].authorId).toBeUndefined();
     const text = document.createElement('div');
     text.innerHTML = create.mock.calls[0][0].description;
     expect(text.textContent).toBe('Descripción nueva');
@@ -333,17 +336,18 @@ describe('Story form and details', () => {
     expect(detail.story()?.title).toBe('Segunda historia');
   });
   it('saves the opened story once and allows retry when personal saving fails', async () => {
-    const { instance, saveStory } = await setup(StoryDetail);
-    const detail = instance as StoryDetail;
+    const { harness, saveStory } = await setup(StoryDetail);
+    const detail = harness.routeDebugElement!.query(By.directive(LibrarySaveControl))
+      .componentInstance as LibrarySaveControl;
     saveStory.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 403 })));
-    detail.saveToLibrary();
-    expect(detail.saved()).toBe(false);
+    detail.save();
+    expect(!!detail.reading()).toBe(false);
     expect(detail.saveError()).toContain('permiso');
-    detail.saveToLibrary();
-    detail.saveToLibrary();
+    detail.save();
+    detail.save();
     expect(saveStory).toHaveBeenCalledTimes(2);
-    expect(saveStory).toHaveBeenLastCalledWith('story');
-    expect(detail.saved()).toBe(true);
+    expect(saveStory).toHaveBeenLastCalledWith('story', 'WANT_TO_READ');
+    expect(!!detail.reading()).toBe(true);
   });
   it('keeps the reading detail free of writing controls even when the user can manage the story', async () => {
     const { instance, harness, remove } = await setup(StoryDetail, true);
@@ -378,8 +382,9 @@ describe('Story form and details', () => {
     expect(harness.routeNativeElement!.querySelector('a[href^="/stories"]')).toBeNull();
   });
   it('explains the subscription restriction when a Free user saves a Premium story', async () => {
-    const { instance, saveStory } = await setup(StoryDetail);
-    const detail = instance as StoryDetail;
+    const { harness, saveStory } = await setup(StoryDetail);
+    const detail = harness.routeDebugElement!.query(By.directive(LibrarySaveControl))
+      .componentInstance as LibrarySaveControl;
     saveStory.mockReturnValueOnce(
       throwError(
         () =>
@@ -392,9 +397,9 @@ describe('Story form and details', () => {
       ),
     );
 
-    detail.saveToLibrary();
+    detail.save();
 
-    expect(detail.saved()).toBe(false);
+    expect(!!detail.reading()).toBe(false);
     expect(detail.saving()).toBe(false);
     expect(detail.saveError()).toBe(
       'Esta historia es Premium. Tu plan actual solo permite guardar historias gratuitas.',

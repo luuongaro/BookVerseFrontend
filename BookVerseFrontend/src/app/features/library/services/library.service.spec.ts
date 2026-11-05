@@ -77,6 +77,35 @@ describe('Personal library API', () => {
     expect(result?.status).toBe('IN_PROGRESS');
     expect(result?.progressValue).toBe(40);
   });
+  it.each(['WANT_TO_READ', 'IN_PROGRESS', 'FINISHED'] as const)(
+    'saves books and stories with the chosen state %s and no fabricated progress',
+    (selected) => {
+      for (const kind of ['book', 'story'] as const) {
+        const request =
+          kind === 'book'
+            ? service.saveBook('new-content', selected)
+            : service.saveStory('new-content', selected);
+        request.subscribe();
+        http.expectOne('http://localhost:8080/api/reading-statuses/user/' + userId).flush([]);
+        const post = http.expectOne('http://localhost:8080/api/reading-statuses');
+        expect(post.request.body).toEqual({
+          bookId: kind === 'book' ? 'new-content' : null,
+          storyId: kind === 'story' ? 'new-content' : null,
+          status: selected,
+          startedAt: null,
+          finishedAt: null,
+          progressType: null,
+          progressValue: null,
+        });
+        post.flush({ ...status, status: selected });
+      }
+    },
+  );
+  it('returns the existing book state even when a different initial state was selected', () => {
+    service.saveBook('saved-book', 'FINISHED').subscribe((value) => expect(value).toEqual(status));
+    http.expectOne('http://localhost:8080/api/reading-statuses/user/' + userId).flush([status]);
+    http.expectNone((request) => request.method === 'POST' || request.method === 'PUT');
+  });
   it('saves a new book for the authenticated user as WANT_TO_READ without inventing progress', () => {
     service.saveBook('new-book').subscribe();
     http.expectOne('http://localhost:8080/api/reading-statuses/user/' + userId).flush([]);

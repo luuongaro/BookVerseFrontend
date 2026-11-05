@@ -1,1 +1,20 @@
 @import '../../../../shared/styles/catalog.css';
+.detail {
+  grid-template-columns: 240px minmax(0, 1fr);
+}
+.detail > div {
+  min-width: 0;
+}
+h1,
+dd {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 900px) {
+  .detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .detail > .panel {
+    width: 100%;
+    max-width: 320px;
+  }
+}
