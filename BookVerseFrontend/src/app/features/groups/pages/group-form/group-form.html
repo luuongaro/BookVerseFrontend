@@ -126,6 +126,35 @@
               }
             </div>
 
+            @if (isEditing && group?.bookId) {
+              <div class="field">
+                <label for="totalChapters">Cantidad total de capítulos</label>
+
+                <input
+                  id="totalChapters"
+                  type="number"
+                  min="1"
+                  step="1"
+                  formControlName="totalChapters"
+                  placeholder="Por ejemplo: 24"
+                />
+
+                <small class="field-hint">
+                  Cargá el total de capítulos de la obra. Se usará para las metas del grupo
+                  medidas en capítulos.
+                </small>
+
+                @if (
+                  groupForm.controls.totalChapters.touched &&
+                  groupForm.controls.totalChapters.invalid
+                ) {
+                  <small class="field-error">
+                    Ingresá una cantidad entera mayor que cero.
+                  </small>
+                }
+              </div>
+            }
+
             @if (!isEditing) {
               <div class="field">
                 <label for="workType">¿Qué van a leer?</label>

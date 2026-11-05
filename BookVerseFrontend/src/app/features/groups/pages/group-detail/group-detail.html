@@ -191,39 +191,62 @@
                 </p>
               }
 
-              <div class="goal-actions">
-                <button
-                  class="button button-outline"
-                  type="button"
-                  (click)="finishGoal()"
-                  [disabled]="isChangingGoal"
-                >
-                  Marcar completada
-                </button>
-                <button
-                  class="button button-outline"
-                  type="button"
-                  (click)="cancelGoal()"
-                  [disabled]="isChangingGoal"
-                >
-                  Cancelar meta
-                </button>
-              </div>
+              @if (canManageGoals) {
+                <div class="goal-actions">
+                  <button
+                    class="button button-outline"
+                    type="button"
+                    (click)="finishGoal()"
+                    [disabled]="isChangingGoal"
+                  >
+                    Marcar completada
+                  </button>
+                  <button
+                    class="button button-outline"
+                    type="button"
+                    (click)="cancelGoal()"
+                    [disabled]="isChangingGoal"
+                  >
+                    Cancelar meta
+                  </button>
+                </div>
+              }
             } @else {
               <p class="goal-book">
                 Todavía no hay una meta activa para este grupo.
               </p>
 
-              <div class="goal-create-form">
+              @if (canManageGoals) {
+                <div class="goal-create-form">
                 <label>
                   Tipo de meta
                   <select [(ngModel)]="goalType" name="goalType">
                     <option value="PERCENTAGE">Porcentaje</option>
-                    @if (isStoryGroup) {
-                      <option value="CHAPTER">Capítulos</option>
-                    }
+                    <option value="CHAPTER">Capítulos</option>
                   </select>
                 </label>
+
+                @if (!isStoryGroup && goalType === 'CHAPTER') {
+                  <label>
+                    Cantidad total de capítulos
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      [(ngModel)]="bookTotalChapters"
+                      name="bookTotalChapters"
+                      required
+                    />
+                    <small>
+                      Cargá el total de capítulos del libro. Se usará para validar y calcular
+                      esta meta.
+                    </small>
+
+                    @if (bookTotalChapters === null || bookTotalChapters < 1) {
+                      <small>Ingresá un número entero mayor que cero.</small>
+                    }
+                  </label>
+                }
 
                 <label>
                   Objetivo ({{ goalUnit }})
@@ -240,23 +263,21 @@
                     <small>Verificando los capítulos publicados…</small>
                   }
 
-                  @if (
-                    goalType === 'CHAPTER' &&
-                    linkedStory &&
-                    maxChapterTarget === 0
-                  ) {
-                    <small>Esta historia no tiene capítulos publicados.</small>
+                  @if (goalType === 'CHAPTER' && maxChapterTarget === 0) {
+                    <small>
+                      @if (isStoryGroup) {
+                        La historia todavía no tiene capítulos publicados.
+                      } @else {
+                        El creador debe cargar el total de capítulos desde Editar grupo.
+                      }
+                    </small>
                   }
 
-                  @if (
-                    goalType === 'CHAPTER' &&
-                    linkedStory &&
-                    maxChapterTarget > 0
-                  ) {
-                    <small>Máximo: {{ maxChapterTarget }} capítulos publicados.</small>
+                  @if (goalType === 'CHAPTER' && maxChapterTarget > 0) {
+                    <small>Máximo: {{ maxChapterTarget }} capítulos.</small>
 
                     @if (targetProgress > maxChapterTarget) {
-                      <small>El objetivo no puede superar los capítulos publicados.</small>
+                      <small>El objetivo no puede superar el total de capítulos.</small>
                     }
                   }
 
@@ -319,7 +340,12 @@
                 >
                   {{ isSavingGoal ? 'Guardando…' : 'Crear meta' }}
                 </button>
-              </div>
+                </div>
+              } @else {
+                <p class="member-state">
+                  El creador del grupo puede establecer la meta de lectura.
+                </p>
+              }
             }
 
             @if (goalActionMessage) {

@@ -10,6 +10,7 @@ export interface CreateGroupGoalRequest {
   goalType: string;
   targetProgress: number;
   targetDate: string;
+  totalChapters?: number | null;
 }
 
 export interface ChangeGroupGoalStatusRequest {
