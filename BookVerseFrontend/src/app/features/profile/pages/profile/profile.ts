@@ -56,7 +56,11 @@ interface CreatorTransferOption {
 @Component({
   imports: [UserAvatar, RouterLink, FormsModule, FavoriteStories, SendTip],
   selector: 'app-profile',
-  styleUrls: ['./profile.css', './profile-social.css'],
+  styleUrls: [
+    './profile.css',
+    './profile-settings.css',
+    './profile-social.css',
+  ],
   templateUrl: './profile.html',
 })
 export class Profile implements OnInit {
