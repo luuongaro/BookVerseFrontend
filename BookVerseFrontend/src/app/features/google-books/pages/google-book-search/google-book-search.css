@@ -1,1 +1,22 @@
 @import '../../../../shared/styles/catalog.css';
+@import '../../../../shared/styles/book-cards.css';
+
+.book-search {
+  grid-template-columns: minmax(0, 180px) minmax(0, 1fr) auto;
+}
+.book-search > div {
+  min-width: 0;
+}
+@media (max-width: 1000px) {
+  .book-search {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  }
+  .book-search > button {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 600px) {
+  .book-search {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -10,12 +10,14 @@
     </div>
   } @else if (result(); as page) {
     <p>{{ page.totalElements }} libros en el catálogo</p>
-    <div class="grid">
+    <div class="grid book-grid">
       @for (book of page.content; track book.idExternal) {
-        <a class="card" [routerLink]="['/books', book.idExternal]">
+        <a class="card book-card" [routerLink]="['/books', book.idExternal]">
           <app-book-cover class="cover" [src]="book.thumbnailUrl" [title]="book.title" />
-          <h3>{{ book.title }}</h3>
-          <p>{{ book.authors?.join(', ') || 'Autor desconocido' }}</p></a
+          <h3 class="book-card-title" [title]="book.title">{{ book.title }}</h3>
+          <p class="book-card-authors" [title]="book.authors?.join(', ') || 'Autor desconocido'">
+            {{ book.authors?.join(', ') || 'Autor desconocido' }}
+          </p></a
         >
       } @empty {
         <p class="state">Todavía no hay libros en el catálogo.</p>

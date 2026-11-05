@@ -364,6 +364,7 @@ describe('Personal bookshelf screen', () => {
       story: {
         idExternal: 'story-id',
         authorId: 'author',
+        authorUsername: 'Autora',
         title: 'Historia guardada',
         description: 'Descripción',
         accessType: StoryAccessType.FREE,
@@ -372,6 +373,7 @@ describe('Personal bookshelf screen', () => {
         createdAt: '',
         updatedAt: '',
         chaptersCount: 4,
+        publishedChaptersCount: 4,
         chapters: [],
       },
       reading: {
