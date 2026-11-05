@@ -16,7 +16,10 @@
       }}
     </p>
     @if (editable) {
-      <a routerLink="/stories">Explorar historias</a>
+      <a class="explore-stories-button" routerLink="/stories">
+        Explorar historias
+        <span aria-hidden="true">→</span>
+      </a>
     }
   } @else {
     <div class="favorites-grid">

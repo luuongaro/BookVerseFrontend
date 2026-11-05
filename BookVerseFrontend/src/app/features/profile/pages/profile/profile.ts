@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   EMPTY,
@@ -19,18 +19,39 @@ import {
   Subscription,
   catchError,
   combineLatest,
+  expand,
+  forkJoin,
+  map,
+  of,
   startWith,
   switchMap,
+  toArray,
 } from 'rxjs';
+import { GroupMember } from '../../../groups/models/group-member.model';
 import { GroupMembersService } from '../../../groups/services/group-members.service';
 import { ReadingGroupsService } from '../../../groups/services/reading-groups.service';
 import { ReadingGroup } from '../../../groups/models/reading-group.model';
 import { FavoriteStories } from '../../components/favorite-stories/favorite-stories';
+import {
+  AccountDeactivationRequest,
+  AccountStoryAction,
+} from '../../models/user.model';
 import { UserProfile } from '../../models/user-profile.model';
 import { PROFILE_COVERS } from '../../models/profile-covers';
 import { PROFILE_AVATARS, profileAvatar } from '../../models/profile-avatars';
+import { StoryResponse } from '../../../stories/models/story-response';
+import { StoryService } from '../../../stories/services/story.services';
 import { UserService } from '../../services/user.service';
 import { SendTip } from '../../../tips/components/send-tip/send-tip';
+
+interface CreatorTransferOption {
+  groupId: string;
+  groupName: string;
+  candidates: GroupMember[];
+  selectedUsername: string;
+  searchText: string;
+  lookupFailed: boolean;
+}
 
 @Component({
   imports: [UserAvatar, RouterLink, FormsModule, FavoriteStories, SendTip],
@@ -42,8 +63,10 @@ export class Profile implements OnInit {
   readonly userService = inject(UserService);
   private readonly users = this.userService;
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly groupsService = inject(ReadingGroupsService);
   private readonly membersService = inject(GroupMembersService);
+  private readonly storyService = inject(StoryService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly reload = new Subject<void>();
   private activityRequest?: Subscription;
@@ -65,6 +88,13 @@ export class Profile implements OnInit {
   readonly appearanceLoading = signal(true);
   readonly savingAvatar = signal(false);
   readonly avatarError = signal('');
+  readonly editingUsername = signal(false);
+  readonly savingUsername = signal(false);
+  readonly usernameError = signal('');
+  readonly settingsMenuOpen = signal(false);
+  readonly settingsMode = signal<'username' | 'username-updated'>('username');
+  readonly usernameMessage = signal('');
+  usernameDraft = '';
   readonly readingCounts = signal({ wantToRead: '…', inProgress: '…', finished: '…' });
   readonly createdStoriesCount = signal('…');
   readonly activeGroupsCount = signal('…');
@@ -76,6 +106,18 @@ export class Profile implements OnInit {
   readonly groupsError = signal('');
   readonly adding = signal(false);
   readonly groupMessage = signal('');
+  readonly showDeactivationDialog = signal(false);
+  readonly preparingDeactivation = signal(false);
+  readonly deactivatingAccount = signal(false);
+  readonly deactivationError = signal('');
+  readonly storyAction = signal<AccountStoryAction>('KEEP');
+  readonly activeGroupMemberships = signal<GroupMember[]>([]);
+  readonly creatorTransferOptions = signal<CreatorTransferOption[]>([]);
+  readonly ownStories = signal<StoryResponse[]>([]);
+  readonly loadingOwnStories = signal(false);
+  readonly ownStoriesError = signal('');
+  readonly openCreatorListGroupId = signal<string | null>(null);
+  private pendingDeactivationRequest: AccountDeactivationRequest | null = null;
   selectedGroupId = '';
   readonly covers = PROFILE_COVERS;
   readonly avatars = PROFILE_AVATARS;
@@ -83,6 +125,12 @@ export class Profile implements OnInit {
   selectedAvatarIndex: number | null = null;
   @ViewChild('coverPicker') coverPicker?: ElementRef<HTMLDialogElement>;
   @ViewChild('avatarPicker') avatarPicker?: ElementRef<HTMLDialogElement>;
+  @ViewChild('settingsDialog')
+  settingsDialog?: ElementRef<HTMLDialogElement>;
+  @ViewChild('deactivationDialog')
+  deactivationDialog?: ElementRef<HTMLDialogElement>;
+  @ViewChild('finalConfirmationDialog')
+  finalConfirmationDialog?: ElementRef<HTMLDialogElement>;
 
   get profile() {
     const ownUser = this.canEditProfile() ? this.users.currentUser() : null;
@@ -176,6 +224,355 @@ export class Profile implements OnInit {
   retry(): void {
     this.reload.next();
   }
+
+  openSettings(): void {
+    if (!this.canEditProfile()) return;
+
+    this.settingsMenuOpen.update((isOpen) => !isOpen);
+  }
+
+  filteredCreatorCandidates(transfer: CreatorTransferOption): GroupMember[] {
+    const query = transfer.searchText.trim().toLocaleLowerCase();
+
+    return transfer.candidates.filter((candidate) =>
+      candidate.userName.toLocaleLowerCase().includes(query),
+    );
+  }
+
+  selectedCreator(transfer: CreatorTransferOption): GroupMember | undefined {
+    return (
+      transfer.candidates.find(
+        (candidate) => candidate.userName === transfer.selectedUsername,
+      ) ?? transfer.candidates[0]
+    );
+  }
+
+  openCreatorCandidates(groupId: string): void {
+    this.openCreatorListGroupId.set(groupId);
+  }
+
+  closeCreatorCandidates(): void {
+    this.openCreatorListGroupId.set(null);
+  }
+
+  selectCreator(transfer: CreatorTransferOption, username: string): void {
+    transfer.selectedUsername = username;
+    transfer.searchText = '';
+    this.closeCreatorCandidates();
+  }
+
+  openDeactivationDialog(): void {
+    const userId = localStorage.getItem('userId');
+
+    if (!userId || !this.canEditProfile() || this.preparingDeactivation()) return;
+
+    this.showDeactivationDialog.set(true);
+    this.deactivationDialog?.nativeElement.showModal();
+    this.preparingDeactivation.set(true);
+    this.deactivationError.set('');
+    this.storyAction.set('KEEP');
+    this.activeGroupMemberships.set([]);
+    this.creatorTransferOptions.set([]);
+    this.ownStories.set([]);
+    this.loadingOwnStories.set(true);
+    this.ownStoriesError.set('');
+
+    this.storyService
+      .getByAuthor(userId)
+      .pipe(
+        expand((page) =>
+          page.last
+            ? EMPTY
+            : this.storyService.getByAuthor(userId, page.number + 1),
+        ),
+        toArray(),
+        map((pages) => pages.flatMap((page) => page.content)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (stories) => {
+          this.ownStories.set(stories);
+          this.loadingOwnStories.set(false);
+        },
+        error: () => {
+          this.loadingOwnStories.set(false);
+          this.ownStoriesError.set('No pudimos cargar tus historias.');
+        },
+      });
+
+    this.membersService
+      .getActiveByUser(userId)
+      .pipe(
+        switchMap((memberships) => {
+          this.activeGroupMemberships.set(memberships);
+
+          const createdGroups = memberships.filter(
+            (membership) =>
+              membership.memberType === 'CREATOR' &&
+              membership.status === 'ACTIVE',
+          );
+
+          if (createdGroups.length === 0) {
+            return of([] as CreatorTransferOption[]);
+          }
+
+          return forkJoin(
+            createdGroups.map((membership) =>
+              this.membersService.getActiveByGroup(membership.groupId).pipe(
+                map((members) => {
+                  const candidates = members
+                    .filter(
+                      (member) =>
+                        member.userId !== userId &&
+                        member.status === 'ACTIVE',
+                    )
+                    .sort(
+                      (a, b) =>
+                        Date.parse(a.joinedAt) - Date.parse(b.joinedAt),
+                    );
+
+                  return {
+                    groupId: membership.groupId,
+                    groupName: membership.groupName,
+                    candidates,
+                    selectedUsername: candidates[0]?.userName ?? '',
+                    searchText: '',
+                    lookupFailed: false,
+                  };
+                }),
+                catchError(() =>
+                  of({
+                    groupId: membership.groupId,
+                    groupName: membership.groupName,
+                    candidates: [],
+                    selectedUsername: '',
+                    searchText: '',
+                    lookupFailed: true,
+                  }),
+                ),
+              ),
+            ),
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (options) => {
+          this.creatorTransferOptions.set(options);
+          this.preparingDeactivation.set(false);
+        },
+        error: () => {
+          this.preparingDeactivation.set(false);
+          this.deactivationError.set(
+            'No pudimos cargar tus grupos. Intentá de nuevo.',
+          );
+        },
+      });
+  }
+
+  closeDeactivationDialog(): void {
+    if (this.deactivatingAccount()) return;
+
+    this.deactivationDialog?.nativeElement.close();
+    this.showDeactivationDialog.set(false);
+  }
+
+  returnToDeactivationReview(): void {
+    if (this.deactivatingAccount()) return;
+
+    this.deactivationError.set('');
+    this.finalConfirmationDialog?.nativeElement.close();
+    this.showDeactivationDialog.set(true);
+    this.deactivationDialog?.nativeElement.showModal();
+  }
+
+  cancelFinalDeactivation(): void {
+    if (this.deactivatingAccount()) return;
+
+    this.pendingDeactivationRequest = null;
+    this.deactivationError.set('');
+    this.finalConfirmationDialog?.nativeElement.close();
+  }
+
+  continueToDeactivationConfirmation(): void {
+    if (
+      this.preparingDeactivation() ||
+      this.loadingOwnStories() ||
+      this.ownStoriesError() ||
+      this.deactivationError()
+    ) {
+      return;
+    }
+
+    const creatorReplacements: Record<string, string> = {};
+
+    for (const transfer of this.creatorTransferOptions()) {
+      if (transfer.lookupFailed || transfer.candidates.length === 0) {
+        continue;
+      }
+
+      const selected =
+        transfer.candidates.find(
+          (candidate) => candidate.userName === transfer.selectedUsername,
+        ) ?? transfer.candidates[0];
+
+      creatorReplacements[transfer.groupId] = selected.userName;
+    }
+
+    this.pendingDeactivationRequest = {
+      storyAction: this.storyAction(),
+      creatorReplacements,
+    };
+
+    this.deactivationDialog?.nativeElement.close();
+    this.showDeactivationDialog.set(false);
+    this.finalConfirmationDialog?.nativeElement.showModal();
+  }
+
+  deactivateAccount(): void {
+    const request = this.pendingDeactivationRequest;
+
+    if (!request || this.deactivatingAccount()) return;
+
+    this.deactivatingAccount.set(true);
+    this.deactivationError.set('');
+
+    this.users
+      .deactivateOwnAccount(request)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.deactivatingAccount.set(false);
+          this.pendingDeactivationRequest = null;
+          this.finalConfirmationDialog?.nativeElement.close();
+          this.users.logout();
+          void this.router.navigateByUrl('/login');
+        },
+        error: (error: HttpErrorResponse) => {
+          this.deactivatingAccount.set(false);
+
+          this.deactivationError.set(
+            error.status === 403
+              ? 'Esta cuenta no puede desactivarse.'
+              : error.status === 400
+                ? 'No se pudo completar la baja. Revisá las decisiones de historias y grupos.'
+                : 'No pudimos desactivar tu cuenta. Intentá de nuevo.',
+          );
+        },
+      });
+  }
+
+  closeSettings(): void {
+    if (this.savingUsername()) return;
+
+    this.settingsDialog?.nativeElement.close();
+  }
+
+  startUsernameEdit(): void {
+    if (!this.canEditProfile()) return;
+
+    this.settingsMenuOpen.set(false);
+    this.usernameDraft = this.viewedUser()?.username ?? '';
+    this.usernameError.set('');
+    this.usernameMessage.set('');
+    this.settingsMode.set('username');
+    this.editingUsername.set(true);
+    this.settingsDialog?.nativeElement.showModal();
+  }
+
+  cancelUsernameChange(): void {
+    if (this.savingUsername()) return;
+
+    this.usernameError.set('');
+    this.settingsDialog?.nativeElement.close();
+  }
+
+  returnToSettingsMenu(): void {
+    this.cancelUsernameChange();
+  }
+
+  saveUsername(): void {
+    const profile = this.viewedUser();
+    const username = this.usernameDraft.trim();
+
+    if (!profile || !this.canEditProfile() || this.savingUsername()) return;
+
+    if (!username) {
+      this.usernameError.set('Ingresá un nombre de usuario.');
+      return;
+    }
+
+    if (username === profile.username) {
+      this.usernameError.set('El nombre de usuario no cambió.');
+      return;
+    }
+
+    if (username.length < 3 || username.length > 15) {
+      this.usernameError.set(
+        'El nombre de usuario debe tener entre 3 y 15 caracteres.',
+      );
+      return;
+    }
+
+    this.savingUsername.set(true);
+    this.usernameError.set('');
+
+    this.users
+      .loadCurrentUser()
+      .pipe(
+        switchMap((currentUser) => {
+          if (!currentUser || currentUser.idExternal !== profile.idExternal) {
+            this.usernameError.set('No pudimos cargar tus datos. Intentá de nuevo.');
+            this.savingUsername.set(false);
+            return EMPTY;
+          }
+
+          return this.users.updateUser(currentUser.idExternal, {
+            username,
+            email: currentUser.email,
+          });
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (updatedUser) => {
+          this.users.setCurrentUser(updatedUser);
+          this.viewedUser.update((current) =>
+            current ? { ...current, username: updatedUser.username } : current,
+          );
+          this.savingUsername.set(false);
+          this.usernameError.set('');
+          this.usernameMessage.set('Tu nombre de usuario se actualizó correctamente.');
+          this.settingsMode.set('username-updated');
+          this.editingUsername.set(false);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.savingUsername.set(false);
+
+          this.usernameError.set(
+            error.status === 409
+              ? 'Ese nombre de usuario ya existe. Elegí otro.'
+              : 'No pudimos cambiar el nombre de usuario. Intentá de nuevo.',
+          );
+          this.settingsMode.set('username');
+          this.editingUsername.set(true);
+        },
+      });
+  }
+
+  requestUsernameChange(): void {
+    this.saveUsername();
+  }
+
+  confirmUsernameChange(): void {
+    this.saveUsername();
+  }
+
+  // Compatibilidad temporal con la plantilla inline anterior.
+  cancelUsernameEdit(): void {
+    this.returnToSettingsMenu();
+  }
+
   loadActivity(): void {
     const user = this.viewedUser();
     if (!user) return;

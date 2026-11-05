@@ -169,9 +169,60 @@
               <app-send-tip [storyId]="tipStoryId()!" [recipientName]="profile.name" />
             }
             @if (canEditProfile()) {
-              <a class="public-profile-link" [routerLink]="['/users', user.idExternal]"
-                >Ver perfil público</a
+              <button
+                class="profile-button public-profile-link"
+                type="button"
+                [routerLink]="['/users', user.idExternal]"
               >
+                Ver perfil público
+              </button>
+
+              <div class="settings-control">
+                <button
+                  class="profile-button settings-button"
+                  type="button"
+                  aria-label="Configuración del perfil"
+                  title="Configuración del perfil"
+                  aria-haspopup="menu"
+                  [attr.aria-expanded]="settingsMenuOpen()"
+                  (click)="openSettings()"
+                >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M12.22 2h-.44a2 2 0 0 0-1.99 1.82l-.07.64a2 2 0 0 1-1 1.73l-.55.32a2 2 0 0 1-1.97-.02l-.54-.3a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.54.3a2 2 0 0 1 1 1.73v.64a2 2 0 0 1-1 1.73l-.54.3a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.54-.3a2 2 0 0 1 1.97-.02l.55.32a2 2 0 0 1 1 1.73l.07.64A2 2 0 0 0 11.78 22h.44a2 2 0 0 0 1.99-1.82l.07-.64a2 2 0 0 1 1-1.73l.55-.32a2 2 0 0 1 1.97.02l.54.3a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.54-.3a2 2 0 0 1-1-1.73v-.64a2 2 0 0 1 1-1.73l.54-.3a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.54.3a2 2 0 0 1-1.97-.02l-.55-.32a2 2 0 0 1-1-1.73l-.07-.64A2 2 0 0 0 12.22 2Z"
+                  />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                </button>
+
+                @if (settingsMenuOpen()) {
+                  <div class="settings-menu" role="menu" aria-label="Opciones del perfil">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      (click)="startUsernameEdit()"
+                    >
+                      Cambiar nombre de usuario
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      (click)="openDeactivationDialog()"
+                    >
+                      Desactivar mi cuenta
+                    </button>
+                  </div>
+                }
+              </div>
+
               <span class="membership active-state">
                 {{ profile.accountStatus }}
               </span>
@@ -194,6 +245,427 @@
         </section>
 
         @if (canEditProfile()) {
+          <dialog
+            #settingsDialog
+            class="profile-settings-dialog"
+            aria-labelledby="settings-title"
+            (cancel)="closeSettings()"
+          >
+            <header class="settings-dialog-header">
+              <h2 id="settings-title">Cambiar nombre de usuario</h2>
+              <button
+                class="settings-close"
+                type="button"
+                aria-label="Cerrar"
+                (click)="closeSettings()"
+                [disabled]="savingUsername()"
+              >
+                ×
+              </button>
+            </header>
+
+            @if (settingsMode() === 'username') {
+              <p>Ingresá el nuevo nombre que querés mostrar en tu perfil.</p>
+
+              <form class="username-edit-form" (ngSubmit)="saveUsername()">
+                <label for="profile-username">Nombre de usuario</label>
+                <input
+                  id="profile-username"
+                  name="username"
+                  type="text"
+                  [(ngModel)]="usernameDraft"
+                  minlength="3"
+                  maxlength="15"
+                  autocomplete="username"
+                  [disabled]="savingUsername()"
+                />
+
+                @if (usernameError()) {
+                  <p class="profile-error" role="alert">{{ usernameError() }}</p>
+                }
+
+                <div class="settings-dialog-actions">
+                  <button
+                    class="profile-button"
+                    type="button"
+                    (click)="closeSettings()"
+                    [disabled]="savingUsername()"
+                  >
+                    Volver
+                  </button>
+                  <button
+                    class="profile-button profile-primary"
+                    type="submit"
+                    [disabled]="
+                      savingUsername() ||
+                      usernameDraft.trim().length < 3 ||
+                      usernameDraft.trim().length > 15
+                    "
+                  >
+                    Guardar
+                  </button>
+                </div>
+              </form>
+            }
+
+            @if (settingsMode() === 'username-updated') {
+              <p class="settings-success" role="status">{{ usernameMessage() }}</p>
+              <button
+                class="profile-button profile-primary"
+                type="button"
+                (click)="closeSettings()"
+              >
+                Listo
+              </button>
+            }
+          </dialog>
+
+          <dialog
+            #deactivationDialog
+            class="profile-settings-dialog deactivation-dialog"
+            aria-labelledby="deactivation-title"
+            (cancel)="closeDeactivationDialog()"
+          >
+            <header class="settings-dialog-header">
+              <h2 id="deactivation-title">Desactivar mi cuenta</h2>
+
+              <button
+                class="settings-close"
+                type="button"
+                aria-label="Cerrar"
+                (click)="closeDeactivationDialog()"
+                [disabled]="preparingDeactivation() || deactivatingAccount()"
+              >
+                ×
+              </button>
+            </header>
+
+            <p>
+              Tu cuenta quedará inactiva. Antes de continuar, elegí qué hacer:
+            </p>
+
+            @if (preparingDeactivation()) {
+              <p role="status">Cargando tus grupos…</p>
+            } @else {
+              <section class="deactivation-section">
+                <h3>Historias propias</h3>
+
+                @if (loadingOwnStories()) {
+                  <p role="status">Cargando tus historias…</p>
+                } @else if (ownStoriesError()) {
+                  <p class="profile-error" role="alert">
+                    No pudimos cargar tus historias. Cerrá y volvé a abrir el proceso para
+                    intentarlo nuevamente.
+                  </p>
+                } @else if (ownStories().length > 0) {
+                  <p>Elegí qué querés hacer con estas historias:</p>
+
+                  <ul class="deactivation-story-list">
+                    @for (story of ownStories(); track story.idExternal) {
+                      <li>{{ story.title }}</li>
+                    }
+                  </ul>
+
+                  <fieldset class="deactivation-story-choice">
+                    <legend>Decisión sobre tus historias</legend>
+
+                    <label>
+                      <input
+                        type="radio"
+                        name="storyAction"
+                        [ngModel]="storyAction()"
+                        (ngModelChange)="storyAction.set($event)"
+                        value="KEEP"
+                      />
+                      Conservar mis historias
+                    </label>
+
+                    <label>
+                      <input
+                        type="radio"
+                        name="storyAction"
+                        [ngModel]="storyAction()"
+                        (ngModelChange)="storyAction.set($event)"
+                        value="DELETE"
+                      />
+                      Eliminar mis historias
+                    </label>
+                  </fieldset>
+                } @else {
+                  <p>No tenés historias propias cargadas.</p>
+                  <p>Podés continuar con la baja de tu cuenta.</p>
+                }
+              </section>
+
+              @if (creatorTransferOptions().length) {
+                <section class="creator-transfer-list">
+                  <h3>Elegí nuevos creadores para tus grupos</h3>
+
+                  @for (transfer of creatorTransferOptions(); track transfer.groupId) {
+                    <div class="creator-transfer-item">
+                      <h4>{{ transfer.groupName }}</h4>
+
+                      @if (transfer.lookupFailed) {
+                        <p role="status">
+                          No pudimos cargar los integrantes. Si continuás, el backend
+                          asignará automáticamente a quien se unió primero.
+                        </p>
+                      } @else if (transfer.candidates.length) {
+                        <div class="creator-selector">
+                          <div class="creator-search-container">
+                            <div class="creator-search">
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                aria-hidden="true"
+                              >
+                                <circle cx="10.8" cy="10.8" r="6.8" />
+                                <path d="m16 16 5 5" />
+                              </svg>
+
+                              <input
+                                [id]="'creator-search-' + transfer.groupId"
+                                [name]="'search-' + transfer.groupId"
+                                type="search"
+                                [(ngModel)]="transfer.searchText"
+                                placeholder="Buscar por nombre de usuario"
+                                (focus)="openCreatorCandidates(transfer.groupId)"
+                                (click)="openCreatorCandidates(transfer.groupId)"
+                                (keydown.escape)="closeCreatorCandidates()"
+                              />
+                            </div>
+
+                            @if (openCreatorListGroupId() === transfer.groupId) {
+                              <div
+                                class="creator-candidate-list"
+                                aria-label="Integrantes activos del grupo"
+                              >
+                                @for (
+                                  candidate of filteredCreatorCandidates(transfer);
+                                  track candidate.userId
+                                ) {
+                                  <article
+                                    class="creator-candidate"
+                                    [class.is-selected]="
+                                      transfer.selectedUsername === candidate.userName
+                                    "
+                                  >
+                                    <app-user-avatar
+                                      class="creator-candidate-avatar"
+                                      [userId]="candidate.userId"
+                                      [username]="candidate.userName"
+                                      [decorative]="false"
+                                    />
+
+                                    <span class="creator-candidate-name">
+                                      {{ '@' + candidate.userName }}
+                                    </span>
+
+                                    <button
+                                      class="profile-button creator-select-button"
+                                      type="button"
+                                      [attr.aria-pressed]="
+                                        transfer.selectedUsername === candidate.userName
+                                      "
+                                      (click)="
+                                        selectCreator(transfer, candidate.userName)
+                                      "
+                                    >
+                                      {{
+                                        transfer.selectedUsername === candidate.userName
+                                          ? 'Seleccionado'
+                                          : 'Seleccionar'
+                                      }}
+                                    </button>
+                                  </article>
+                                } @empty {
+                                  <p class="creator-no-results">
+                                    No encontramos integrantes con ese nombre.
+                                  </p>
+                                }
+                              </div>
+                            }
+                          </div>
+
+                          <div class="creator-selected">
+                            <span class="creator-selected-label">Nuevo creador</span>
+
+                            @if (selectedCreator(transfer); as selected) {
+                              <div class="creator-selected-option">
+                                <app-user-avatar
+                                  class="creator-candidate-avatar"
+                                  [userId]="selected.userId"
+                                  [username]="selected.userName"
+                                  [decorative]="false"
+                                />
+
+                                <span class="creator-candidate-name">
+                                  {{ '@' + selected.userName }}
+                                </span>
+
+                                <span class="creator-selected-badge">Seleccionado</span>
+                              </div>
+                            }
+                          </div>
+                        </div>
+
+                        @if (
+                          selectedCreator(transfer)?.userName ===
+                          transfer.candidates[0]?.userName
+                        ) {
+                          <p>Por defecto está seleccionado quien se unió primero.</p>
+                        } @else {
+                          <p>Seleccionaste a otro integrante como nuevo creador.</p>
+                        }
+                      } @else {
+                        <p>
+                          No hay otros integrantes activos. El grupo se desactivará junto
+                          con tu cuenta.
+                        </p>
+                      }
+                    </div>
+                  }
+                </section>
+              }
+
+              @if (deactivationError()) {
+                <p class="profile-error" role="alert">{{ deactivationError() }}</p>
+              }
+
+              <div class="settings-dialog-actions">
+                <button
+                  class="profile-button"
+                  type="button"
+                  (click)="closeDeactivationDialog()"
+                  [disabled]="deactivatingAccount()"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  class="profile-button account-danger-button"
+                  type="button"
+                  (click)="continueToDeactivationConfirmation()"
+                  [disabled]="deactivatingAccount()"
+                >
+                  Continuar
+                </button>
+              </div>
+            }
+          </dialog>
+
+          <dialog
+            #finalConfirmationDialog
+            class="profile-settings-dialog deactivation-dialog"
+            aria-labelledby="final-deactivation-title"
+            (cancel)="cancelFinalDeactivation()"
+          >
+            <header class="settings-dialog-header">
+              <h2 id="final-deactivation-title">Confirmar baja de cuenta</h2>
+
+              <button
+                class="settings-close"
+                type="button"
+                aria-label="Cerrar"
+                (click)="cancelFinalDeactivation()"
+                [disabled]="deactivatingAccount()"
+              >
+                ×
+              </button>
+            </header>
+
+            <p>
+              Tu cuenta quedará inactiva y se cerrará tu sesión. Revisá el resumen antes
+              de confirmar.
+            </p>
+
+            <section class="deactivation-section">
+              <h3>Historias</h3>
+
+              @if (ownStories().length) {
+                <p>
+                  {{
+                    storyAction() === 'KEEP'
+                      ? 'Se conservarán tus historias:'
+                      : 'Se eliminarán tus historias:'
+                  }}
+                </p>
+
+                <ul class="deactivation-story-list">
+                  @for (story of ownStories(); track story.idExternal) {
+                    <li>{{ story.title }}</li>
+                  }
+                </ul>
+              } @else {
+                <p>No tenés historias propias cargadas.</p>
+              }
+            </section>
+
+            <section class="deactivation-section">
+              <h3>Grupos</h3>
+
+              @if (activeGroupMemberships().length) {
+                <ul class="deactivation-group-list">
+                  @for (membership of activeGroupMemberships(); track membership.idExternal) {
+                    <li>
+                      <strong>{{ membership.groupName }}</strong>
+
+                      @if (membership.memberType === 'CREATOR') {
+                        @for (transfer of creatorTransferOptions(); track transfer.groupId) {
+                          @if (transfer.groupId === membership.groupId) {
+                            @if (transfer.lookupFailed) {
+                              <span>— se asignará a quien se unió primero.</span>
+                            } @else if (transfer.candidates.length) {
+                              <span>
+                                — nuevo creador:
+                                {{ '@' + transfer.selectedUsername }}.
+                              </span>
+                            } @else {
+                              <span>
+                                — el grupo se desactivará porque sos su única persona integrante.
+                              </span>
+                            }
+                          }
+                        }
+                      } @else {
+                        <span>— vas a salir del grupo.</span>
+                      }
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p>No participás en grupos activos.</p>
+              }
+            </section>
+
+            @if (deactivationError()) {
+              <p class="profile-error" role="alert">{{ deactivationError() }}</p>
+            }
+
+            <div class="settings-dialog-actions">
+              <button
+                class="profile-button"
+                type="button"
+                (click)="returnToDeactivationReview()"
+                [disabled]="deactivatingAccount()"
+              >
+                Volver a revisar
+              </button>
+
+              <button
+                class="profile-button account-danger-button"
+                type="button"
+                (click)="deactivateAccount()"
+                [disabled]="deactivatingAccount()"
+              >
+                {{ deactivatingAccount() ? 'Procesando…' : 'Eliminar cuenta' }}
+              </button>
+            </div>
+          </dialog>
+
           <dialog
             #avatarPicker
             class="avatar-picker"
@@ -388,7 +860,20 @@
             </article>
 
             <article class="secondary-card groups-card">
-              <span class="secondary-icon" aria-hidden="true">♧</span>
+              <span class="secondary-icon" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M9 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7 13v-3a7 7 0 0 0-14 0v3Zm1-16a3 3 0 0 1 0 6m2 10v-3a7 7 0 0 0-2-5"
+                  />
+                </svg>
+              </span>
               <div>
                 <span class="secondary-overline">LECTURA EN COMUNIDAD</span>
                 <h3>Grupos activos</h3>

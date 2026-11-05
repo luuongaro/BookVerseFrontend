@@ -95,8 +95,23 @@ h2 {
   color: #a44d68;
   font-size: 14px;
 }
-a {
-  color: #7465ad;
+.explore-stories-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 10px 16px;
+  border: 1px solid #d8c9e8;
+  border-radius: 9px;
+  background: #fff;
+  color: #665498;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.explore-stories-button:hover {
+  background: #f7f3fb;
 }
 button {
   font: inherit;

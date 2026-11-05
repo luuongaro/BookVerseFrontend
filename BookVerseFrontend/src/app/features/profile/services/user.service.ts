@@ -3,7 +3,11 @@ import { inject, Service, signal } from '@angular/core';
 import { of, Observable, ReplaySubject, share } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { API_URL } from '../../../core/api/api.config';
-import { User } from '../models/user.model';
+import {
+  AccountDeactivationRequest,
+  UpdateUserRequest,
+  User,
+} from '../models/user.model';
 import {
   ProfileActivity,
   ProfileAppearance,
@@ -143,6 +147,19 @@ export class UserService {
 
   getByIdExternal(idExternal: string): Observable<User> {
     return this.http.get<User>(`${API_URL}/users/${encodeURIComponent(idExternal)}`);
+  }
+
+  updateUser(id: string, request: UpdateUserRequest): Observable<User> {
+    return this.http.put<User>(
+      `${API_URL}/users/${encodeURIComponent(id)}`,
+      request,
+    );
+  }
+
+  deactivateOwnAccount(request: AccountDeactivationRequest): Observable<void> {
+    return this.http.delete<void>(`${API_URL}/users/me`, {
+      body: request,
+    });
   }
 
   setCurrentUser(user: User): void {
