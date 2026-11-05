@@ -183,6 +183,7 @@ export class GroupForm implements OnInit {
     ],
     workType: ['book' as GroupWorkType, Validators.required],
     referenceId: ['', Validators.required],
+    totalChapters: ['', [Validators.pattern(/^\d+$/), Validators.min(1)]],
   });
 
   ngOnInit(): void {
@@ -275,6 +276,7 @@ export class GroupForm implements OnInit {
             name: group.name,
             workType: group.storyId ? 'story' : 'book',
             referenceId: group.storyId ?? group.bookId ?? '',
+            totalChapters: group.totalChapters?.toString() ?? '',
           });
 
           // El backend solo permite cambiar el nombre del grupo.
@@ -304,25 +306,54 @@ export class GroupForm implements OnInit {
       return;
     }
 
+    const { name, workType, referenceId } = this.groupForm.getRawValue();
+    const normalizedName = name.trim();
+    const rawTotalChapters: unknown =
+      this.groupForm.controls.totalChapters.value;
+
+    const parsedTotalChapters =
+      rawTotalChapters === '' || rawTotalChapters == null
+        ? null
+        : Number(rawTotalChapters);
+
+    if (
+      parsedTotalChapters !== null &&
+      (!Number.isInteger(parsedTotalChapters) || parsedTotalChapters < 1)
+    ) {
+      this.errorMessage = 'Ingresá un número entero mayor que cero.';
+      return;
+    }
+
     this.errorMessage = '';
     this.isSaving = true;
 
-    const { name, workType, referenceId } = this.groupForm.getRawValue();
-    const normalizedName = name.trim();
-
     if (this.groupId) {
+      const updateRequest = this.group?.bookId
+        ? {
+            name: normalizedName,
+            totalChapters: parsedTotalChapters,
+          }
+        : { name: normalizedName };
+
       this.readingGroupsService
-        .update(this.groupId, { name: normalizedName })
+        .update(this.groupId, updateRequest)
+        .pipe(
+          finalize(() => {
+            this.isSaving = false;
+            this.cdr.markForCheck();
+          }),
+        )
         .subscribe({
           next: () => {
+            this.groupForm.markAsPristine();
+            this.groupForm.markAsUntouched();
+
             void this.router.navigate(['/groups', this.groupId]);
           },
           error: (error: unknown) => {
             console.error('Error updating reading group:', error);
             this.errorMessage =
               'No se pudo actualizar el grupo. Revisá los permisos e intentá nuevamente.';
-            this.isSaving = false;
-            this.cdr.markForCheck();
           },
         });
 

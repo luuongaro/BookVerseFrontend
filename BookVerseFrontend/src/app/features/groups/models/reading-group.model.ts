@@ -4,6 +4,7 @@ export interface ReadingGroup {
   storyId: string | null;
   createdByUserId: string;
   name: string;
+  totalChapters: number | null;
   isActive: boolean;
   createdAt: string;
 }
@@ -16,4 +17,5 @@ export interface CreateReadingGroupRequest {
 
 export interface UpdateReadingGroupRequest {
   name: string;
+  totalChapters?: number | null;
 }

@@ -70,6 +70,7 @@ export class GroupDetail implements OnInit {
 
   goalType: 'CHAPTER' | 'PERCENTAGE' = 'PERCENTAGE';
   targetProgress = 1;
+  bookTotalChapters: number | null = null;
   targetDate = '';
   readonly minTargetDate = this.getTomorrowDate();
   targetDatePastError = false;
@@ -185,6 +186,13 @@ export class GroupDetail implements OnInit {
     return !!this.group?.storyId;
   }
 
+  get canManageGoals(): boolean {
+    return !!this.group?.isActive && (
+      this.group.createdByUserId === localStorage.getItem('userId') ||
+      this.tokens.hasAnyRole('ROLE_ADMIN', 'ROLE_MODERATOR')
+    );
+  }
+
   get goalUnit(): string {
     return this.goalType === 'PERCENTAGE' ? '%' : 'capítulos';
   }
@@ -194,7 +202,11 @@ export class GroupDetail implements OnInit {
   }
 
   get maxChapterTarget(): number {
-    return this.linkedStory?.publishedChaptersCount ?? 0;
+    if (this.isStoryGroup) {
+      return this.linkedStory?.publishedChaptersCount ?? 0;
+    }
+
+    return this.bookTotalChapters ?? this.group?.totalChapters ?? 0;
   }
 
   get isChapterTargetInvalid(): boolean {
@@ -203,10 +215,9 @@ export class GroupDetail implements OnInit {
     }
 
     return (
-      this.isLoadingLinkedContent ||
-      !this.linkedStory ||
-      this.maxChapterTarget === 0 ||
-      this.targetProgress > this.maxChapterTarget
+      this.maxChapterTarget < 1 ||
+      this.targetProgress > this.maxChapterTarget ||
+      (this.isStoryGroup && this.isLoadingLinkedContent)
     );
   }
 
@@ -354,6 +365,7 @@ export class GroupDetail implements OnInit {
 
     if (
       !this.group ||
+      !this.canManageGoals ||
       this.isSavingGoal ||
       !this.targetDate ||
       this.targetDatePastError ||
@@ -374,6 +386,10 @@ export class GroupDetail implements OnInit {
         goalType: this.goalType,
         targetProgress: Number(this.targetProgress),
         targetDate: this.targetDate,
+        totalChapters:
+          !this.isStoryGroup && this.goalType === 'CHAPTER'
+            ? this.bookTotalChapters
+            : null,
       })
       .subscribe({
         next: (goal) => {
@@ -408,7 +424,7 @@ export class GroupDetail implements OnInit {
   }
 
   finishGoal(): void {
-    if (!this.activeGoal || this.isChangingGoal) {
+    if (!this.canManageGoals || !this.activeGoal || this.isChangingGoal) {
       return;
     }
 
@@ -423,7 +439,7 @@ export class GroupDetail implements OnInit {
   }
 
   cancelGoal(): void {
-    if (!this.activeGoal || this.isChangingGoal) {
+    if (!this.canManageGoals || !this.activeGoal || this.isChangingGoal) {
       return;
     }
 
