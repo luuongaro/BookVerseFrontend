@@ -9,7 +9,12 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
+import { READING_STATES, readingStateLabel } from '../../models/reading-state';
+import { ReadingStateBadge } from '../../components/reading-state-badge/reading-state-badge';
+import { ReadingStateSelect } from '../../components/reading-state-select/reading-state-select';
 import { LibraryService, libraryError } from '../../services/library.service';
 import {
   LibraryBook,
@@ -19,7 +24,7 @@ import {
 } from '../../models/library-book.model';
 @Component({
   selector: 'app-my-library',
-  imports: [RouterLink],
+  imports: [RouterLink, ReadingStateBadge, ReadingStateSelect],
   templateUrl: './my-library.html',
   styleUrl: './my-library.css',
 })
@@ -35,13 +40,17 @@ export class MyLibrary implements OnInit {
   filter = signal('all');
   readonly statusDialog = viewChild.required<ElementRef<HTMLDialogElement>>('statusDialog');
   private readonly bookShelf = viewChild<ElementRef<HTMLDivElement>>('bookShelf');
-  readonly readingStates: ReadingState[] = [
-    'WANT_TO_READ',
-    'IN_PROGRESS',
-    'FINISHED',
-    'RE_READING',
-    'ABANDONED',
-  ];
+  readonly readingStates = READING_STATES;
+  private readonly addedId = toSignal(
+    inject(ActivatedRoute).queryParamMap.pipe(map((params) => params.get('saved'))),
+    { initialValue: null },
+  );
+  readonly addedReading = computed(
+    () =>
+      [...this.entries(), ...this.stories()].find(
+        (entry) => entry.reading.idExternal === this.addedId(),
+      ) ?? null,
+  );
   editing = signal<LibraryBook | LibraryStory | null>(null);
   draftStatus = signal<ReadingState>('WANT_TO_READ');
   draftPercentage = signal('');
@@ -200,12 +209,6 @@ export class MyLibrary implements OnInit {
       });
   }
   statusLabel(state: ReadingState): string {
-    return {
-      WANT_TO_READ: 'Quiero leer',
-      IN_PROGRESS: 'Leyendo',
-      FINISHED: 'Leído',
-      ABANDONED: 'Abandonado',
-      RE_READING: 'Releyendo',
-    }[state];
+    return readingStateLabel(state);
   }
 }

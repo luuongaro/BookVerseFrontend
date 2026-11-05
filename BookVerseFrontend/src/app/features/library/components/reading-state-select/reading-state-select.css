@@ -1,0 +1,51 @@
+@import '../../styles/reading-state.css';
+:host {
+  display: block;
+  min-width: 0;
+  width: 100%;
+}
+label {
+  display: block;
+  margin: 0 0 7px;
+  color: #514a62;
+  font:
+    600 13px/1.4 'DM Sans',
+    sans-serif;
+}
+.select-row {
+  position: relative;
+}
+svg {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  width: 19px;
+  height: 19px;
+  transform: translateY(-50%);
+  color: var(--reading-color);
+  pointer-events: none;
+}
+select {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 11px 30px 11px 43px;
+  border: 2px solid var(--reading-border);
+  border-radius: 10px;
+  background: var(--reading-background);
+  color: var(--reading-color);
+  font:
+    600 15px/1.4 'DM Sans',
+    sans-serif;
+  cursor: pointer;
+}
+select:focus-visible {
+  outline: 3px solid #8e9fe1;
+  outline-offset: 3px;
+}
+select:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}

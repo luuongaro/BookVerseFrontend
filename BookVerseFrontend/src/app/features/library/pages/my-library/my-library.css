@@ -1,4 +1,28 @@
 @import '../../../../shared/styles/catalog.css';
+@import '../../styles/reading-state.css';
+.reading-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 0;
+}
+.added-reading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid #c2aedf;
+  border-radius: 12px;
+  background: white;
+  overflow-wrap: anywhere;
+}
+.added-reading > strong {
+  min-width: 0;
+}
+.status-dialog app-reading-state-select {
+  margin-top: 20px;
+}
 .page-heading {
   display: flex;
   justify-content: space-between;
@@ -194,11 +218,11 @@ h1 em {
 .book-spine {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 11px;
+  grid-template-columns: minmax(0, 1fr) 15px;
   grid-template-rows: 15px minmax(0, 1fr);
   gap: 10px 4px;
   width: 100%;
-  padding: 16px 6px 18px 8px;
+  padding: 16px 4px 18px 6px;
   color: #fff8e5;
   border-radius: 3px 5px 1px 1px;
   box-shadow:
@@ -258,6 +282,11 @@ h1 em {
   text-overflow: ellipsis;
 }
 .spine-status {
+  padding: 4px 1px;
+  border: 1px solid var(--reading-border);
+  border-radius: 5px;
+  background: var(--reading-background);
+  color: var(--reading-color);
   grid-column: 2;
   grid-row: 2;
   align-self: end;

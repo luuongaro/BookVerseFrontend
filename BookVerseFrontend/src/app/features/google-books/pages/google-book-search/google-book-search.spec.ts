@@ -59,9 +59,22 @@ describe('GoogleBookSearch states', () => {
     const { page, importBook, saveBook, navigate } = setup();
     importBook.mockReturnValue(of({ idExternal: 'local-id' }));
     page.importBook('google-id');
-    expect(saveBook).toHaveBeenCalledWith('local-id');
-    expect(navigate).toHaveBeenCalledWith(['/library']);
+    expect(saveBook).toHaveBeenCalledWith('local-id', 'WANT_TO_READ');
+    expect(navigate).toHaveBeenCalledWith(['/library'], { queryParams: { saved: 'reading-id' } });
     expect(page.importing()).toBe('');
+  });
+  it('uses the state selected for each result and prevents changes during import', () => {
+    const { page, importBook, saveBook } = setup();
+    page.chooseState('first', 'IN_PROGRESS');
+    page.chooseState('second', 'FINISHED');
+    expect(page.stateFor('first')).toBe('IN_PROGRESS');
+    expect(page.stateFor('second')).toBe('FINISHED');
+    importBook.mockReturnValue(of({ idExternal: 'second-book' }));
+    page.importBook('second');
+    expect(saveBook).toHaveBeenCalledWith('second-book', 'FINISHED');
+    page.importing.set('first');
+    page.chooseState('second', 'WANT_TO_READ');
+    expect(page.stateFor('second')).toBe('FINISHED');
   });
   it('preserves results when importing fails', () => {
     const { page, importBook } = setup();

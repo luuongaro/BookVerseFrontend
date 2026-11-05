@@ -46,6 +46,12 @@
             {{ book.volumeInfo.authors?.join(', ') || 'Autor desconocido' }}
           </p>
           <p class="book-card-date">{{ book.volumeInfo.publishedDate }}</p>
+          <app-reading-state-select
+            label="Guardar como"
+            [value]="stateFor(book.id)"
+            [disabled]="!!importing()"
+            (valueChange)="chooseState(book.id, $event)"
+          />
           <button [disabled]="!!importing()" (click)="importBook(book.id)">
             {{ importing() === book.id ? 'Agregando…' : 'Guardar en mi biblioteca' }}
           </button>

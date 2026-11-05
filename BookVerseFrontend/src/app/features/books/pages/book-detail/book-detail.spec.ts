@@ -15,7 +15,7 @@ describe('Book description rendering', () => {
           provide: BooksService,
           useValue: { getById: () => of({ idExternal: 'book', title: 'Libro', description }) },
         },
-        { provide: LibraryService, useValue: {} },
+        { provide: LibraryService, useValue: { getBookStatus: () => of(null) } },
       ],
     });
     const fixture = TestBed.createComponent(BookDetail);
