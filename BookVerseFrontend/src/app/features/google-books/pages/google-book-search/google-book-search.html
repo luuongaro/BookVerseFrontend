@@ -1,6 +1,6 @@
 <main>
   <h1>Buscar libros</h1>
-  <form class="search panel" [formGroup]="form" (ngSubmit)="search()">
+  <form class="search panel book-search" [formGroup]="form" (ngSubmit)="search()">
     <div>
       <label for="type">Buscar por</label
       ><select id="type" formControlName="type">
@@ -28,17 +28,24 @@
   } @else if (error()) {
     <p class="state error" role="alert">{{ error() }}</p>
   } @else if (searched()) {
-    <div class="grid">
+    <div class="grid book-grid">
       @for (book of results(); track book.id) {
-        <article class="card">
+        <article class="card book-card">
           <app-book-cover
             class="cover"
             [src]="book.volumeInfo.imageLinks?.thumbnail"
             [title]="book.volumeInfo.title"
           />
-          <h3>{{ book.volumeInfo.title }}</h3>
-          <p>{{ book.volumeInfo.authors?.join(', ') || 'Autor desconocido' }}</p>
-          <p>{{ book.volumeInfo.publishedDate }}</p>
+          <h3 class="book-card-title" [title]="book.volumeInfo.title">
+            {{ book.volumeInfo.title }}
+          </h3>
+          <p
+            class="book-card-authors"
+            [title]="book.volumeInfo.authors?.join(', ') || 'Autor desconocido'"
+          >
+            {{ book.volumeInfo.authors?.join(', ') || 'Autor desconocido' }}
+          </p>
+          <p class="book-card-date">{{ book.volumeInfo.publishedDate }}</p>
           <button [disabled]="!!importing()" (click)="importBook(book.id)">
             {{ importing() === book.id ? 'Agregando…' : 'Guardar en mi biblioteca' }}
           </button>
