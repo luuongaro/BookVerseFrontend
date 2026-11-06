@@ -118,6 +118,29 @@ describe('Personal bookshelf screen', () => {
     expect(el.querySelectorAll('.book-spine')).toHaveLength(0);
     expect(el.textContent).toContain('Todavía no tenés libros en este estado.');
   });
+  it('keeps only the title on the spine and edits the state from its separate label', async () => {
+    const entry = savedEntry();
+    entry.book.title = 'Un título largo que necesita más de una línea en el lomo';
+    entry.reading.status = 'IN_PROGRESS';
+    entry.reading.progressType = 'PERCENTAGE';
+    entry.reading.progressValue = 45;
+    const { fixture } = await setup({ entries: [entry], unavailableCount: 0 });
+    const el: HTMLElement = fixture.nativeElement;
+    const spine = el.querySelector<HTMLAnchorElement>('.book-spine')!;
+    const label = el.querySelector<HTMLButtonElement>('.edit-status')!;
+
+    expect(spine.textContent?.trim()).toBe(entry.book.title);
+    expect(spine.querySelector('.spine-status, .spine-progress, .spine-mark')).toBeNull();
+    expect(label.parentElement).toBe(spine.parentElement);
+    expect(label.getAttribute('data-state')).toBe('IN_PROGRESS');
+    expect(label.textContent).toContain('Leyendo');
+    expect(label.textContent).toContain('45%');
+    expect(label.getAttribute('aria-describedby')).toBe(label.querySelector('.status-label')!.id);
+    label.click();
+    fixture.detectChanges();
+    expect(el.querySelector('dialog')?.hasAttribute('open')).toBe(true);
+    expect(el.querySelector('.selected-title')?.textContent).toBe(entry.book.title);
+  });
   it('keeps more than two former rows of books in one shelf and allows editing the last book', async () => {
     const entries = Array.from({ length: 22 }, (_, i) => {
       const entry = savedEntry();
@@ -218,7 +241,7 @@ describe('Personal bookshelf screen', () => {
     component.saveStatus();
     expect(component.entries()[0].reading.status).toBe('IN_PROGRESS');
   });
-  it('saves progress without requiring a status change and shows the server result on the spine', async () => {
+  it('saves progress without requiring a status change and shows the server result on the separate state label', async () => {
     const entry = savedEntry();
     entry.reading = {
       ...entry.reading,
@@ -248,9 +271,9 @@ describe('Personal bookshelf screen', () => {
     pending.complete();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.spine-status').textContent).toContain('45%');
-    expect(fixture.nativeElement.querySelector('.book-spine').getAttribute('aria-label')).toContain(
-      '45% leído',
-    );
+    expect(
+      fixture.nativeElement.querySelector('.book-spine').getAttribute('aria-describedby'),
+    ).toBe(fixture.nativeElement.querySelector('.status-label').id);
     expect(component.confirmation()).toBe('Mi libro: Leyendo · 45%.');
     component.editStatus(component.entries()[0]);
     fixture.detectChanges();

@@ -129,9 +129,9 @@ h1 em {
 .books-row {
   display: flex;
   align-items: flex-end;
-  justify-content: center;
-  gap: 12px;
-  padding: 24px 12px 0;
+  justify-content: safe center;
+  gap: 16px;
+  padding: 16px 12px 0;
   overflow-x: auto;
   scrollbar-color: #b68a5c #48352b;
 }
@@ -163,13 +163,10 @@ h1 em {
   min-width: 100%;
 }
 .book-shelf-room .books-row {
-  min-height: 288px;
+  min-height: 342px;
   justify-content: flex-start;
-  padding: 24px 40px 0;
+  padding: 16px 28px 0;
   overflow: visible;
-}
-.book-shelf-room .shelf-book {
-  flex: 0 0 72px;
 }
 .shelf-scroll > .wood-shelf {
   position: sticky;
@@ -179,50 +176,68 @@ h1 em {
 }
 .shelf-book {
   position: relative;
-  flex: 0 1 72px;
-  min-width: 54px;
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  min-width: 112px;
 }
 .edit-status {
-  position: absolute;
-  top: -13px;
-  right: -9px;
-  z-index: 3;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border: 1px solid #e5bd8b;
-  border-radius: 50%;
-  background: #fff4df;
-  color: #624329;
-  box-shadow: 0 3px 8px #160e0966;
-  font-size: 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 14px;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  max-width: 144px;
+  min-height: 44px;
+  margin: 0 0 18px;
+  padding: 7px 8px;
+  border: 1px solid var(--reading-border);
+  border-radius: 8px;
+  background: var(--reading-background);
+  color: var(--reading-color);
+  box-shadow: 0 3px 8px #160e0926;
+  font:
+    600 11px/1.35 'DM Sans',
+    sans-serif;
+  text-align: center;
+  cursor: pointer;
+}
+.status-label {
+  min-width: 0;
+}
+.status-pencil {
+  font-size: 16px;
 }
 @media (hover: hover) and (pointer: fine) {
-  .edit-status {
+  .status-pencil {
     opacity: 0;
-    pointer-events: none;
   }
-  .shelf-book:hover .edit-status,
-  .shelf-book:focus-within .edit-status {
+  .shelf-book:hover .status-pencil,
+  .shelf-book:focus-within .status-pencil {
     opacity: 1;
-    pointer-events: auto;
   }
 }
 .edit-status:hover {
-  background: #eed3a4;
+  box-shadow: 0 0 0 2px var(--reading-border);
 }
 .edit-status:focus-visible {
   outline: 3px solid #f7d69d;
   outline-offset: 3px;
 }
+.status-percentage {
+  display: block;
+  font-size: 10px;
+}
 .book-spine {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 15px;
-  grid-template-rows: 15px minmax(0, 1fr);
-  gap: 10px 4px;
-  width: 100%;
-  padding: 16px 4px 18px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  width: max-content;
+  min-width: 56px;
+  padding: 22px 12px;
   color: #fff8e5;
   border-radius: 3px 5px 1px 1px;
   box-shadow:
@@ -256,57 +271,25 @@ h1 em {
   bottom: 10px;
   border-top: 3px double currentColor;
 }
-.spine-mark {
-  grid-column: 1 / -1;
-  grid-row: 1;
-  justify-self: center;
-  font-size: 15px;
-  line-height: 1;
-}
 .book-spine strong {
-  grid-column: 1;
-  grid-row: 2;
-  justify-self: center;
-  min-width: 0;
-  min-height: 0;
-  max-width: 100%;
+  display: block;
+  height: 100%;
   max-height: 100%;
-  writing-mode: vertical-rl;
+  max-width: 100%;
   font:
-    400 20px/1.15 'Libre Caslon Display',
+    400 20px/1.2 'Libre Caslon Display',
     Georgia,
     serif;
   text-align: center;
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.spine-status {
-  padding: 4px 1px;
-  border: 1px solid var(--reading-border);
-  border-radius: 5px;
-  background: var(--reading-background);
-  color: var(--reading-color);
-  grid-column: 2;
-  grid-row: 2;
-  align-self: end;
-  justify-self: end;
-  min-height: 0;
-  max-height: 100%;
-  writing-mode: vertical-rl;
-  font-size: 9px;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 .spine-progress {
-  position: absolute;
-  bottom: 3px;
-  left: 6px;
-  right: 5px;
+  display: block;
   height: 3px;
-  background: #0002;
+  margin-top: 4px;
+  background: var(--reading-border);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -378,18 +361,12 @@ h1 em {
     padding-left: 4px;
     padding-right: 4px;
   }
-  .shelf-book {
-    flex: 0 0 58px;
-  }
   .shelf-scroll {
     margin: 0 -15px;
   }
   .book-shelf-room .books-row {
     padding-right: 19px;
     padding-left: 19px;
-  }
-  .book-shelf-room .shelf-book {
-    flex-basis: 58px;
   }
   .wood-shelf {
     margin: 0 -15px;
