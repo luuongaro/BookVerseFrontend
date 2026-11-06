@@ -131,7 +131,7 @@
                         [routerLink]="['/books', entry.book.idExternal]"
                         [style.background-color]="colors[i % colors.length]"
                         [style.color]="inkColors[i % inkColors.length]"
-                        [style.height.px]="240 + (i % 3) * 12"
+                        [style.height.px]="200 + (i % 3) * 12"
                         [attr.aria-label]="
                           entry.book.title +
                           ', ' +
@@ -237,7 +237,7 @@
                         [routerLink]="['/stories', entry.story.idExternal]"
                         [style.background-color]="colors[(i + 1) % colors.length]"
                         [style.color]="inkColors[(i + 1) % inkColors.length]"
-                        [style.height.px]="240 + (i % 3) * 12"
+                        [style.height.px]="200 + (i % 3) * 12"
                         [attr.aria-label]="entry.story.title + '. Historia'"
                         [title]="entry.story.title"
                         [attr.aria-describedby]="'reading-state-' + entry.reading.idExternal"
