@@ -17,9 +17,20 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     return next(request);
   }
 
-  const token = inject(TokenService).getToken();
+  const tokenService = inject(TokenService);
+  const token = tokenService.getToken();
   const router = inject(Router);
   const sessionExpired = inject(SessionExpiredService);
+
+  const currentPath = router.url.split('?')[0];
+  const publicPaths = [
+    '/',
+    '/login',
+    '/register',
+    '/forgot-password',
+    '/reset-password',
+  ];
+  const isPrivateRoute = !publicPaths.includes(currentPath);
 
   const authenticatedRequest = token
     ? request.clone({
@@ -29,7 +40,14 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
 
   return next(authenticatedRequest).pipe(
     catchError((error: unknown) => {
-      if (error instanceof HttpErrorResponse && error.status === 401) {
+      const hasSession = Boolean(token) || tokenService.hasStoredToken();
+
+      if (
+        error instanceof HttpErrorResponse &&
+        error.status === 401 &&
+        isPrivateRoute &&
+        hasSession
+      ) {
         sessionExpired.show(router.url);
       }
 

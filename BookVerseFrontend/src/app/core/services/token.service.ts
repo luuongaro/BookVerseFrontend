@@ -16,6 +16,14 @@ export class TokenService {
     }
   }
 
+  hasStoredToken(): boolean {
+    try {
+      return Boolean(localStorage.getItem('token'));
+    } catch {
+      return false;
+    }
+  }
+
   getRoles(): string[] | null {
     const claims = this.getValidClaims();
     if (!claims) return null;
