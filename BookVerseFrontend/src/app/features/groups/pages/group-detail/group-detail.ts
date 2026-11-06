@@ -36,7 +36,7 @@ import { StoryService } from '../../../stories/services/story.services';
 @Component({
   selector: 'app-group-detail',
   imports: [UserAvatar, DatePipe, DecimalPipe, FormsModule, RouterLink, UserSearch],
-  styleUrl: './group-detail.css',
+  styleUrls: ['./group-detail.css', './group-leave-dialog.css'],
   templateUrl: './group-detail.html',
 })
 export class GroupDetail implements OnInit {
