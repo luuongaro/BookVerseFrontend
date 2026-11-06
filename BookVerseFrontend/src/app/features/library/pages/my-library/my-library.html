@@ -294,6 +294,9 @@
         [disabled]="saving()"
         (valueChange)="chooseStatus($event)"
       />
+      @if (draftStatus() === 'FINISHED') {
+        <p class="percentage-help">Se guardará como finalizado, con el 100% leído.</p>
+      }
       @if (canEditPercentage()) {
         <label for="book-reading-percentage">Porcentaje leído</label>
         <div class="percentage-field">

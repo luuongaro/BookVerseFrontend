@@ -78,7 +78,7 @@ describe('Personal library API', () => {
     expect(result?.progressValue).toBe(40);
   });
   it.each(['WANT_TO_READ', 'IN_PROGRESS', 'FINISHED'] as const)(
-    'saves books and stories with the chosen state %s and no fabricated progress',
+    'saves books and stories with progress consistent with the chosen state %s',
     (selected) => {
       for (const kind of ['book', 'story'] as const) {
         const request =
@@ -94,8 +94,9 @@ describe('Personal library API', () => {
           status: selected,
           startedAt: null,
           finishedAt: null,
-          progressType: null,
-          progressValue: null,
+          progressType: selected === 'FINISHED' ? 'PERCENTAGE' : null,
+          progressValue: selected === 'FINISHED' ? 100 : null,
+          progressTotal: null,
         });
         post.flush({ ...status, status: selected });
       }
@@ -119,6 +120,7 @@ describe('Personal library API', () => {
       finishedAt: null,
       progressType: null,
       progressValue: null,
+      progressTotal: null,
     });
     expect(req.request.headers.get('Authorization')).toBe('Bearer session-token');
     req.flush({ ...status, bookId: 'new-book', status: 'WANT_TO_READ' });
@@ -147,7 +149,7 @@ describe('Personal library API', () => {
       .flush({}, { status: 403, statusText: 'Forbidden' });
     expect(error?.status).toBe(403);
   });
-  it('updates the existing reading record and preserves progress, dates and association', () => {
+  it('finishes the existing reading at 100 percent while preserving dates and association', () => {
     const reading = { ...status, startedAt: '2026-10-01T10:00:00', finishedAt: null };
     service
       .updateStatus(reading, 'FINISHED')
@@ -162,7 +164,8 @@ describe('Personal library API', () => {
       startedAt: reading.startedAt,
       finishedAt: null,
       progressType: 'PERCENTAGE',
-      progressValue: 40,
+      progressValue: 100,
+      progressTotal: null,
     });
     request.flush({ ...reading, status: 'FINISHED' });
   });
@@ -190,6 +193,7 @@ describe('Personal library API', () => {
       status: 'RE_READING',
       progressType: 'PERCENTAGE',
       progressValue: 75,
+      progressTotal: null,
       startedAt: reading.startedAt,
       finishedAt: reading.finishedAt,
     });
@@ -218,11 +222,15 @@ describe('Personal library API', () => {
   );
   it('preserves chapter progress when no new percentage was provided', () => {
     service
-      .updateStatus({ ...status, progressType: 'CHAPTER', progressValue: 4 }, 'IN_PROGRESS')
+      .updateStatus(
+        { ...status, progressType: 'CHAPTER', progressValue: 4, progressTotal: 12 },
+        'IN_PROGRESS',
+      )
       .subscribe();
     const request = http.expectOne('http://localhost:8080/api/reading-statuses/reading-id');
     expect(request.request.body.progressType).toBe('CHAPTER');
     expect(request.request.body.progressValue).toBe(4);
+    expect(request.request.body.progressTotal).toBe(12);
     request.flush(status);
   });
   it.each(['WANT_TO_READ', 'FINISHED', 'ABANDONED'] as const)(
@@ -234,6 +242,39 @@ describe('Personal library API', () => {
       http.expectNone(() => true);
     },
   );
+  it('clears progress when returning to want-to-read, and starts rereading without carrying completion', () => {
+    for (const target of ['WANT_TO_READ', 'RE_READING', 'IN_PROGRESS'] as const) {
+      service
+        .updateStatus({ ...status, status: 'FINISHED', progressValue: 100 }, target)
+        .subscribe();
+      const request = http.expectOne('http://localhost:8080/api/reading-statuses/reading-id');
+      expect(request.request.body.status).toBe(target);
+      expect(request.request.body.progressType).toBeNull();
+      expect(request.request.body.progressValue).toBeNull();
+      expect(request.request.body.progressTotal).toBeNull();
+      request.flush({ ...status, status: target, progressType: null, progressValue: null });
+    }
+  });
+  it('does not send 100 percent while the reading is still in progress', () => {
+    service.updateStatus(status, 'IN_PROGRESS', 100).subscribe({
+      error: (error) => expect(error).toBeInstanceOf(RangeError),
+    });
+    http.expectNone(() => true);
+  });
+  it('clears a book chapter total when switching to percentage progress', () => {
+    service
+      .updateStatus(
+        { ...status, progressType: 'CHAPTER', progressValue: 4, progressTotal: 12 },
+        'IN_PROGRESS',
+        50,
+      )
+      .subscribe();
+    const request = http.expectOne('http://localhost:8080/api/reading-statuses/reading-id');
+    expect(request.request.body.progressType).toBe('PERCENTAGE');
+    expect(request.request.body.progressValue).toBe(50);
+    expect(request.request.body.progressTotal).toBeNull();
+    request.flush(status);
+  });
   it('loads only personal saved books and stories and keeps them separate', () => {
     let result: LibraryResult | undefined;
     service.getMyLibrary().subscribe((value) => (result = value));
@@ -308,6 +349,7 @@ describe('Personal library API', () => {
       finishedAt: null,
       progressType: null,
       progressValue: null,
+      progressTotal: null,
     });
     request.flush({ ...status, bookId: null, storyId: 'new-story' });
     service.saveStory('new-story').subscribe((reading) => expect(reading.progressValue).toBe(4));

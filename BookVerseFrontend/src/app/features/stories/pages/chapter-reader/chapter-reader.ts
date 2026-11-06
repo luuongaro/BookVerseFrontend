@@ -389,12 +389,12 @@ private saveReadingProgress(
     return;
   }
 
-  if (existingStatus?.status === 'COMPLETED') {
+  if (existingStatus?.status === 'FINISHED') {
     this.readingStatus.set(existingStatus);
     this.isSavingProgress.set(false);
 
     this.progressMessage.set(
-      'Esta historia ya figura como completada.'
+      'Esta historia ya figura como finalizada.'
     );
 
     return;
@@ -414,7 +414,7 @@ private saveReadingProgress(
   const request: ReadingStatusRequest = {
     bookId: null,
     storyId: currentStoryId,
-    status: 'IN_PROGRESS',
+    status: existingStatus?.status === 'RE_READING' ? 'RE_READING' : 'IN_PROGRESS',
     startedAt:
       existingStatus?.startedAt
         ?? this.currentLocalDateTime(),
