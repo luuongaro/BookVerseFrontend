@@ -66,7 +66,7 @@
             [attr.data-state]="shelf.state"
             [attr.aria-labelledby]="'books-shelf-' + shelf.state"
           >
-            <div class="shelf-heading reading-state" [attr.data-state]="shelf.state">
+            <div class="shelf-heading" [attr.data-state]="shelf.state">
               <h3 [id]="'books-shelf-' + shelf.state">{{ shelfLabel(shelf.state) }}</h3>
               <span
                 >{{ shelf.entries.length }}
@@ -88,7 +88,8 @@
                     <div class="shelf-book">
                       <button
                         type="button"
-                        class="edit-status spine-status reading-state"
+                        class="edit-status spine-status"
+                        [class.has-progress]="readingPercentage(entry.reading) !== null"
                         [attr.data-state]="entry.reading.status"
                         (click)="editStatus(entry)"
                         [attr.aria-label]="'Cambiar estado de ' + entry.book.title"
@@ -101,15 +102,29 @@
                         >
                           {{ statusLabel(entry.reading.status) }}
                           @if (readingPercentage(entry.reading) !== null) {
-                            <span class="status-percentage"
-                              >{{ readingPercentage(entry.reading) }}%</span
-                            >
-                            <span class="spine-progress" aria-hidden="true">
-                              <span [style.width.%]="readingPercentage(entry.reading)"></span>
-                            </span>
+                            · {{ readingPercentage(entry.reading) }}% leído
                           }
                         </span>
-                        <span class="status-pencil" aria-hidden="true">✎</span>
+                        @if (readingPercentage(entry.reading) !== null) {
+                          <span class="status-percentage" aria-hidden="true"
+                            >{{ readingPercentage(entry.reading) }}%</span
+                          >
+                          <span class="spine-progress" aria-hidden="true">
+                            <span [style.width.%]="readingPercentage(entry.reading)"></span>
+                          </span>
+                        }
+                        <svg
+                          class="status-pencil"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15l-1 6Z" />
+                        </svg>
                       </button>
                       <a
                         class="book-spine"
@@ -169,7 +184,7 @@
             [attr.data-state]="shelf.state"
             [attr.aria-labelledby]="'stories-shelf-' + shelf.state"
           >
-            <div class="shelf-heading reading-state" [attr.data-state]="shelf.state">
+            <div class="shelf-heading" [attr.data-state]="shelf.state">
               <h3 [id]="'stories-shelf-' + shelf.state">{{ shelfLabel(shelf.state, true) }}</h3>
               <span
                 >{{ shelf.entries.length }}
@@ -191,7 +206,7 @@
                     <div class="shelf-book">
                       <button
                         type="button"
-                        class="edit-status spine-status reading-state"
+                        class="edit-status spine-status"
                         [attr.data-state]="entry.reading.status"
                         (click)="editStatus(entry)"
                         [attr.aria-label]="'Cambiar estado de ' + entry.story.title"
@@ -204,7 +219,18 @@
                         >
                           {{ statusLabel(entry.reading.status) }}
                         </span>
-                        <span class="status-pencil" aria-hidden="true">✎</span>
+                        <svg
+                          class="status-pencil"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15l-1 6Z" />
+                        </svg>
                       </button>
                       <a
                         class="book-spine story-spine"
