@@ -7,6 +7,7 @@ import {
   inject,
   signal,
   viewChild,
+  viewChildren,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -39,7 +40,8 @@ export class MyLibrary implements OnInit {
   unavailableCount = signal(0);
   filter = signal('all');
   readonly statusDialog = viewChild.required<ElementRef<HTMLDialogElement>>('statusDialog');
-  private readonly bookShelf = viewChild<ElementRef<HTMLDivElement>>('bookShelf');
+  private readonly shelves = viewChildren<ElementRef<HTMLDivElement>>('readingShelf');
+  readonly shelfStates = READING_STATES.filter((state) => state !== 'ABANDONED');
   readonly readingStates = READING_STATES;
   private readonly addedId = toSignal(
     inject(ActivatedRoute).queryParamMap.pipe(map((params) => params.get('saved'))),
@@ -166,24 +168,45 @@ export class MyLibrary implements OnInit {
   }
   readonly colors = ['#42445e', '#93a897', '#766081', '#caa6b4', '#8c9bb9', '#d2ad93'];
   readonly inkColors = ['#e7dab6', '#263c32', '#fff0db', '#4d2b45', '#24324b', '#49352d'];
+  readonly libraryBooks = computed(() =>
+    this.entries().filter((entry) => entry.reading.status !== 'ABANDONED'),
+  );
+  readonly libraryStories = computed(() =>
+    this.stories().filter((entry) => entry.reading.status !== 'ABANDONED'),
+  );
   readonly filteredBooks = computed(() =>
-    this.entries().filter(
+    this.libraryBooks().filter(
       (entry) => this.filter() === 'all' || entry.reading.status === this.filter(),
     ),
   );
-  setFilter(value: string): void {
-    this.filter.set(value);
-    const shelf = this.bookShelf()?.nativeElement;
-    if (shelf) shelf.scrollLeft = 0;
+  readonly bookShelves = computed(() => this.groupByState(this.filteredBooks()));
+  readonly storyShelves = computed(() =>
+    this.groupByState(
+      this.libraryStories().filter(
+        (entry) => this.filter() === 'all' || entry.reading.status === this.filter(),
+      ),
+    ),
+  );
+  private groupByState<T extends { reading: ReadingStatus }>(entries: T[]) {
+    return this.shelfStates
+      .map((state) => ({
+        state,
+        entries: entries.filter((entry) => entry.reading.status === state),
+      }))
+      .filter((shelf) => shelf.entries.length > 0);
   }
-  readonly storyShelves = computed(() => {
-    const stories = this.stories().filter(
-      (entry) => this.filter() === 'all' || entry.reading.status === this.filter(),
-    );
-    const rows: LibraryStory[][] = [];
-    for (let i = 0; i < stories.length; i += 9) rows.push(stories.slice(i, i + 9));
-    return rows;
-  });
+  shelfLabel(state: ReadingState, stories = false): string {
+    return state === 'FINISHED'
+      ? stories
+        ? 'Finalizadas'
+        : 'Finalizados'
+      : this.statusLabel(state);
+  }
+  setFilter(value: string): void {
+    if (value !== 'all' && !this.shelfStates.some((state) => state === value)) return;
+    this.filter.set(value);
+    for (const shelf of this.shelves()) shelf.nativeElement.scrollLeft = 0;
+  }
   ngOnInit(): void {
     this.load();
   }
