@@ -4,7 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { CHECKOUT_REDIRECT, SendTip } from './send-tip';
 import { API_URL } from '../../../../core/api/api.config';
 
-describe('Sending a cafecito through the existing story checkout', () => {
+describe('Supporting an author through the existing story checkout', () => {
   function setup() {
     const redirect = vi.fn();
     TestBed.configureTestingModule({
@@ -36,7 +36,7 @@ describe('Sending a cafecito through the existing story checkout', () => {
     expect(request.request.body).toEqual({
       storyId: 'published-story',
       amount: 1000,
-      message: 'Cafecito para Marina',
+      message: 'Apoyo para Marina',
     });
     request.flush({ checkout: { checkoutUrl: 'https://www.mercadopago.com.ar/checkout/test' } });
     expect(redirect).toHaveBeenCalledExactlyOnceWith(

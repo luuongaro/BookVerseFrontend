@@ -102,7 +102,7 @@ describe('Visiting user profiles', () => {
     expect(component.showGroupPicker()).toBe(false);
   });
 
-  it('only offers a cafecito for another user with a published story', async () => {
+  it('only offers author support for another user with a published story', async () => {
     const { component, users, harness } = await setup();
     expect(harness.routeNativeElement!.querySelector('app-send-tip')).toBeNull();
     users.getProfileActivity.mockReturnValue(

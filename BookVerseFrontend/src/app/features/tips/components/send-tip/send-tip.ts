@@ -35,7 +35,7 @@ export const CHECKOUT_REDIRECT = new InjectionToken<(url: string) => void>('CHEC
           d="M4 8h12v7a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8Zm12 1h2a3 3 0 0 1 0 6h-2M8 3v2m4-2v2M2 23h18"
         />
       </svg>
-      {{ pending() ? 'Preparando cafecito…' : 'Enviar cafecito · $1.000' }}
+      {{ pending() ? 'Preparando pago…' : 'Apoyar al autor · $1.000' }}
     </button>
     @if (error()) {
       <p class="tip-error" role="alert">{{ error() }}</p>
@@ -111,8 +111,8 @@ export class SendTip implements OnChanges {
         storyId: this.storyId,
         amount: 1000,
         message: this.recipientName
-          ? `Cafecito para ${this.recipientName}`
-          : 'Cafecito para esta historia',
+          ? `Apoyo para ${this.recipientName}`
+          : 'Apoyo a esta historia',
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -123,12 +123,12 @@ export class SendTip implements OnChanges {
             if (url.protocol !== 'https:') throw new Error('Invalid checkout');
             this.redirect(url.href);
           } catch {
-            this.error.set('No pudimos abrir el pago del cafecito. Intentá de nuevo.');
+            this.error.set('No pudimos abrir el pago. Intentá de nuevo.');
           }
         },
         error: () => {
           this.pending.set(false);
-          this.error.set('No pudimos preparar el cafecito. Intentá de nuevo más tarde.');
+          this.error.set('No pudimos iniciar el pago. Intentá de nuevo más tarde.');
         },
       });
   }
