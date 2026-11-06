@@ -1,11 +1,5 @@
 @import '../../../../shared/styles/catalog.css';
 @import '../../styles/reading-state.css';
-.reading-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 20px 0;
-}
 .added-reading {
   display: flex;
   align-items: center;
@@ -124,7 +118,29 @@ h1 em {
     0 8px 12px #1b120d66;
 }
 .shelf-section {
-  margin-bottom: 18px;
+  margin-bottom: 24px;
+}
+.shelf-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 8px 12px;
+  margin: 4px 0 8px;
+  border: 1px solid var(--reading-border);
+  border-radius: 8px;
+  background: var(--reading-background);
+  color: var(--reading-color);
+}
+.shelf-heading h3 {
+  margin: 0;
+  font:
+    600 15px/1.4 'DM Sans',
+    sans-serif;
+}
+.shelf-heading > span {
+  font-size: 12px;
 }
 .books-row {
   display: flex;
@@ -162,7 +178,7 @@ h1 em {
   width: max-content;
   min-width: 100%;
 }
-.book-shelf-room .books-row {
+.shelf-track .books-row {
   min-height: 342px;
   justify-content: flex-start;
   padding: 16px 28px 0;
@@ -364,7 +380,7 @@ h1 em {
   .shelf-scroll {
     margin: 0 -15px;
   }
-  .book-shelf-room .books-row {
+  .shelf-track .books-row {
     padding-right: 19px;
     padding-left: 19px;
   }

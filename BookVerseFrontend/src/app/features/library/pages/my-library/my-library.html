@@ -22,7 +22,7 @@
     </div>
   } @else {
     <div class="library-toolbar">
-      <p>{{ entries().length }} libros · {{ stories().length }} historias</p>
+      <p>{{ libraryBooks().length }} libros · {{ libraryStories().length }} historias</p>
       <div>
         <label for="reading-filter">Mostrar</label
         ><select
@@ -36,7 +36,6 @@
           <option value="IN_PROGRESS">Leyendo</option>
           <option value="FINISHED">Finalizados</option>
           <option value="RE_READING">Releyendo</option>
-          <option value="ABANDONED">Abandonados</option>
         </select>
       </div>
     </div>
@@ -46,11 +45,6 @@
         <app-reading-state-badge [state]="added.reading.status" prefix="Estado actual" />
       </div>
     }
-    <div class="reading-legend" aria-label="Estados de lectura">
-      @for (state of readingStates; track state) {
-        <app-reading-state-badge [state]="state" />
-      }
-    </div>
     <p class="save-confirmation" role="status" aria-live="polite">{{ confirmation() }}</p>
     @if (unavailableCount()) {
       <p class="state" role="status">
@@ -66,18 +60,31 @@
       <h2 id="library-books-heading">Libros</h2>
       <section class="shelf-room book-shelf-room" aria-label="Mi estantería de libros guardados">
         <div class="shelf-crown" aria-hidden="true"></div>
-        @if (filteredBooks().length) {
-          <section class="shelf-section">
+        @for (shelf of bookShelves(); track shelf.state) {
+          <section
+            class="shelf-section"
+            [attr.data-state]="shelf.state"
+            [attr.aria-labelledby]="'books-shelf-' + shelf.state"
+          >
+            <div class="shelf-heading reading-state" [attr.data-state]="shelf.state">
+              <h3 [id]="'books-shelf-' + shelf.state">{{ shelfLabel(shelf.state) }}</h3>
+              <span
+                >{{ shelf.entries.length }}
+                {{ shelf.entries.length === 1 ? 'libro' : 'libros' }}</span
+              >
+            </div>
             <div
-              #bookShelf
+              #readingShelf
               class="shelf-scroll"
               role="region"
               tabindex="0"
-              aria-label="Libros guardados, desplazamiento horizontal"
+              [attr.aria-label]="
+                'Libros: ' + shelfLabel(shelf.state) + ', desplazamiento horizontal'
+              "
             >
               <div class="shelf-track">
                 <div class="books-row">
-                  @for (entry of filteredBooks(); track entry.reading.idExternal; let i = $index) {
+                  @for (entry of shelf.entries; track entry.reading.idExternal; let i = $index) {
                     <div class="shelf-book">
                       <button
                         type="button"
@@ -127,20 +134,20 @@
               <div class="wood-shelf" aria-hidden="true"></div>
             </div>
           </section>
-        } @else {
+        } @empty {
           <section class="shelf-section">
             <div class="empty-shelf">
               <span aria-hidden="true">✧</span>
               <h2>
                 {{
-                  entries().length
+                  libraryBooks().length
                     ? 'Cada libro tiene su momento.'
                     : 'Tu estantería empieza con un libro.'
                 }}
               </h2>
               <p>
                 {{
-                  entries().length
+                  libraryBooks().length
                     ? 'Todavía no tenés libros en este estado.'
                     : 'Buscá en el catálogo y elegí «Guardar en mi biblioteca» para verlo acá.'
                 }}
@@ -156,48 +163,74 @@
       <h2 id="library-stories-heading">Historias</h2>
       <div class="shelf-room story-shelf-room" aria-label="Mi estantería de historias guardadas">
         <div class="shelf-crown" aria-hidden="true"></div>
-        @for (shelf of storyShelves(); track $index) {
-          <section class="shelf-section">
-            <div class="books-row">
-              @for (entry of shelf; track entry.reading.idExternal; let i = $index) {
-                <div class="shelf-book">
-                  <button
-                    type="button"
-                    class="edit-status spine-status reading-state"
-                    [attr.data-state]="entry.reading.status"
-                    (click)="editStatus(entry)"
-                    [attr.aria-label]="'Cambiar estado de ' + entry.story.title"
-                    [attr.aria-describedby]="'reading-state-' + entry.reading.idExternal"
-                    title="Cambiar estado"
-                  >
-                    <span class="status-label" [id]="'reading-state-' + entry.reading.idExternal">
-                      {{ statusLabel(entry.reading.status) }}
-                    </span>
-                    <span class="status-pencil" aria-hidden="true">✎</span>
-                  </button>
-                  <a
-                    class="book-spine story-spine"
-                    [routerLink]="['/stories', entry.story.idExternal]"
-                    [style.background-color]="colors[(i + 1) % colors.length]"
-                    [style.color]="inkColors[(i + 1) % inkColors.length]"
-                    [style.height.px]="240 + (i % 3) * 12"
-                    [attr.aria-label]="entry.story.title + '. Historia'"
-                    [title]="entry.story.title"
-                    [attr.aria-describedby]="'reading-state-' + entry.reading.idExternal"
-                  >
-                    <strong>{{ entry.story.title }}</strong>
-                  </a>
-                </div>
-              }
+        @for (shelf of storyShelves(); track shelf.state) {
+          <section
+            class="shelf-section"
+            [attr.data-state]="shelf.state"
+            [attr.aria-labelledby]="'stories-shelf-' + shelf.state"
+          >
+            <div class="shelf-heading reading-state" [attr.data-state]="shelf.state">
+              <h3 [id]="'stories-shelf-' + shelf.state">{{ shelfLabel(shelf.state, true) }}</h3>
+              <span
+                >{{ shelf.entries.length }}
+                {{ shelf.entries.length === 1 ? 'historia' : 'historias' }}</span
+              >
             </div>
-            <div class="wood-shelf" aria-hidden="true"></div>
+            <div
+              #readingShelf
+              class="shelf-scroll"
+              role="region"
+              tabindex="0"
+              [attr.aria-label]="
+                'Historias: ' + shelfLabel(shelf.state, true) + ', desplazamiento horizontal'
+              "
+            >
+              <div class="shelf-track">
+                <div class="books-row">
+                  @for (entry of shelf.entries; track entry.reading.idExternal; let i = $index) {
+                    <div class="shelf-book">
+                      <button
+                        type="button"
+                        class="edit-status spine-status reading-state"
+                        [attr.data-state]="entry.reading.status"
+                        (click)="editStatus(entry)"
+                        [attr.aria-label]="'Cambiar estado de ' + entry.story.title"
+                        [attr.aria-describedby]="'reading-state-' + entry.reading.idExternal"
+                        title="Cambiar estado"
+                      >
+                        <span
+                          class="status-label"
+                          [id]="'reading-state-' + entry.reading.idExternal"
+                        >
+                          {{ statusLabel(entry.reading.status) }}
+                        </span>
+                        <span class="status-pencil" aria-hidden="true">✎</span>
+                      </button>
+                      <a
+                        class="book-spine story-spine"
+                        [routerLink]="['/stories', entry.story.idExternal]"
+                        [style.background-color]="colors[(i + 1) % colors.length]"
+                        [style.color]="inkColors[(i + 1) % inkColors.length]"
+                        [style.height.px]="240 + (i % 3) * 12"
+                        [attr.aria-label]="entry.story.title + '. Historia'"
+                        [title]="entry.story.title"
+                        [attr.aria-describedby]="'reading-state-' + entry.reading.idExternal"
+                      >
+                        <strong>{{ entry.story.title }}</strong>
+                      </a>
+                    </div>
+                  }
+                </div>
+              </div>
+              <div class="wood-shelf" aria-hidden="true"></div>
+            </div>
           </section>
         } @empty {
           <section class="shelf-section">
             <div class="empty-shelf">
               <h2>
                 {{
-                  stories().length
+                  libraryStories().length
                     ? 'No hay historias en este estado.'
                     : 'Todavía no guardaste historias.'
                 }}

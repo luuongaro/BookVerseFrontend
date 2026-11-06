@@ -3,7 +3,7 @@ import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/route
 import { of, throwError, Subject } from 'rxjs';
 import { MyLibrary } from './my-library';
 import { LibraryService } from '../../services/library.service';
-import { LibraryResult, LibraryStory } from '../../models/library-book.model';
+import { LibraryResult, LibraryStory, ReadingState } from '../../models/library-book.model';
 import { StoryAccessType } from '../../../stories/models/story-access-type';
 import { HttpErrorResponse } from '@angular/common/http';
 function savedEntry(): LibraryResult['entries'][number] {
@@ -34,6 +34,32 @@ function savedEntry(): LibraryResult['entries'][number] {
       startedAt: null,
       finishedAt: null,
       updatedAt: null,
+    },
+  };
+}
+function savedStory(index: number, status: ReadingState): LibraryStory {
+  return {
+    story: {
+      idExternal: `story-${index}`,
+      authorId: 'author',
+      authorUsername: 'Autora',
+      title: `Historia ${index}`,
+      description: 'Descripción',
+      accessType: StoryAccessType.FREE,
+      hidden: false,
+      deleted: false,
+      createdAt: '',
+      updatedAt: '',
+      chaptersCount: 4,
+      publishedChaptersCount: 4,
+      chapters: [],
+    },
+    reading: {
+      ...savedEntry().reading,
+      idExternal: `story-reading-${index}`,
+      bookId: null,
+      storyId: `story-${index}`,
+      status,
     },
   };
 }
@@ -117,6 +143,110 @@ describe('Personal bookshelf screen', () => {
     fixture.detectChanges();
     expect(el.querySelectorAll('.book-spine')).toHaveLength(0);
     expect(el.textContent).toContain('Todavía no tenés libros en este estado.');
+  });
+  it('groups books and stories into ordered state shelves and leaves abandoned readings out', async () => {
+    const states: ReadingState[] = [
+      'WANT_TO_READ',
+      'IN_PROGRESS',
+      'FINISHED',
+      'RE_READING',
+      'ABANDONED',
+    ];
+    const entries = states.map((status, index) => {
+      const entry = savedEntry();
+      return {
+        book: { ...entry.book, idExternal: `book-${index}`, title: `Libro ${index}` },
+        reading: { ...entry.reading, idExternal: `reading-${index}`, status },
+      };
+    });
+    const { fixture } = await setup({
+      entries,
+      stories: states.map((state, index) => savedStory(index, state)),
+      unavailableCount: 0,
+    });
+    const el: HTMLElement = fixture.nativeElement;
+    for (const kind of ['book', 'story']) {
+      const shelves = Array.from(
+        el.querySelectorAll(`.${kind}-shelf-room .shelf-section[data-state]`),
+      );
+      expect(shelves.map((shelf) => shelf.getAttribute('data-state'))).toEqual(states.slice(0, 4));
+      for (const [index, shelf] of shelves.entries()) {
+        expect(shelf.querySelectorAll('.book-spine')).toHaveLength(1);
+        expect(shelf.querySelector('.book-spine')?.getAttribute('href')).toBe(
+          `/${kind === 'book' ? 'books' : 'stories'}/${kind}-${index}`,
+        );
+        expect(shelf.querySelector('.shelf-scroll')?.getAttribute('tabindex')).toBe('0');
+        expect(shelf.querySelectorAll('.wood-shelf')).toHaveLength(1);
+      }
+    }
+    expect(el.querySelector('.library-toolbar p')?.textContent).toContain('4 libros · 4 historias');
+    expect(el.querySelector('#reading-filter option[value="ABANDONED"]')).toBeNull();
+    expect(el.querySelector('a[href="/books/book-4"]')).toBeNull();
+    expect(el.querySelector('a[href="/stories/story-4"]')).toBeNull();
+
+    const scrollAreas = Array.from(el.querySelectorAll<HTMLDivElement>('.shelf-scroll'));
+    scrollAreas.forEach((area) => {
+      area.scrollLeft = 400;
+    });
+    fixture.componentInstance.setFilter('FINISHED');
+    fixture.detectChanges();
+    expect(scrollAreas.every((area) => area.scrollLeft === 0)).toBe(true);
+    expect(el.querySelectorAll('.shelf-section[data-state]')).toHaveLength(2);
+    expect(el.querySelectorAll('.shelf-section[data-state="FINISHED"]')).toHaveLength(2);
+  });
+  it('keeps all stories in a single horizontal shelf per state rather than splitting after nine', async () => {
+    const stories = Array.from({ length: 22 }, (_, i) => savedStory(i, 'IN_PROGRESS'));
+    const { fixture } = await setup({ entries: [], stories, unavailableCount: 0 });
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelectorAll('.story-shelf-room .shelf-section[data-state]')).toHaveLength(1);
+    expect(el.querySelectorAll('.story-shelf-room .wood-shelf')).toHaveLength(1);
+    expect(el.querySelectorAll('.story-shelf-room .shelf-scroll .book-spine')).toHaveLength(22);
+  });
+  it('moves a reading between shelves only after the server confirms its new state', async () => {
+    const entry = savedEntry();
+    const { fixture, updateStatus } = await setup({ entries: [entry], unavailableCount: 0 });
+    const component = fixture.componentInstance;
+    const pending = new Subject<typeof entry.reading>();
+    updateStatus.mockReturnValue(pending);
+    component.editStatus(entry);
+    component.chooseStatus('IN_PROGRESS');
+    component.saveStatus();
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(
+      el.querySelectorAll('.shelf-section[data-state="WANT_TO_READ"] .book-spine'),
+    ).toHaveLength(1);
+    expect(el.querySelector('.shelf-section[data-state="IN_PROGRESS"]')).toBeNull();
+    pending.next({ ...entry.reading, status: 'IN_PROGRESS' });
+    pending.complete();
+    fixture.detectChanges();
+    expect(el.querySelector('.shelf-section[data-state="WANT_TO_READ"]')).toBeNull();
+    expect(
+      el.querySelectorAll('.shelf-section[data-state="IN_PROGRESS"] .book-spine'),
+    ).toHaveLength(1);
+  });
+  it('removes abandoned readings from shelves and totals after a successful save', async () => {
+    const entry = savedEntry();
+    const story = savedStory(0, 'IN_PROGRESS');
+    const { fixture, updateStatus } = await setup({
+      entries: [entry],
+      stories: [story],
+      unavailableCount: 0,
+    });
+    const component = fixture.componentInstance;
+    for (const reading of [entry, story]) {
+      component.editStatus(reading);
+      component.chooseStatus('ABANDONED');
+      updateStatus.mockReturnValueOnce(of({ ...reading.reading, status: 'ABANDONED' }));
+      component.saveStatus();
+      fixture.detectChanges();
+    }
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelectorAll('.book-spine')).toHaveLength(0);
+    expect(el.querySelectorAll('.shelf-section[data-state]')).toHaveLength(0);
+    expect(el.querySelector('.library-toolbar p')?.textContent).toContain('0 libros · 0 historias');
+    expect(component.entries()[0].reading.status).toBe('ABANDONED');
+    expect(component.stories()[0].reading.status).toBe('ABANDONED');
   });
   it('keeps only the title on the spine and edits the state from its separate label', async () => {
     const entry = savedEntry();
