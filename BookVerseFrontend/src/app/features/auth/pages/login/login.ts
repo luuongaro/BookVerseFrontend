@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
+import { SessionExpiredService } from '../../../../core/services/session-expired.service';
 import { UserService } from '../../../profile/services/user.service';
 
 @Component({
@@ -16,6 +17,7 @@ export class Login {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private userService = inject(UserService);
+  private sessionExpired = inject(SessionExpiredService);
 
   showPassword = false;
 
@@ -50,6 +52,7 @@ export class Login {
         this.userService.getByIdExternal(response.userId).subscribe({
           next: (user) => {
             this.userService.setCurrentUser(user);
+            this.sessionExpired.clear();
             void this.router.navigateByUrl(this.getReturnUrl());
           },
           error: () => {
