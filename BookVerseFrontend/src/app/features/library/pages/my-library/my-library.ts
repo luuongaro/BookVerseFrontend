@@ -115,6 +115,7 @@ export class MyLibrary implements OnInit {
     this.draftPercentage.set(value);
     this.progressTouched.set(true);
     this.progressInputValid.set(valid);
+    if (valid && value.trim() !== '' && Number(value) === 100) this.chooseStatus('FINISHED');
   }
   readingPercentage(reading: ReadingStatus): number | null {
     return this.allowsPercentage(reading.status) &&

@@ -468,23 +468,42 @@ describe('Personal bookshelf screen', () => {
     const { fixture, updateStatus } = await setup({ entries: [entry], unavailableCount: 0 });
     const component = fixture.componentInstance;
     component.editStatus(entry);
-    component.choosePercentage('100');
+    component.choosePercentage('90');
     updateStatus.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 0 })));
     component.saveStatus();
     expect(component.entries()[0].reading.progressValue).toBeNull();
-    expect(component.draftPercentage()).toBe('100');
+    expect(component.draftPercentage()).toBe('90');
     expect(component.saveError()).not.toBe('');
     updateStatus.mockReturnValueOnce(
-      of({ ...entry.reading, progressType: 'PERCENTAGE', progressValue: 100 }),
+      of({ ...entry.reading, progressType: 'PERCENTAGE', progressValue: 90 }),
     );
     component.saveStatus();
-    expect(component.entries()[0].reading.progressValue).toBe(100);
+    expect(component.entries()[0].reading.progressValue).toBe(90);
     component.editStatus(component.entries()[0]);
     component.choosePercentage('30');
     component.closeEditor();
     component.editStatus(component.entries()[0]);
-    expect(component.draftPercentage()).toBe('100');
+    expect(component.draftPercentage()).toBe('90');
     expect(component.hasChanges()).toBe(false);
+  });
+  it('shows Finalizado explicitly when the user enters 100 percent', async () => {
+    const entry = savedEntry();
+    entry.reading.status = 'IN_PROGRESS';
+    const { fixture, updateStatus } = await setup({ entries: [entry], unavailableCount: 0 });
+    const component = fixture.componentInstance;
+    component.editStatus(entry);
+    component.choosePercentage('100');
+    fixture.detectChanges();
+    expect(component.draftStatus()).toBe('FINISHED');
+    expect(fixture.nativeElement.querySelector('#book-reading-percentage')).toBeNull();
+    expect(fixture.nativeElement.querySelector('dialog').textContent).toContain('100% leído');
+    updateStatus.mockReturnValue(
+      of({ ...entry.reading, status: 'FINISHED', progressType: 'PERCENTAGE', progressValue: 100 }),
+    );
+    component.saveStatus();
+    fixture.detectChanges();
+    expect(updateStatus).toHaveBeenCalledWith(entry.reading, 'FINISHED', undefined);
+    expect(component.entries()[0].reading.status).toBe('FINISHED');
   });
   it('preserves chapter progress when only the status is edited', async () => {
     const entry = savedEntry();

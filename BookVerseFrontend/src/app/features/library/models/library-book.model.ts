@@ -9,6 +9,7 @@ export interface ReadingStatus {
   status: ReadingState;
   progressType: 'PERCENTAGE' | 'CHAPTER' | null;
   progressValue: number | null;
+  progressTotal?: number | null;
   startedAt: string | null;
   finishedAt: string | null;
   updatedAt: string | null;
