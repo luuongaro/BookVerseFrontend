@@ -7,6 +7,66 @@
 .book-search > div {
   min-width: 0;
 }
+.book-preview-trigger {
+  width: 100%;
+  display: block;
+  min-height: 0;
+  margin-top: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  border-radius: 0.5rem;
+}
+.book-preview-trigger:hover {
+  background: transparent;
+}
+.book-preview-trigger:focus-visible {
+  border-radius: 0.5rem;
+  outline: 3px solid #9caeea;
+  outline-offset: 4px;
+}
+.book-preview-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(48 43 67 / 55%);
+}
+.book-preview {
+  width: min(760px, 100%);
+  max-height: min(720px, calc(100vh - 48px));
+  margin: 0;
+  overflow: auto;
+  box-shadow: 0 20px 60px rgb(48 43 67 / 25%);
+}
+.book-preview__header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.book-preview__header h2 {
+  margin-top: 0;
+}
+.book-preview__content {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 24px;
+}
+.book-preview__content .cover {
+  height: 260px;
+}
+@media (max-width: 600px) {
+  .book-preview__content {
+    grid-template-columns: 1fr;
+  }
+  .book-preview__content .cover {
+    height: 230px;
+  }
+}
 @media (max-width: 1000px) {
   .book-search {
     grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);

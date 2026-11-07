@@ -23,6 +23,33 @@
   @if (form.controls.value.touched && !form.controls.value.value.trim()) {
     <p class="validation">Ingresá un texto para buscar.</p>
   }
+  @if (selectedBook(); as book) {
+    <div class="book-preview-backdrop" (click)="closePreview()">
+      <section
+        class="book-preview panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="book-preview-title"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="book-preview__header">
+          <h2 id="book-preview-title">{{ book.volumeInfo.title }}</h2>
+          <button class="secondary" type="button" (click)="closePreview()">Cerrar</button>
+        </div>
+        <div class="book-preview__content">
+          <app-book-cover
+            class="cover"
+            [src]="book.volumeInfo.imageLinks?.thumbnail"
+            [title]="book.volumeInfo.title"
+          />
+          <div>
+            <p>{{ book.volumeInfo.authors?.join(', ') || 'Autor desconocido' }}</p>
+            <div class="prose" [innerHTML]="book.volumeInfo.description || 'Sin descripción disponible.'"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  }
   @if (loading()) {
     <p class="state" role="status">Buscando libros…</p>
   } @else if (error()) {
@@ -31,14 +58,21 @@
     <div class="grid book-grid">
       @for (book of results(); track book.id) {
         <article class="card book-card">
-          <app-book-cover
-            class="cover"
-            [src]="book.volumeInfo.imageLinks?.thumbnail"
-            [title]="book.volumeInfo.title"
-          />
-          <h3 class="book-card-title" [title]="book.volumeInfo.title">
-            {{ book.volumeInfo.title }}
-          </h3>
+          <button
+            class="book-preview-trigger"
+            type="button"
+            (click)="preview(book)"
+            [attr.aria-label]="'Previsualizar ' + book.volumeInfo.title"
+          >
+            <app-book-cover
+              class="cover"
+              [src]="book.volumeInfo.imageLinks?.thumbnail"
+              [title]="book.volumeInfo.title"
+            />
+            <h3 class="book-card-title" [title]="book.volumeInfo.title">
+              {{ book.volumeInfo.title }}
+            </h3>
+          </button>
           <p
             class="book-card-authors"
             [title]="book.volumeInfo.authors?.join(', ') || 'Autor desconocido'"
