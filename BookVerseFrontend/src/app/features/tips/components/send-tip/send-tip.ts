@@ -24,18 +24,12 @@ export const CHECKOUT_REDIRECT = new InjectionToken<(url: string) => void>('CHEC
       [disabled]="pending() || !storyId"
       (click)="send()"
     >
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.5"
-        aria-hidden="true"
-      >
-        <path
-          d="M4 8h12v7a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8Zm12 1h2a3 3 0 0 1 0 6h-2M8 3v2m4-2v2M2 23h18"
-        />
-      </svg>
-      {{ pending() ? 'Preparando pago…' : 'Apoyar al autor · $1.000' }}
+      @if (pending()) {
+        Preparando pago…
+      } @else {
+        <span>Apoyar al autor</span>
+        <span class="tip-amount">$1.000</span>
+      }
     </button>
     @if (error()) {
       <p class="tip-error" role="alert">{{ error() }}</p>
@@ -48,21 +42,23 @@ export const CHECKOUT_REDIRECT = new InjectionToken<(url: string) => void>('CHEC
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 9px;
-      min-height: 42px;
-      padding: 10px 16px;
-      border: 1px solid #e5d2bc;
-      border-radius: 10px;
-      background: #fbf1e4;
-      color: #795a3d;
+      gap: 12px;
+      max-width: 100%;
+      min-height: 44px;
+      padding: 11px 16px;
+      border: 1px solid #ded4ec;
+      border-radius: 12px;
+      background: #faf7fd;
+      color: #665498;
       font:
-        13px 'DM Sans',
+        500 13px/1.4 'DM Sans',
         Arial,
         sans-serif;
       cursor: pointer;
     }
     .tip-button:hover:not(:disabled) {
-      background: #f6e7d3;
+      border-color: #bca9d6;
+      background: #f0e9f8;
     }
     .tip-button:disabled {
       opacity: 0.6;
@@ -72,10 +68,12 @@ export const CHECKOUT_REDIRECT = new InjectionToken<(url: string) => void>('CHEC
       outline: 2px solid #7465ad;
       outline-offset: 3px;
     }
-    svg {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
+    .tip-amount {
+      padding-left: 12px;
+      border-left: 1px solid #ded4ec;
+      color: #7d6a9e;
+      font-size: 12px;
+      white-space: nowrap;
     }
     .tip-error {
       max-width: 320px;
@@ -110,9 +108,7 @@ export class SendTip implements OnChanges {
       .createTip({
         storyId: this.storyId,
         amount: 1000,
-        message: this.recipientName
-          ? `Apoyo para ${this.recipientName}`
-          : 'Apoyo a esta historia',
+        message: this.recipientName ? `Apoyo para ${this.recipientName}` : 'Apoyo a esta historia',
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
