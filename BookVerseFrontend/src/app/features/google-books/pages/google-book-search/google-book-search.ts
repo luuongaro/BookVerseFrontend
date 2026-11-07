@@ -26,7 +26,7 @@ export class GoogleBookSearch {
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   form = this.fb.nonNullable.group({
-    type: ['query' as SearchType],
+    type: ['title' as SearchType],
     value: ['', Validators.required],
   });
   results = signal<GoogleBook[]>([]);
@@ -35,12 +35,19 @@ export class GoogleBookSearch {
   error = signal('');
   importing = signal('');
   importError = signal('');
+  selectedBook = signal<GoogleBook | null>(null);
   readonly selectedStates = signal<Record<string, ReadingState>>({});
   stateFor(id: string): ReadingState {
     return this.selectedStates()[id] ?? 'WANT_TO_READ';
   }
   chooseState(id: string, state: ReadingState): void {
     if (!this.importing()) this.selectedStates.update((states) => ({ ...states, [id]: state }));
+  }
+  preview(book: GoogleBook): void {
+    this.selectedBook.set(book);
+  }
+  closePreview(): void {
+    this.selectedBook.set(null);
   }
   search(): void {
     if (this.loading() || this.importing()) return;
@@ -53,6 +60,7 @@ export class GoogleBookSearch {
     this.error.set('');
     this.importError.set('');
     this.results.set([]);
+    this.closePreview();
     this.selectedStates.set({});
     this.searched.set(true);
     this.service

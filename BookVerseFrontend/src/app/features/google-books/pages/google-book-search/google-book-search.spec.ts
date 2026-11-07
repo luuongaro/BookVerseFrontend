@@ -33,6 +33,11 @@ describe('GoogleBookSearch states', () => {
     expect(search).not.toHaveBeenCalled();
     expect(page.searched()).toBe(false);
   });
+  it('uses title as the default search type', () => {
+    const { page } = setup();
+
+    expect(page.form.controls.type.value).toBe('title');
+  });
   it('normalizes absent search items', () => {
     const { page, search } = setup();
     search.mockReturnValue(of({ items: null }));
