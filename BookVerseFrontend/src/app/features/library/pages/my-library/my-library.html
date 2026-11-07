@@ -336,7 +336,48 @@
         <button type="button" class="secondary" [disabled]="saving()" (click)="closeEditor()">
           Cancelar
         </button>
+        @if (entry) {
+          @if (!confirmingDelete()) {
+            <button
+              type="button"
+              class="danger-button"
+              [disabled]="saving()"
+              (click)="askToRemoveEntry()"
+            >
+              {{ 'book' in entry ? 'Eliminar libro' : 'Eliminar historia' }}
+            </button>
+          }
+        }
       </div>
+      @if (entry) {
+        @if (confirmingDelete()) {
+          <div class="delete-confirmation" role="alert">
+            <p>
+              ¿Querés quitar <strong>{{ titleOf(entry) }}</strong> de tu biblioteca?
+            </p>
+
+            <div class="actions">
+              <button
+                type="button"
+                class="danger-button"
+                [disabled]="saving()"
+                (click)="removeEntryFromLibrary()"
+              >
+                {{ saving() ? 'Eliminando…' : ('book' in entry ? 'Sí, eliminar libro' : 'Sí, eliminar historia') }}
+              </button>
+
+              <button
+                type="button"
+                class="secondary"
+                [disabled]="saving()"
+                (click)="cancelRemoveBook()"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        }
+      }
     </form>
   }
 </dialog>

@@ -172,6 +172,15 @@ export class LibraryService {
       },
     );
   }
+  removeFromLibrary(reading: ReadingStatus): Observable<void> {
+    const userId = localStorage.getItem('userId');
+    if (!userId || reading.userId !== userId) {
+      return throwError(() => new LibrarySessionError());
+    }
+    return this.http.delete<void>(
+      `${API_URL}/reading-statuses/${encodeURIComponent(reading.idExternal)}`,
+    );
+  }
   saveBook(bookId: string, status: ReadingState = 'WANT_TO_READ'): Observable<ReadingStatus> {
     // Importing a Google volume into the shared catalog does not save it for a user.
     return this.getBookStatus(bookId).pipe(

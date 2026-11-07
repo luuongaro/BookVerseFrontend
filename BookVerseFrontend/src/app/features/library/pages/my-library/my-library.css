@@ -495,6 +495,40 @@ h1 em {
 .status-dialog .actions {
   margin-bottom: 0;
 }
+.status-dialog > form > .actions {
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+.status-dialog .danger-button {
+  padding: 4px 6px;
+  border: 1px solid #e2c3d0;
+  border-radius: 5px;
+  background: #fff;
+  color: #a44d68;
+  font: 7px var(--sans);
+  white-space: nowrap;
+  box-shadow: 0 0 0 0 rgb(164 77 104 / 0%);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.status-dialog .danger-button:hover:not(:disabled) {
+  border-color: #c8899e;
+  background: #fff7fa;
+  color: #893c56;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgb(164 77 104 / 16%);
+}
+.status-dialog .delete-confirmation {
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px solid #e8a1a8;
+  border-radius: 10px;
+  background: #fff1f2;
+}
+.status-dialog .delete-confirmation p {
+  margin: 0;
+  color: #6f1d28;
+}
 
 .library-section {
   margin-top: 36px;

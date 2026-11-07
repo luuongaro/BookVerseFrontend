@@ -89,6 +89,7 @@ export class MyLibrary implements OnInit {
   saving = signal(false);
   saveError = signal('');
   confirmation = signal('');
+  confirmingDelete = signal(false);
   titleOf(entry: LibraryBook | LibraryStory): string {
     return 'book' in entry ? entry.book.title : entry.story.title;
   }
@@ -105,6 +106,7 @@ export class MyLibrary implements OnInit {
     this.progressInputValid.set(true);
     this.saveError.set('');
     this.confirmation.set('');
+    this.confirmingDelete.set(false);
     this.statusDialog().nativeElement.showModal();
   }
   chooseStatus(value: string): void {
@@ -129,6 +131,43 @@ export class MyLibrary implements OnInit {
   }
   closeEditor(): void {
     if (!this.saving()) this.statusDialog().nativeElement.close();
+  }
+  askToRemoveEntry(): void {
+    if (this.saving() || !this.editing()) return;
+    this.confirmingDelete.set(true);
+    this.saveError.set('');
+  }
+  cancelRemoveBook(): void {
+    if (!this.saving()) {
+      this.confirmingDelete.set(false);
+      this.saveError.set('');
+    }
+  }
+  removeEntryFromLibrary(): void {
+    const entry = this.editing();
+    if (!entry || this.saving()) return;
+    this.saving.set(true);
+    this.saveError.set('');
+    this.service
+      .removeFromLibrary(entry.reading)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.entries.update((entries) =>
+            entries.filter((item) => item.reading.idExternal !== entry.reading.idExternal),
+          );
+          this.stories.update((stories) =>
+            stories.filter((item) => item.reading.idExternal !== entry.reading.idExternal),
+          );
+          this.saving.set(false);
+          this.confirmation.set(`${this.titleOf(entry)} se quitó de tu biblioteca.`);
+          this.statusDialog().nativeElement.close();
+        },
+        error: (error) => {
+          this.saveError.set(libraryError(error));
+          this.saving.set(false);
+        },
+      });
   }
   saveStatus(): void {
     const entry = this.editing();
