@@ -23,6 +23,7 @@ import {
   ReadingState,
   ReadingStatus,
 } from '../../models/library-book.model';
+type ShelfOrder = 'original' | 'title' | 'progress' | 'custom';
 @Component({
   selector: 'app-my-library',
   imports: [RouterLink, ReadingStateBadge, ReadingStateSelect],
@@ -39,6 +40,9 @@ export class MyLibrary implements OnInit {
   error = signal('');
   unavailableCount = signal(0);
   filter = signal('all');
+  shelfOrder = signal<ShelfOrder>(this.readShelfOrder());
+  private readonly customOrders = signal<Record<string, string[]>>(this.readCustomOrders());
+  private dragged: { shelf: string; id: string } | null = null;
   readonly statusDialog = viewChild.required<ElementRef<HTMLDialogElement>>('statusDialog');
   private readonly shelves = viewChildren<ElementRef<HTMLDivElement>>('readingShelf');
   readonly shelfStates = READING_STATES.filter((state) => state !== 'ABANDONED');
@@ -227,14 +231,112 @@ export class MyLibrary implements OnInit {
       ),
     ),
   );
-  private groupByState<T extends { reading: ReadingStatus }>(entries: T[]) {
+  private groupByState<T extends LibraryBook | LibraryStory>(entries: T[]) {
     return this.shelfStates
       .map((state) => ({
         state,
-        entries: entries.filter((entry) => entry.reading.status === state),
+        entries: this.sortShelf(entries.filter((entry) => entry.reading.status === state), state),
       }))
       .filter((shelf) => shelf.entries.length > 0);
   }
+  private sortShelf<T extends LibraryBook | LibraryStory>(entries: T[], state: ReadingState): T[] {
+    const order = this.shelfOrder();
+    if (order === 'original') return entries;
+    if (order === 'custom') {
+      if (!entries.length) return entries;
+      const ids = this.customOrders()[this.shelfKey(entries[0], state)] ?? [];
+      const positions = new Map(ids.map((id, index) => [id, index]));
+      return [...entries].sort((a, b) =>
+        (positions.get(a.reading.idExternal) ?? Number.MAX_SAFE_INTEGER) -
+        (positions.get(b.reading.idExternal) ?? Number.MAX_SAFE_INTEGER),
+      );
+    }
+    const collator = new Intl.Collator('es', { sensitivity: 'base', numeric: true });
+    return [...entries].sort((a, b) => {
+      if (order === 'progress') {
+        const aProgress = this.progressForSort(a.reading);
+        const bProgress = this.progressForSort(b.reading);
+        if (aProgress === null && bProgress !== null) return 1;
+        if (aProgress !== null && bProgress === null) return -1;
+        if (aProgress !== null && bProgress !== null && aProgress !== bProgress) {
+          return bProgress - aProgress;
+        }
+      }
+      return collator.compare(this.titleOf(a), this.titleOf(b));
+    });
+  }
+  private progressForSort(reading: ReadingStatus): number | null {
+    if (reading.status === 'FINISHED') return 100;
+    const value = reading.progressValue;
+    if (value == null || !Number.isFinite(value) || value < 0) return null;
+    if (reading.progressType === 'PERCENTAGE' && value <= 100) return value;
+    if (reading.progressType === 'CHAPTER' && reading.progressTotal && reading.progressTotal > 0 && value <= reading.progressTotal) {
+      return (value / reading.progressTotal) * 100;
+    }
+    return null;
+  }
+  setShelfOrder(value: string): void {
+    if (value !== 'original' && value !== 'title' && value !== 'progress' && value !== 'custom') return;
+    this.shelfOrder.set(value);
+    try {
+      const key = this.storageKey();
+      if (key) localStorage.setItem(`${key}:selected`, value);
+    } catch { /* The current selection still works for this visit. */ }
+    for (const shelf of this.shelves()) shelf.nativeElement.scrollLeft = 0;
+  }
+  private shelfKey(entry: LibraryBook | LibraryStory, state: ReadingState): string {
+    return `${'book' in entry ? 'books' : 'stories'}:${state}`;
+  }
+  private storageKey(): string | null {
+    try {
+      const id = localStorage.getItem('userId');
+      return id ? `bookverse:shelf-order:${id}` : null;
+    } catch { return null; }
+  }
+  private readCustomOrders(): Record<string, string[]> {
+    try {
+      const key = this.storageKey();
+      const data: unknown = key ? JSON.parse(localStorage.getItem(key) ?? '{}') : {};
+      if (!data || typeof data !== 'object' || Array.isArray(data)) return {};
+      return Object.fromEntries(Object.entries(data).filter(([, ids]) =>
+        Array.isArray(ids) && ids.every((id: unknown) => typeof id === 'string')));
+    } catch { return {}; }
+  }
+  private readShelfOrder(): ShelfOrder {
+    try {
+      const key = this.storageKey();
+      const value = key ? localStorage.getItem(`${key}:selected`) : null;
+      return value === 'title' || value === 'progress' || value === 'custom' ? value : 'original';
+    } catch { return 'original'; }
+  }
+  moveEntry(entries: (LibraryBook | LibraryStory)[], state: ReadingState, from: number, to: number): void {
+    if (this.shelfOrder() !== 'custom' || from === to || from < 0 || to < 0 || from >= entries.length || to >= entries.length) return;
+    const ids = entries.map((entry) => entry.reading.idExternal);
+    const [id] = ids.splice(from, 1);
+    ids.splice(to, 0, id);
+    const key = this.shelfKey(entries[0], state);
+    this.customOrders.update((orders) => ({ ...orders, [key]: ids }));
+    try {
+      const storageKey = this.storageKey();
+      if (storageKey) localStorage.setItem(storageKey, JSON.stringify(this.customOrders()));
+    } catch { this.confirmation.set('No pudimos guardar el orden en este navegador.'); }
+  }
+  startDrag(event: DragEvent, entry: LibraryBook | LibraryStory, state: ReadingState): void {
+    if (this.shelfOrder() !== 'custom') return;
+    this.dragged = { shelf: this.shelfKey(entry, state), id: entry.reading.idExternal };
+    event.dataTransfer?.setData('text/plain', entry.reading.idExternal);
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+  }
+  allowDrop(event: DragEvent, entry: LibraryBook | LibraryStory, state: ReadingState): void {
+    if (this.dragged?.shelf === this.shelfKey(entry, state)) event.preventDefault();
+  }
+  dropEntry(event: DragEvent, entries: (LibraryBook | LibraryStory)[], entry: LibraryBook | LibraryStory, state: ReadingState): void {
+    if (!this.dragged || this.dragged.shelf !== this.shelfKey(entry, state)) return;
+    event.preventDefault();
+    this.moveEntry(entries, state, entries.findIndex((item) => item.reading.idExternal === this.dragged?.id), entries.indexOf(entry));
+    this.dragged = null;
+  }
+  endDrag(): void { this.dragged = null; }
   shelfLabel(state: ReadingState, stories = false): string {
     return state === 'FINISHED'
       ? stories

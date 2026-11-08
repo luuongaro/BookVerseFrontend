@@ -38,7 +38,19 @@
           <option value="RE_READING">Releyendo</option>
         </select>
       </div>
+      <div>
+        <label for="shelf-order">Ordenar por</label>
+        <select id="shelf-order" #shelfOrderSelect [value]="shelfOrder()" (change)="setShelfOrder(shelfOrderSelect.value)">
+          <option value="original">Orden original</option>
+          <option value="title">Título (A–Z)</option>
+          <option value="progress">Mayor progreso</option>
+          <option value="custom">Orden personalizado</option>
+        </select>
+      </div>
     </div>
+    @if (shelfOrder() === 'custom') {
+      <p class="shelf-order-hint">Arrastrá los lomos o usá las flechas para ordenarlos. El orden se guarda en este navegador.</p>
+    }
     @if (addedReading(); as added) {
       <div class="added-reading" role="status" aria-live="polite">
         <strong>En tu biblioteca: {{ titleOf(added) }}</strong>
@@ -85,7 +97,13 @@
               <div class="shelf-track">
                 <div class="books-row">
                   @for (entry of shelf.entries; track entry.reading.idExternal; let i = $index) {
-                    <div class="shelf-book">
+                    <div class="shelf-book" [attr.draggable]="shelfOrder() === 'custom' ? 'true' : null" (dragstart)="startDrag($event, entry, shelf.state)" (dragover)="allowDrop($event, entry, shelf.state)" (drop)="dropEntry($event, shelf.entries, entry, shelf.state)" (dragend)="endDrag()">
+                      @if (shelfOrder() === 'custom') {
+                        <div class="shelf-reorder">
+                          <button type="button" [disabled]="i === 0" (click)="moveEntry(shelf.entries, shelf.state, i, i - 1)" [attr.aria-label]="'Mover ' + entry.book.title + ' a la izquierda'">←</button>
+                          <button type="button" [disabled]="i === shelf.entries.length - 1" (click)="moveEntry(shelf.entries, shelf.state, i, i + 1)" [attr.aria-label]="'Mover ' + entry.book.title + ' a la derecha'">→</button>
+                        </div>
+                      }
                       <button
                         type="button"
                         class="edit-status spine-status"
@@ -203,7 +221,13 @@
               <div class="shelf-track">
                 <div class="books-row">
                   @for (entry of shelf.entries; track entry.reading.idExternal; let i = $index) {
-                    <div class="shelf-book">
+                    <div class="shelf-book" [attr.draggable]="shelfOrder() === 'custom' ? 'true' : null" (dragstart)="startDrag($event, entry, shelf.state)" (dragover)="allowDrop($event, entry, shelf.state)" (drop)="dropEntry($event, shelf.entries, entry, shelf.state)" (dragend)="endDrag()">
+                      @if (shelfOrder() === 'custom') {
+                        <div class="shelf-reorder">
+                          <button type="button" [disabled]="i === 0" (click)="moveEntry(shelf.entries, shelf.state, i, i - 1)" [attr.aria-label]="'Mover ' + entry.story.title + ' a la izquierda'">←</button>
+                          <button type="button" [disabled]="i === shelf.entries.length - 1" (click)="moveEntry(shelf.entries, shelf.state, i, i + 1)" [attr.aria-label]="'Mover ' + entry.story.title + ' a la derecha'">→</button>
+                        </div>
+                      }
                       <button
                         type="button"
                         class="edit-status spine-status"
