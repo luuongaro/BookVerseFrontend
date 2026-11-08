@@ -90,6 +90,55 @@ describe('Personal bookshelf screen', () => {
     await fixture.whenStable();
     return { fixture, getMyBooks, updateStatus };
   }
+  it('sorts within each shelf by title or progress and leaves missing progress last', async () => {
+    const entries = [
+      { title: 'Zorro', value: 30 },
+      { title: 'Árbol', value: null },
+      { title: 'Libro 2', value: 80 },
+      { title: 'Libro 10', value: 80 },
+    ].map(({ title, value }, index) => {
+      const entry = savedEntry();
+      return {
+        ...entry,
+        book: { ...entry.book, idExternal: `book-${index}`, title },
+        reading: { ...entry.reading, idExternal: `reading-${index}`, status: 'IN_PROGRESS' as const,
+          progressType: value === null ? null : 'PERCENTAGE' as const, progressValue: value },
+      };
+    });
+    const { fixture } = await setup({ entries, unavailableCount: 0 });
+    const titles = () => Array.from(fixture.nativeElement.querySelectorAll('.book-shelf-room .book-spine strong'))
+      .map((element: any) => element.textContent.trim());
+    fixture.componentInstance.setShelfOrder('title');
+    fixture.detectChanges();
+    expect(titles()).toEqual(['Árbol', 'Libro 2', 'Libro 10', 'Zorro']);
+    fixture.componentInstance.setShelfOrder('progress');
+    fixture.detectChanges();
+    expect(titles()).toEqual(['Libro 2', 'Libro 10', 'Zorro', 'Árbol']);
+    fixture.componentInstance.setShelfOrder('original');
+    fixture.detectChanges();
+    expect(titles()).toEqual(['Zorro', 'Árbol', 'Libro 2', 'Libro 10']);
+  });
+  it('keeps a custom order per user after the library is reopened', async () => {
+    localStorage.setItem('userId', 'shelf-test-user');
+    try {
+      const first = savedEntry();
+      const second = { ...savedEntry(), book: { ...first.book, idExternal: 'second', title: 'Segundo' },
+        reading: { ...first.reading, idExternal: 'second-reading' } };
+      const result: LibraryResult = { entries: [first, second], unavailableCount: 0 };
+      const { fixture } = await setup(result);
+      fixture.componentInstance.setShelfOrder('custom');
+      const shelf = fixture.componentInstance.bookShelves()[0];
+      fixture.componentInstance.moveEntry(shelf.entries, shelf.state, 1, 0);
+      expect(fixture.componentInstance.bookShelves()[0].entries.map(e => e.book.title)).toEqual(['Segundo', 'Mi libro']);
+      const reopened = await setup(result);
+      expect(reopened.fixture.componentInstance.shelfOrder()).toBe('custom');
+      expect(reopened.fixture.componentInstance.bookShelves()[0].entries.map(e => e.book.title)).toEqual(['Segundo', 'Mi libro']);
+    } finally {
+      localStorage.removeItem('bookverse:shelf-order:shelf-test-user');
+      localStorage.removeItem('bookverse:shelf-order:shelf-test-user:selected');
+      localStorage.removeItem('userId');
+    }
+  });
   it('shows a personal empty shelf and a catalog link without fabricated book titles', async () => {
     const { fixture } = await setup({ entries: [], unavailableCount: 0 });
     const el: HTMLElement = fixture.nativeElement;
