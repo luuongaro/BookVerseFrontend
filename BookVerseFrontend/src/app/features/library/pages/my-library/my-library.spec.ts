@@ -67,6 +67,7 @@ describe('Personal bookshelf screen', () => {
   async function setup(result: LibraryResult, savedId: string | null = null) {
     TestBed.resetTestingModule();
     const updateStatus = vi.fn();
+    const saveShelfOrder = vi.fn(() => of(undefined));
     const getMyBooks = vi.fn(() => of(result));
     TestBed.configureTestingModule({
       imports: [MyLibrary],
@@ -76,7 +77,7 @@ describe('Personal bookshelf screen', () => {
           provide: ActivatedRoute,
           useValue: { queryParamMap: of(convertToParamMap(savedId ? { saved: savedId } : {})) },
         },
-        { provide: LibraryService, useValue: { getMyLibrary: getMyBooks, updateStatus } },
+        { provide: LibraryService, useValue: { getMyLibrary: getMyBooks, updateStatus, saveShelfOrder } },
       ],
     });
     const fixture = TestBed.createComponent(MyLibrary);
@@ -88,7 +89,7 @@ describe('Personal bookshelf screen', () => {
       dialog.dispatchEvent(new Event('close'));
     };
     await fixture.whenStable();
-    return { fixture, getMyBooks, updateStatus };
+    return { fixture, getMyBooks, updateStatus, saveShelfOrder };
   }
   it('sorts within each shelf by title or progress and leaves missing progress last', async () => {
     const entries = [
@@ -130,7 +131,7 @@ describe('Personal bookshelf screen', () => {
       const shelf = fixture.componentInstance.bookShelves()[0];
       fixture.componentInstance.moveEntry(shelf.entries, shelf.state, 1, 0);
       expect(fixture.componentInstance.bookShelves()[0].entries.map(e => e.book.title)).toEqual(['Segundo', 'Mi libro']);
-      const reopened = await setup(result);
+      const reopened = await setup({ ...result, entries: [first, { ...second, reading: { ...second.reading, shelfPosition: 0 } }] });
       expect(reopened.fixture.componentInstance.shelfOrder()).toBe('custom');
       expect(reopened.fixture.componentInstance.bookShelves()[0].entries.map(e => e.book.title)).toEqual(['Segundo', 'Mi libro']);
     } finally {
@@ -138,6 +139,17 @@ describe('Personal bookshelf screen', () => {
       localStorage.removeItem('bookverse:shelf-order:shelf-test-user:selected');
       localStorage.removeItem('userId');
     }
+  });
+  it('does not change the order if the server fails to save it', async () => {
+    const first = savedEntry();
+    const second = { ...savedEntry(), book: { ...first.book, title: 'Segundo' }, reading: { ...first.reading, idExternal: 'other' } };
+    const { fixture, saveShelfOrder } = await setup({ entries: [first, second], unavailableCount: 0 });
+    saveShelfOrder.mockImplementationOnce(() => throwError(() => new Error('offline')));
+    fixture.componentInstance.setShelfOrder('custom');
+    const shelf = fixture.componentInstance.bookShelves()[0];
+    fixture.componentInstance.moveEntry(shelf.entries, shelf.state, 1, 0);
+    expect(fixture.componentInstance.bookShelves()[0].entries.map(e => e.book.title)).toEqual(['Mi libro', 'Segundo']);
+    expect(fixture.componentInstance.confirmation()).toContain('No pudimos guardar');
   });
   it('shows a personal empty shelf and a catalog link without fabricated book titles', async () => {
     const { fixture } = await setup({ entries: [], unavailableCount: 0 });

@@ -43,6 +43,7 @@ export class MyLibrary implements OnInit {
   shelfOrder = signal<ShelfOrder>(this.readShelfOrder());
   private readonly customOrders = signal<Record<string, string[]>>(this.readCustomOrders());
   private dragged: { shelf: string; id: string } | null = null;
+  readonly savingShelfOrder = signal(false);
   readonly statusDialog = viewChild.required<ElementRef<HTMLDialogElement>>('statusDialog');
   private readonly shelves = viewChildren<ElementRef<HTMLDivElement>>('readingShelf');
   readonly shelfStates = READING_STATES.filter((state) => state !== 'ABANDONED');
@@ -244,6 +245,11 @@ export class MyLibrary implements OnInit {
     if (order === 'original') return entries;
     if (order === 'custom') {
       if (!entries.length) return entries;
+      if (entries.some((entry) => entry.reading.shelfPosition != null)) {
+        return [...entries].sort((a, b) =>
+          (a.reading.shelfPosition ?? Number.MAX_SAFE_INTEGER) -
+          (b.reading.shelfPosition ?? Number.MAX_SAFE_INTEGER));
+      }
       const ids = this.customOrders()[this.shelfKey(entries[0], state)] ?? [];
       const positions = new Map(ids.map((id, index) => [id, index]));
       return [...entries].sort((a, b) =>
@@ -310,16 +316,26 @@ export class MyLibrary implements OnInit {
     } catch { return 'original'; }
   }
   moveEntry(entries: (LibraryBook | LibraryStory)[], state: ReadingState, from: number, to: number): void {
-    if (this.shelfOrder() !== 'custom' || from === to || from < 0 || to < 0 || from >= entries.length || to >= entries.length) return;
+    if (this.savingShelfOrder() || this.shelfOrder() !== 'custom' || from === to || from < 0 || to < 0 || from >= entries.length || to >= entries.length) return;
     const ids = entries.map((entry) => entry.reading.idExternal);
     const [id] = ids.splice(from, 1);
     ids.splice(to, 0, id);
     const key = this.shelfKey(entries[0], state);
-    this.customOrders.update((orders) => ({ ...orders, [key]: ids }));
-    try {
-      const storageKey = this.storageKey();
-      if (storageKey) localStorage.setItem(storageKey, JSON.stringify(this.customOrders()));
-    } catch { this.confirmation.set('No pudimos guardar el orden en este navegador.'); }
+    this.savingShelfOrder.set(true);
+    this.confirmation.set('');
+    this.service.saveShelfOrder(ids).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        const positions = new Map(ids.map((id, index) => [id, index]));
+        this.entries.update(items => items.map(item => positions.has(item.reading.idExternal)
+          ? { ...item, reading: { ...item.reading, shelfPosition: positions.get(item.reading.idExternal)! } } : item));
+        this.stories.update(items => items.map(item => positions.has(item.reading.idExternal)
+          ? { ...item, reading: { ...item.reading, shelfPosition: positions.get(item.reading.idExternal)! } } : item));
+        this.customOrders.update((orders) => ({ ...orders, [key]: ids }));
+        try { const storageKey = this.storageKey(); if (storageKey) localStorage.setItem(storageKey, JSON.stringify(this.customOrders())); } catch { /* The server has saved the order. */ }
+        this.savingShelfOrder.set(false);
+      },
+      error: () => { this.savingShelfOrder.set(false); this.confirmation.set('No pudimos guardar el orden. Intentá de nuevo.'); },
+    });
   }
   startDrag(event: DragEvent, entry: LibraryBook | LibraryStory, state: ReadingState): void {
     if (this.shelfOrder() !== 'custom') return;
@@ -363,6 +379,13 @@ export class MyLibrary implements OnInit {
         next: (result) => {
           this.entries.set(result.entries);
           this.stories.set(result.stories ?? []);
+          try {
+            const key = this.storageKey();
+            if (key && !localStorage.getItem(`${key}:selected`) &&
+                [...result.entries, ...(result.stories ?? [])].some(entry => entry.reading.shelfPosition != null)) {
+              this.shelfOrder.set('custom');
+            }
+          } catch { /* Loading the library does not depend on browser storage. */ }
           this.restrictedCount.set(result.restrictedCount ?? 0);
           this.unavailableCount.set(result.unavailableCount);
           this.loading.set(false);

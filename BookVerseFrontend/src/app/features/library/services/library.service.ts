@@ -37,6 +37,9 @@ export class LibraryService {
   private readonly http = inject(HttpClient);
   private readonly books = inject(BooksService);
   private readonly stories = inject(StoryService);
+  saveShelfOrder(readingStatusIds: string[]): Observable<void> {
+    return this.http.put<void>(`${API_URL}/reading-statuses/me/shelf-order`, { readingStatusIds });
+  }
   getMyStatuses(): Observable<ReadingStatus[]> {
     const userId = localStorage.getItem('userId');
     if (!userId) return throwError(() => new LibrarySessionError());
