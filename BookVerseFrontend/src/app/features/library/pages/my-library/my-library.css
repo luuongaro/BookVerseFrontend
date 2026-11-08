@@ -69,9 +69,6 @@ h1 em {
 .shelf-order-hint { color: #70677f; font-size: 14px; }
 .shelf-book[draggable='true'] { cursor: grab; }
 .shelf-book[draggable='true']:active { cursor: grabbing; }
-.shelf-reorder { display: flex; justify-content: center; gap: 4px; margin-bottom: 4px; }
-.shelf-reorder button { min-width: 36px; min-height: 36px; padding: 4px; border: 1px solid #d4c5e0; border-radius: 8px; background: #faf7fd; color: #665498; cursor: pointer; }
-.shelf-reorder button:disabled { opacity: .45; cursor: default; }
 .shelf-room {
   --grain: repeating-linear-gradient(
     2deg,

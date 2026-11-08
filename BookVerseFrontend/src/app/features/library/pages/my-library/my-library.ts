@@ -309,6 +309,11 @@ export class MyLibrary implements OnInit {
       return value === 'title' || value === 'progress' || value === 'custom' ? value : 'original';
     } catch { return 'original'; }
   }
+  moveWithKeyboard(event: Event, entries: (LibraryBook | LibraryStory)[], state: ReadingState, index: number, direction: number): void {
+    if (this.shelfOrder() !== 'custom') return;
+    event.preventDefault();
+    this.moveEntry(entries, state, index, index + direction);
+  }
   moveEntry(entries: (LibraryBook | LibraryStory)[], state: ReadingState, from: number, to: number): void {
     if (this.shelfOrder() !== 'custom' || from === to || from < 0 || to < 0 || from >= entries.length || to >= entries.length) return;
     const ids = entries.map((entry) => entry.reading.idExternal);
