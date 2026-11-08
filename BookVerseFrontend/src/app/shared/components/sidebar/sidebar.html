@@ -1,11 +1,26 @@
 <aside class="sidebar" aria-label="Navegación principal">
-  <a class="sidebar-brand" routerLink="/dashboard" aria-label="BookVerse, Mi espacio">
-    <img class="brand-symbol" src="/assets/favicon.png" alt="" width="36" height="36" />
-    <span class="brand-wordmark">Book<span>Verse</span><sup>✦</sup></span>
-  </a>
+  <div class="sidebar-header">
+    <a class="sidebar-brand" routerLink="/dashboard" aria-label="BookVerse, Mi espacio">
+      <img class="brand-symbol" src="/assets/favicon.png" alt="" width="36" height="36" />
+      <span class="brand-wordmark">Book<span>Verse</span><sup>✦</sup></span>
+    </a>
+    <div class="mobile-account">
+      <a class="mobile-profile" routerLink="/profile" routerLinkActive="active"
+        ariaCurrentWhenActive="page" aria-label="Ir a Mi perfil">
+        <app-user-avatar class="mobile-avatar" />
+        <span>Mi perfil</span>
+      </a>
+      <button class="mobile-logout" type="button" (click)="logout()" aria-label="Cerrar sesión">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path [attr.d]="iconPaths['logout']" />
+        </svg>
+      </button>
+    </div>
+  </div>
 
 
-  <nav class="sidebar-nav" aria-label="Secciones de BookVerse">
+  <nav class="sidebar-nav" aria-label="Secciones de BookVerse" tabindex="0">
     @for (item of commonLinks; track item.route) {
       <a class="sidebar-link" [routerLink]="item.route" routerLinkActive="active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
