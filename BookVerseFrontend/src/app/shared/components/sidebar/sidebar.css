@@ -29,6 +29,14 @@
   background: var(--sidebar);
 }
 
+.sidebar-header {
+  min-width: 0;
+}
+
+.mobile-account {
+  display: none;
+}
+
 .sidebar-brand {
   display: inline-flex;
   align-items: center;
@@ -48,7 +56,6 @@
   flex: 0 0 auto;
   object-fit: contain;
 }
-
 
 .brand-wordmark > span,
 .brand-wordmark sup {
@@ -95,7 +102,9 @@
   font: 14px var(--sans);
   text-align: left;
   text-decoration: none;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .sidebar-link:hover,
@@ -238,9 +247,84 @@
     border-bottom: 1px solid var(--line);
   }
 
+  .sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
   .sidebar-brand {
-    margin: 0 0 13px 2px;
-    font-size: 25px;
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    font-size: 24px;
+  }
+
+  .brand-wordmark {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mobile-account {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  .mobile-profile,
+  .mobile-logout {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--violet);
+    font: 600 12px var(--sans);
+    text-decoration: none;
+  }
+
+  .mobile-profile {
+    gap: 6px;
+    padding: 4px 6px;
+    white-space: nowrap;
+  }
+
+  .mobile-profile.active,
+  .mobile-profile:hover,
+  .mobile-logout:hover {
+    background: #e9e2f2;
+  }
+
+  .mobile-avatar {
+    width: 30px;
+    height: 30px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: #e1d7f0;
+    color: #75649f;
+    font-size: 10px;
+  }
+
+  .mobile-logout {
+    width: 44px;
+    cursor: pointer;
+  }
+
+  .mobile-logout svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .mobile-profile:focus-visible,
+  .mobile-logout:focus-visible,
+  .sidebar-nav:focus-visible {
+    outline: 2px solid var(--lavender);
+    outline-offset: 2px;
   }
 
   .brand-symbol {
@@ -259,6 +343,8 @@
     flex-direction: row;
     gap: 5px;
     overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
     padding-bottom: 3px;
   }
 

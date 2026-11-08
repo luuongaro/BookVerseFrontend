@@ -498,9 +498,16 @@
   }
 
   .identity {
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr);
+    align-items: center;
     min-height: 95px;
-    padding: 0 8px;
+    padding: 0 8px 12px;
     gap: 12px;
+  }
+
+  .identity-badges {
+    grid-column: 1 / -1;
   }
 
   .profile-avatar {
