@@ -7,6 +7,9 @@
 .book-search > div {
   min-width: 0;
 }
+.book-save-button.is-saved:disabled {
+  cursor: default;
+}
 .book-preview-trigger {
   width: 100%;
   display: block;

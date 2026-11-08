@@ -182,21 +182,27 @@ export class LibraryService {
     );
   }
   saveBook(bookId: string, status: ReadingState = 'WANT_TO_READ'): Observable<ReadingStatus> {
-    // Importing a Google volume into the shared catalog does not save it for a user.
-    return this.getBookStatus(bookId).pipe(
-      switchMap((existing) =>
-        existing
-          ? of(existing)
-          : this.http.post<ReadingStatus>(`${API_URL}/reading-statuses`, {
-              bookId,
-              storyId: null,
-              status,
-              startedAt: null,
-              finishedAt: null,
-              ...this.progressForStatus(status),
-            }),
-      ),
+    return this.getMyStatuses().pipe(
+      switchMap((statuses) => this.saveBookWithKnownStatuses(bookId, status, statuses)),
     );
+  }
+  saveBookWithKnownStatuses(
+    bookId: string,
+    status: ReadingState,
+    statuses: ReadingStatus[],
+  ): Observable<ReadingStatus> {
+    // Importing a Google volume into the shared catalog does not save it for a user.
+    const existing = statuses.find((reading) => reading.bookId === bookId);
+    return existing
+      ? of(existing)
+      : this.http.post<ReadingStatus>(`${API_URL}/reading-statuses`, {
+          bookId,
+          storyId: null,
+          status,
+          startedAt: null,
+          finishedAt: null,
+          ...this.progressForStatus(status),
+        });
   }
   private progressForStatus(
     status: ReadingState,

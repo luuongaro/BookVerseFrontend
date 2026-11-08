@@ -1,9 +1,8 @@
-import { switchMap } from 'rxjs';
+import { forkJoin, switchMap } from 'rxjs';
 import { LibraryService, LibrarySessionError } from '../../../library/services/library.service';
 import { BookCover } from '../../../../shared/components/book-cover/book-cover';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { apiError } from '../../../../core/api/api.config';
 import { GoogleBooksService } from '../../services/google-books.service';
@@ -22,7 +21,6 @@ export class GoogleBookSearch {
   private readonly service = inject(GoogleBooksService);
   private readonly books = inject(BooksService);
   private readonly library = inject(LibraryService);
-  private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   form = this.fb.nonNullable.group({
@@ -35,8 +33,10 @@ export class GoogleBookSearch {
   error = signal('');
   importing = signal('');
   importError = signal('');
+  confirmation = signal('');
   selectedBook = signal<GoogleBook | null>(null);
   readonly selectedStates = signal<Record<string, ReadingState>>({});
+  readonly savedBookIds = signal<Set<string>>(new Set());
   stateFor(id: string): ReadingState {
     return this.selectedStates()[id] ?? 'WANT_TO_READ';
   }
@@ -59,9 +59,11 @@ export class GoogleBookSearch {
     this.loading.set(true);
     this.error.set('');
     this.importError.set('');
+    this.confirmation.set('');
     this.results.set([]);
     this.closePreview();
     this.selectedStates.set({});
+    this.savedBookIds.set(new Set());
     this.searched.set(true);
     this.service
       .search(type, value)
@@ -79,20 +81,27 @@ export class GoogleBookSearch {
       });
   }
   importBook(id: string): void {
-    if (this.importing()) return;
+    if (this.importing() || this.savedBookIds().has(id)) return;
     const state = this.stateFor(id);
     this.importing.set(id);
     this.importError.set('');
-    this.books
-      .importGoogleBook(id)
+    this.confirmation.set('');
+    forkJoin({
+      book: this.books.importGoogleBook(id),
+      statuses: this.library.getMyStatuses(),
+    })
       .pipe(
-        switchMap((book) => this.library.saveBook(book.idExternal, state)),
+        switchMap(({ book, statuses }) =>
+          this.library.saveBookWithKnownStatuses(book.idExternal, state, statuses),
+        ),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: (reading) => {
+        next: () => {
+          this.savedBookIds.update((ids) => new Set(ids).add(id));
           this.importing.set('');
-          void this.router.navigate(['/library'], { queryParams: { saved: reading.idExternal } });
+          this.importError.set('');
+          this.confirmation.set('Libro agregado a tu biblioteca. Podés seguir agregando más.');
         },
         error: (error) => {
           this.importError.set(

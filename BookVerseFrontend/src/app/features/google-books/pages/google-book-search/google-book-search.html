@@ -83,11 +83,22 @@
           <app-reading-state-select
             label="Guardar como"
             [value]="stateFor(book.id)"
-            [disabled]="!!importing()"
+            [disabled]="!!importing() || savedBookIds().has(book.id)"
             (valueChange)="chooseState(book.id, $event)"
           />
-          <button [disabled]="!!importing()" (click)="importBook(book.id)">
-            {{ importing() === book.id ? 'Agregando…' : 'Guardar en mi biblioteca' }}
+          <button
+            class="book-save-button"
+            [class.is-saved]="savedBookIds().has(book.id)"
+            [disabled]="!!importing() || savedBookIds().has(book.id)"
+            (click)="importBook(book.id)"
+          >
+            {{
+              importing() === book.id
+                ? 'Agregando…'
+                : savedBookIds().has(book.id)
+                  ? 'En mi biblioteca'
+                  : 'Guardar en mi biblioteca'
+            }}
           </button>
         </article>
       } @empty {
@@ -97,5 +108,8 @@
   }
   @if (importError()) {
     <p class="state error" role="alert">{{ importError() }}</p>
+  }
+  @if (confirmation()) {
+    <p class="confirmation" role="status" aria-live="polite">{{ confirmation() }}</p>
   }
 </main>

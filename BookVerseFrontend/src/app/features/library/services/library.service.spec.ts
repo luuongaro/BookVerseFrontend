@@ -77,6 +77,14 @@ describe('Personal library API', () => {
     expect(result?.status).toBe('IN_PROGRESS');
     expect(result?.progressValue).toBe(40);
   });
+  it('saves with prefetched statuses without waiting for another library request', () => {
+    let result: ReadingStatus | undefined;
+    service.saveBookWithKnownStatuses('new-book', 'WANT_TO_READ', []).subscribe((value) => (result = value));
+    http.expectNone((req) => req.url.includes('/api/reading-statuses/user/'));
+    const request = http.expectOne('http://localhost:8080/api/reading-statuses');
+    request.flush({ ...status, bookId: 'new-book', status: 'WANT_TO_READ' });
+    expect(result?.bookId).toBe('new-book');
+  });
   it.each(['WANT_TO_READ', 'IN_PROGRESS', 'FINISHED'] as const)(
     'saves books and stories with progress consistent with the chosen state %s',
     (selected) => {
