@@ -24,6 +24,7 @@ import {
   ReadingStatus,
 } from '../../models/library-book.model';
 type ShelfOrder = 'original' | 'title' | 'progress' | 'custom';
+type LibraryProgressMode = 'PERCENTAGE' | 'CHAPTER';
 @Component({
   selector: 'app-my-library',
   imports: [RouterLink, ReadingStateBadge, ReadingStateSelect],
@@ -60,6 +61,11 @@ export class MyLibrary implements OnInit {
   editing = signal<LibraryBook | LibraryStory | null>(null);
   draftStatus = signal<ReadingState>('WANT_TO_READ');
   draftPercentage = signal('');
+  progressMode = signal<LibraryProgressMode>('PERCENTAGE');
+  draftChapter = signal('');
+  draftTotalChapters = signal('');
+  progressModeTouched = signal(false);
+  chapterProgressTouched = signal(false);
   progressTouched = signal(false);
   progressInputValid = signal(true);
   readonly canEditPercentage = computed(() => {
@@ -67,11 +73,44 @@ export class MyLibrary implements OnInit {
     return !!entry && 'book' in entry && this.allowsPercentage(this.draftStatus());
   });
   readonly progressError = computed(() => {
-    if (!this.canEditPercentage()) return '';
+    if (!this.canEditPercentage()) {
+      return '';
+    }
+
+    if (this.progressMode() === 'CHAPTER') {
+      const chapterText = this.draftChapter().trim();
+      const totalText = this.draftTotalChapters().trim();
+
+      if (!chapterText || !totalText) {
+        return 'Ingresá el capítulo actual y el total de capítulos.';
+      }
+
+      const chapter = Number(chapterText);
+      const total = Number(totalText);
+
+      if (!Number.isInteger(total) || total < 1) {
+        return 'El total de capítulos debe ser un número entero mayor que 0.';
+      }
+
+      if (!Number.isInteger(chapter) || chapter < 1) {
+        return 'El capítulo actual debe ser un número entero mayor que 0.';
+      }
+
+      if (chapter > total) {
+        return `El capítulo actual no puede superar el total de ${total} capítulos.`;
+      }
+
+      return '';
+    }
+
     const value = this.draftPercentage().trim();
     const percentage = Number(value);
-    return !this.progressInputValid() ||
-      (value !== '' && (!Number.isInteger(percentage) || percentage < 0 || percentage > 100))
+
+    return (
+      !this.progressInputValid() ||
+      (value !== '' &&
+        (!Number.isInteger(percentage) || percentage < 0 || percentage > 100))
+    )
       ? 'Ingresá un porcentaje entero entre 0 y 100.'
       : '';
   });
@@ -81,11 +120,43 @@ export class MyLibrary implements OnInit {
   });
   readonly progressChanged = computed(() => {
     const reading = this.editing()?.reading;
-    if (!reading || !this.canEditPercentage() || !this.progressTouched()) return false;
-    const value = this.percentage();
-    return value === null
-      ? reading.progressType != null || reading.progressValue != null
-      : reading.progressType !== 'PERCENTAGE' || reading.progressValue !== value;
+
+    if (!reading || !this.canEditPercentage()) {
+      return false;
+    }
+
+    const inputWasTouched =
+      this.progressTouched() ||
+      this.chapterProgressTouched() ||
+      this.progressModeTouched();
+
+    if (!inputWasTouched) {
+      return false;
+    }
+
+    if (this.progressMode() === 'CHAPTER') {
+      return (
+        reading.progressType !== 'CHAPTER' ||
+        reading.progressValue !== Number(this.draftChapter()) ||
+        reading.progressTotal !== Number(this.draftTotalChapters())
+      );
+    }
+
+    const percentage = this.percentage();
+
+    if (percentage === null) {
+      return (
+        reading.progressType !== null ||
+        reading.progressValue !== null ||
+        reading.progressTotal != null
+      );
+    }
+
+    return (
+      reading.progressType !== 'PERCENTAGE' ||
+      reading.progressValue !== percentage ||
+      reading.progressTotal != null
+    );
   });
   readonly hasChanges = computed(
     () => this.draftStatus() !== this.editing()?.reading.status || this.progressChanged(),
@@ -97,16 +168,118 @@ export class MyLibrary implements OnInit {
   titleOf(entry: LibraryBook | LibraryStory): string {
     return 'book' in entry ? entry.book.title : entry.story.title;
   }
+  storyChapterProgress(entry: LibraryStory): number | null {
+    const reading = entry.reading;
+
+    if (
+      reading.progressType === 'CHAPTER' &&
+      reading.progressValue !== null
+    ) {
+      return reading.progressValue;
+    }
+
+    return null;
+  }
+
+  storyHasProgress(entry: LibraryStory): boolean {
+    return (
+      entry.reading.status === 'FINISHED' ||
+      this.storyChapterProgress(entry) !== null
+    );
+  }
+
+  storyProgressPercent(entry: LibraryStory): number {
+    if (entry.reading.status === 'FINISHED') {
+      return 100;
+    }
+
+    const currentChapter = this.storyChapterProgress(entry);
+    const totalChapters = entry.story.publishedChaptersCount;
+
+    if (currentChapter === null || totalChapters <= 0) {
+      return 0;
+    }
+
+    return Math.min(
+      100,
+      Math.round((currentChapter / totalChapters) * 100),
+    );
+  }
+
+  storyProgressText(entry: LibraryStory): string {
+    if (entry.reading.status === 'FINISHED') {
+      return 'Historia finalizada';
+    }
+
+    const currentChapter = this.storyChapterProgress(entry);
+
+    if (currentChapter === null) {
+      return 'Todavía no abriste capítulos';
+    }
+
+    const totalChapters = entry.story.publishedChaptersCount;
+
+    return totalChapters > 0
+      ? `Capítulo ${currentChapter} de ${totalChapters}`
+      : `Capítulo ${currentChapter}`;
+  }
+  readingProgressLabel(reading: ReadingStatus): string | null {
+    const percentage = this.readingPercentage(reading);
+
+    if (percentage === null) {
+      return null;
+    }
+
+    if (
+      reading.bookId &&
+      reading.progressType === 'CHAPTER' &&
+      reading.progressValue != null &&
+      reading.progressTotal != null &&
+      reading.progressTotal > 0
+    ) {
+      return `Capítulo ${reading.progressValue} de ${reading.progressTotal}`;
+    }
+
+    if (reading.progressType === 'PERCENTAGE') {
+      return `${reading.progressValue}%`;
+    }
+
+    return null;
+  }
   editStatus(entry: LibraryBook | LibraryStory): void {
     if (this.saving()) return;
+
     this.editing.set(entry);
     this.draftStatus.set(entry.reading.status);
+
+    const isChapterProgress =
+      entry.reading.progressType === 'CHAPTER';
+
+    this.progressMode.set(
+      isChapterProgress ? 'CHAPTER' : 'PERCENTAGE',
+    );
+
     this.draftPercentage.set(
       entry.reading.progressType === 'PERCENTAGE'
         ? (entry.reading.progressValue?.toString() ?? '')
         : '',
     );
+
+    this.draftChapter.set(
+      isChapterProgress
+        ? (entry.reading.progressValue?.toString() ?? '')
+        : '',
+    );
+
+    this.draftTotalChapters.set(
+      isChapterProgress
+        ? (entry.reading.progressTotal?.toString() ?? '')
+        : '',
+    );
+
     this.progressTouched.set(false);
+    this.chapterProgressTouched.set(false);
+    this.progressModeTouched.set(false);
     this.progressInputValid.set(true);
     this.saveError.set('');
     this.confirmation.set('');
@@ -123,7 +296,38 @@ export class MyLibrary implements OnInit {
     this.progressInputValid.set(valid);
     if (valid && value.trim() !== '' && Number(value) === 100) this.chooseStatus('FINISHED');
   }
+  chooseProgressMode(value: string): void {
+    if (value !== 'PERCENTAGE' && value !== 'CHAPTER') {
+      return;
+    }
+
+    this.progressMode.set(value);
+    this.progressModeTouched.set(true);
+  }
+
+  chooseChapter(value: string): void {
+    this.draftChapter.set(value);
+    this.chapterProgressTouched.set(true);
+  }
+
+  chooseTotalChapters(value: string): void {
+    this.draftTotalChapters.set(value);
+    this.chapterProgressTouched.set(true);
+  }
   readingPercentage(reading: ReadingStatus): number | null {
+    if (
+      reading.bookId &&
+      reading.progressType === 'CHAPTER' &&
+      reading.progressValue != null &&
+      reading.progressTotal != null &&
+      reading.progressTotal > 0
+    ) {
+      return Math.min(
+        100,
+        Math.max(0, (reading.progressValue / reading.progressTotal) * 100),
+      );
+    }
+
     return this.allowsPercentage(reading.status) &&
       reading.progressType === 'PERCENTAGE' &&
       reading.progressValue != null
@@ -175,14 +379,30 @@ export class MyLibrary implements OnInit {
   }
   saveStatus(): void {
     const entry = this.editing();
-    if (!entry || this.saving() || this.progressError() || !this.hasChanges()) return;
+    if (!entry || this.saving() || this.progressError() || !this.hasChanges()) {
+      return;
+    }
+
+    const progressUpdate = this.progressChanged()
+      ? this.progressMode() === 'CHAPTER'
+        ? {
+            type: 'CHAPTER' as const,
+            value: Number(this.draftChapter()),
+            total: Number(this.draftTotalChapters()),
+          }
+        : {
+            type: 'PERCENTAGE' as const,
+            value: this.percentage(),
+          }
+      : undefined;
+
     this.saving.set(true);
     this.saveError.set('');
     this.service
       .updateStatus(
         entry.reading,
         this.draftStatus(),
-        this.progressChanged() ? this.percentage() : undefined,
+        progressUpdate,
       )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -198,9 +418,21 @@ export class MyLibrary implements OnInit {
             ),
           );
           this.saving.set(false);
-          const percentage = this.readingPercentage(reading);
+
+          const progressLabel =
+            reading.progressType === 'CHAPTER' &&
+            reading.progressValue != null
+              ? ` · capítulo ${reading.progressValue}${
+                  reading.progressTotal != null
+                    ? ` de ${reading.progressTotal}`
+                    : ''
+                }`
+              : this.readingPercentage(reading) !== null
+                ? ` · ${this.readingPercentage(reading)}%`
+                : '';
+
           this.confirmation.set(
-            `${this.titleOf(entry)}: ${this.statusLabel(reading.status)}${percentage === null ? '' : ` · ${percentage}%`}.`,
+            `${this.titleOf(entry)}: ${this.statusLabel(reading.status)}${progressLabel}.`,
           );
           this.statusDialog().nativeElement.close();
         },

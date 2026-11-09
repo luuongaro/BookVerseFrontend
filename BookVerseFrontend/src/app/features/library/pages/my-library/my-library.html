@@ -113,14 +113,16 @@
                           [id]="'reading-state-' + entry.reading.idExternal"
                         >
                           {{ statusLabel(entry.reading.status) }}
-                          @if (readingPercentage(entry.reading) !== null) {
-                            · {{ readingPercentage(entry.reading) }}% leído
+                          @if (readingProgressLabel(entry.reading); as progressLabel) {
+                            · {{ progressLabel }}
                           }
                         </span>
-                        @if (readingPercentage(entry.reading) !== null) {
-                          <span class="status-percentage" aria-hidden="true"
-                            >{{ readingPercentage(entry.reading) }}%</span
-                          >
+
+                        @if (readingProgressLabel(entry.reading); as progressLabel) {
+                          <span class="status-percentage" aria-hidden="true">
+                            {{ progressLabel }}
+                          </span>
+
                           <span class="spine-progress" aria-hidden="true">
                             <span [style.width.%]="readingPercentage(entry.reading)"></span>
                           </span>
@@ -303,6 +305,34 @@
       <h2 id="status-heading">Tu lectura</h2>
       <p class="selected-title">{{ titleOf(entry) }}</p>
       <app-reading-state-badge [state]="entry.reading.status" prefix="Estado actual" />
+
+      @if ('story' in entry) {
+        <section class="story-progress-summary" aria-labelledby="story-progress-heading">
+          <span class="story-progress-eyebrow">PROGRESO DE LECTURA</span>
+
+          <strong id="story-progress-heading">
+            {{ storyProgressText(entry) }}
+          </strong>
+
+          @if (storyHasProgress(entry)) {
+            <div
+              class="story-progress-track"
+              role="progressbar"
+              [attr.aria-valuenow]="storyProgressPercent(entry)"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              [attr.aria-label]="'Progreso: ' + storyProgressText(entry)"
+            >
+              <span [style.width.%]="storyProgressPercent(entry)"></span>
+            </div>
+          }
+
+          <p>
+            Cada vez que empezás a leer un capítulo publicado, tu progreso se guarda automáticamente.
+          </p>
+        </section>
+      }
+
       <app-reading-state-select
         controlId="book-reading-status"
         label="Cambiar estado"
@@ -314,32 +344,98 @@
         <p class="percentage-help">Se guardará como finalizado, con el 100% leído.</p>
       }
       @if (canEditPercentage()) {
-        <label for="book-reading-percentage">Porcentaje leído</label>
-        <div class="percentage-field">
+        <label for="book-progress-mode">Tipo de progreso</label>
+        <select
+          id="book-progress-mode"
+          #progressModeSelect
+          [value]="progressMode()"
+          [disabled]="saving()"
+          (change)="chooseProgressMode(progressModeSelect.value)"
+        >
+          <option value="PERCENTAGE">Porcentaje</option>
+          <option value="CHAPTER">Capítulos</option>
+        </select>
+
+        @if (progressMode() === 'PERCENTAGE') {
+          <label for="book-reading-percentage-slider">Porcentaje leído</label>
+
+          <div class="percentage-slider-control">
+            <input
+              id="book-reading-percentage-slider"
+              #readingPercentageSlider
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              [value]="percentage() ?? 0"
+              [disabled]="saving()"
+              aria-label="Seleccionar porcentaje de lectura"
+              (input)="choosePercentage(readingPercentageSlider.value)"
+            />
+
+            <label class="visually-hidden" for="book-reading-percentage">
+              Escribir porcentaje leído
+            </label>
+
+            <div class="percentage-field">
+              <input
+                id="book-reading-percentage"
+                #readingPercentageInput
+                type="number"
+                inputmode="numeric"
+                min="0"
+                max="100"
+                step="1"
+                placeholder="—"
+                [value]="draftPercentage()"
+                [disabled]="saving()"
+                [attr.aria-invalid]="progressError() ? 'true' : null"
+                (input)="
+                  choosePercentage(
+                    readingPercentageInput.value,
+                    readingPercentageInput.validity.valid
+                  )
+                "
+              />
+              <span aria-hidden="true">%</span>
+            </div>
+          </div>
+
+        } @else {
+          <label for="book-current-chapter">Capítulo actual</label>
           <input
-            id="book-reading-percentage"
-            #readingPercentageInput
+            id="book-current-chapter"
+            #chapterInput
             type="number"
             inputmode="numeric"
-            min="0"
-            max="100"
+            min="1"
             step="1"
-            placeholder="Sin avance"
-            [value]="draftPercentage()"
+            [value]="draftChapter()"
             [disabled]="saving()"
             [attr.aria-invalid]="progressError() ? 'true' : null"
-            [attr.aria-describedby]="
-              progressError() ? 'percentage-help percentage-error' : 'percentage-help'
-            "
-            (input)="
-              choosePercentage(readingPercentageInput.value, readingPercentageInput.validity.valid)
-            "
+            (input)="chooseChapter(chapterInput.value)"
           />
-          <span aria-hidden="true">%</span>
-        </div>
-        <p id="percentage-help" class="percentage-help">0 o vacío para dejarlo sin avance.</p>
+
+          <label for="book-total-chapters">Total de capítulos</label>
+          <input
+            id="book-total-chapters"
+            #totalChaptersInput
+            type="number"
+            inputmode="numeric"
+            min="1"
+            step="1"
+            [value]="draftTotalChapters()"
+            [disabled]="saving()"
+            [attr.aria-invalid]="progressError() ? 'true' : null"
+            (input)="chooseTotalChapters(totalChaptersInput.value)"
+          />
+
+        }
+
         @if (progressError()) {
-          <p id="percentage-error" class="validation" role="alert">{{ progressError() }}</p>
+          <p class="validation" role="alert">
+            {{ progressError() }}
+          </p>
         }
       }
       @if (saveError()) {
