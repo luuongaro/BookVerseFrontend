@@ -107,6 +107,14 @@ export class GroupDetail implements OnInit {
     return this.userService.currentUser()?.username ?? 'Usuario';
   }
 
+  get completedGoals(): GroupGoal[] {
+    if (!this.isStoryGroup) {
+      return [];
+    }
+
+    return this.goals.filter((goal) => goal.status === 'COMPLETED');
+  }
+
   get canEditGroup(): boolean {
     const currentUserId =
       this.userService.currentUser()?.idExternal ??
@@ -252,6 +260,13 @@ export class GroupDetail implements OnInit {
     );
   }
 
+  get canCreateGoal(): boolean {
+    return (
+      this.canManageGoals &&
+      (!this.isStoryGroup || this.isCurrentUserCreator)
+    );
+  }
+
   get goalUnit(): string {
     return this.goalType === 'PERCENTAGE' ? '%' : 'capítulos';
   }
@@ -304,9 +319,14 @@ export class GroupDetail implements OnInit {
       return '';
     }
 
-    return this.activeGoal.goalType === 'PERCENTAGE'
-      ? `Alcanzar ${this.activeGoal.targetProgress}% de progreso`
-      : `Leer ${this.activeGoal.targetProgress} capítulos`;
+    if (this.activeGoal.goalType === 'PERCENTAGE') {
+      return `Alcanzar ${this.activeGoal.targetProgress}% de progreso`;
+    }
+
+    const unit =
+      this.activeGoal.targetProgress === 1 ? 'capítulo' : 'capítulos';
+
+    return `Leer ${this.activeGoal.targetProgress} ${unit}`;
   }
 
   get goalCompletionPercent(): number {
@@ -564,6 +584,7 @@ export class GroupDetail implements OnInit {
     this.readingGroupsService.getById(groupId).subscribe({
       next: (group) => {
         this.group = group;
+        this.goalType = group.storyId ? 'CHAPTER' : 'PERCENTAGE';
         this.loadLinkedContent(group);
 
         if (group.bookId) {
