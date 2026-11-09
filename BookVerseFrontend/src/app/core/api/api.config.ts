@@ -8,9 +8,13 @@ export function apiError(error: unknown): string {
     return 'Ocurrió un error inesperado.';
   }
 
-  const body = error.error as { message?: unknown } | null;
-  if (typeof body?.message === 'string' && body.message.trim()) {
-    return body.message;
+  const body = error.error as { message?: unknown } | string | null;
+  const message = typeof body === 'string' ? body : body?.message;
+  if (typeof message === 'string' && message.trim()) {
+    if (message.trim() === 'The user has already reviewed this book') {
+      return 'Ya publicaste una reseña para este libro.';
+    }
+    return message.trim();
   }
 
   switch (error.status) {

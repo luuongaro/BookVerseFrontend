@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
 import { Book } from '../../../books/models/book.model';
 import { BooksService } from '../../../books/services/books.service';
@@ -537,7 +538,10 @@ export class GroupDetail implements OnInit {
       })
       .subscribe({
         next: (comment) => {
-          this.comments = [comment, ...this.comments];
+          this.comments = [
+            { ...comment, userName: this.currentUsername },
+            ...this.comments,
+          ];
           this.commentContent = '';
           this.isSavingComment = false;
           this.changeDetector.markForCheck();
@@ -705,21 +709,49 @@ export class GroupDetail implements OnInit {
     this.isLoadingComments = true;
     this.commentsErrorMessage = '';
 
-    this.groupCommentsService.getVisibleByGroup(groupId).subscribe({
-      next: (comments) => {
-        this.comments = comments;
-        this.isLoadingComments = false;
-        this.changeDetector.markForCheck();
-      },
-      error: (error: unknown) => {
-        console.error('Error loading group comments:', error);
-        this.commentsErrorMessage = this.isStoryGroup
-          ? 'Los comentarios todavía están disponibles solo para grupos vinculados a libros.'
-          : 'No se pudieron cargar los comentarios visibles.';
-        this.isLoadingComments = false;
-        this.changeDetector.markForCheck();
-      },
-    });
+    this.groupCommentsService
+      .getVisibleByGroup(groupId)
+      .pipe(
+        switchMap((comments) => {
+          const userIds = [...new Set(comments.map((comment) => comment.userId))];
+
+          if (userIds.length === 0) return of(comments);
+
+          return forkJoin(
+            userIds.map((userId) =>
+              this.userService.getProfile(userId).pipe(catchError(() => of(null))),
+            ),
+          ).pipe(
+            map((profiles) => {
+              const usernames = new Map(
+                profiles
+                  .filter((profile): profile is UserProfile => profile !== null)
+                  .map((profile) => [profile.idExternal, profile.username]),
+              );
+
+              return comments.map((comment) => ({
+                ...comment,
+                userName: usernames.get(comment.userId) ?? comment.userName,
+              }));
+            }),
+          );
+        }),
+      )
+      .subscribe({
+        next: (comments) => {
+          this.comments = comments;
+          this.isLoadingComments = false;
+          this.changeDetector.markForCheck();
+        },
+        error: (error: unknown) => {
+          console.error('Error loading group comments:', error);
+          this.commentsErrorMessage = this.isStoryGroup
+            ? 'Los comentarios todavía están disponibles solo para grupos vinculados a libros.'
+            : 'No se pudieron cargar los comentarios visibles.';
+          this.isLoadingComments = false;
+          this.changeDetector.markForCheck();
+        },
+      });
   }
 
   private onGoalStatusChanged(goal: GroupGoal): void {
