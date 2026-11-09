@@ -81,6 +81,24 @@ describe('Books, Google Books and reviews API contracts', () => {
     expect(apiError(new HttpErrorResponse({ status: 409 }))).toContain('Ya publicaste');
     expect(apiError(new HttpErrorResponse({ status: 0 }))).toContain('conectar');
   });
+  it('translates the backend duplicate-book message', () => {
+    expect(
+      apiError(
+        new HttpErrorResponse({
+          status: 409,
+          error: { message: 'The user has already reviewed this book' },
+        }),
+      ),
+    ).toBe('Ya publicaste una reseña para este libro.');
+    expect(
+      apiError(
+        new HttpErrorResponse({
+          status: 409,
+          error: 'The user has already reviewed this book',
+        }),
+      ),
+    ).toBe('Ya publicaste una reseña para este libro.');
+  });
   it('deletes a review through its encoded id and accepts the empty 204 response', () => {
     let completed = false;
     TestBed.inject(ReviewsService)

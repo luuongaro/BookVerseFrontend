@@ -1,7 +1,7 @@
 import { UserAvatar } from '../../../../shared/components/user-avatar/user-avatar';
 import { Component, DestroyRef, inject, signal, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { map, switchMap } from 'rxjs';
+import { EMPTY, catchError, map, of, switchMap } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { apiError } from '../../../../core/api/api.config';
@@ -202,15 +202,29 @@ export class ReviewForm implements OnInit {
     const content = { rating: Number(values.rating), content: values.content.trim() };
     const selectedStoryId = values.storyId || this.storyId;
     const selectedBookId = values.bookId || this.bookId;
+    const createRequest = () =>
+      this.service.create({
+        ...content,
+        reviewerId: reviewerId!,
+        bookId: selectedBookId,
+        storyId: selectedStoryId,
+      });
 
     const request = this.id
       ? this.service.update(this.id, content)
-      : this.service.create({
-          ...content,
-          reviewerId: reviewerId!,
-          bookId: selectedStoryId ? null : selectedBookId,
-          storyId: selectedStoryId,
-        });
+      : selectedBookId
+        ? this.service.getByBook(selectedBookId).pipe(
+            catchError(() => of([])),
+            switchMap((reviews) => {
+              if (reviews.some((review) => review.reviewerId === reviewerId)) {
+                this.error.set('Ya publicaste una reseña para este libro.');
+                this.saving.set(false);
+                return EMPTY;
+              }
+              return createRequest();
+            }),
+          )
+        : createRequest();
     request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (review) => {
         this.saving.set(false);

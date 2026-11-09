@@ -24,6 +24,7 @@ describe('ReviewForm rules', () => {
     } as Review;
     const service = {
       getById: vi.fn(() => of(review)),
+      getByBook: vi.fn(() => of([])),
       create: vi.fn(() => of(review)),
       update: vi.fn(() => of(review)),
     };
@@ -116,6 +117,22 @@ describe('ReviewForm rules', () => {
     expect(form.error()).toContain('Ya publicaste');
     expect(form.saving()).toBe(false);
     expect(form.form.controls.content.value).toBe('Una reseña válida');
+  });
+  it('shows a Spanish validation message before creating a duplicate book review', () => {
+    const { form, service } = setup();
+    service.getByBook.mockReturnValue(of([{
+      reviewId: 'existing-review',
+      reviewerId: userId,
+      bookId,
+      storyId: null,
+    }]));
+    form.form.patchValue({ content: 'Una reseña válida' });
+
+    form.submit();
+
+    expect(form.error()).toBe('Ya publicaste una reseña para este libro.');
+    expect(form.saving()).toBe(false);
+    expect(service.create).not.toHaveBeenCalled();
   });
   it('never uses the JWT email subject as a reviewer UUID', () => {
     setup();
