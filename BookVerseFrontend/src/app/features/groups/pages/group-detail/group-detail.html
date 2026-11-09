@@ -106,6 +106,39 @@
                 }
               </div>
             </div>
+
+            @if (isCheckingLibraryStatus) {
+              <p class="group-library-status" role="status">
+                Comprobando si la obra está en tu biblioteca…
+              </p>
+            } @else if (libraryStatusError) {
+              <p class="group-library-status group-library-status--error" role="status">
+                {{ libraryStatusError }}
+              </p>
+            } @else if (
+              isWorkInLibrary === false &&
+              (group.bookId || group.storyId)
+            ) {
+              <aside class="group-library-notice" role="note">
+                <div class="group-library-notice__text">
+                  <strong>Esta obra todavía no está en tu biblioteca.</strong>
+                  <p>
+                    Agregala para guardar y actualizar tu progreso de lectura.
+                  </p>
+                </div>
+
+                <a
+                  class="button button-outline"
+                  [routerLink]="
+                    group.bookId
+                      ? ['/books', group.bookId]
+                      : ['/stories', group.storyId]
+                  "
+                >
+                  Agregar a mi biblioteca
+                </a>
+              </aside>
+            }
           </div>
 
           <div class="heading-actions">
@@ -274,14 +307,29 @@
 
                 <label>
                   Objetivo ({{ goalUnit }})
-                  <input
-                    type="number"
-                    min="1"
-                    step="1"
-                    [max]="goalType === 'PERCENTAGE' ? 100 : maxChapterTarget || null"
-                    [(ngModel)]="targetProgress"
-                    name="targetProgress"
-                  />
+                  @if (goalType === 'PERCENTAGE' && !isStoryGroup) {
+                    <div class="goal-percentage-control">
+                      <input
+                        type="range"
+                        min="1"
+                        max="100"
+                        step="1"
+                        [value]="targetProgress"
+                        (input)="onPercentageSliderChange($event)"
+                        aria-label="Objetivo de lectura en porcentaje"
+                      />
+                      <output>{{ targetProgress }}%</output>
+                    </div>
+                  } @else {
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      [max]="maxChapterTarget || null"
+                      [(ngModel)]="targetProgress"
+                      name="targetProgress"
+                    />
+                  }
 
                   @if (goalType === 'CHAPTER' && isLoadingLinkedContent) {
                     <small>Verificando los capítulos publicados…</small>
@@ -384,7 +432,7 @@
               }
             }
 
-            @if (isStoryGroup && completedGoals.length > 0) {
+            @if (completedGoals.length > 0) {
               <section class="goal-history" aria-labelledby="completed-goals-title">
                 <p class="panel-label" id="completed-goals-title">METAS CUMPLIDAS</p>
 
@@ -572,10 +620,37 @@
               <p class="member-state state-error" role="alert">
                 {{ commentsErrorMessage }}
               </p>
-            } @else if (comments.length === 0) {
-              <p class="member-state">
-                Todavía no hay comentarios visibles para tu progreso.
-              </p>
+            } @else if (!isStoryGroup && comments.length === 0) {
+              <div class="comments-empty-state">
+                <p class="member-state" role="status">
+                  {{ commentsEmptyStateMessage }}
+                </p>
+
+                @if (!isCheckingLibraryStatus && !libraryStatusError) {
+                  @if (!libraryReadingStatus && group.bookId) {
+                    <a
+                      class="comment-library-link"
+                      [routerLink]="['/books', group.bookId]"
+                    >
+                      Agregar el libro a mi biblioteca
+                    </a>
+                  } @else if (
+                    libraryReadingStatus &&
+                    libraryReadingStatus.progressType !== 'PERCENTAGE'
+                  ) {
+                    <a class="comment-library-link" routerLink="/library">
+                      Actualizar mi estado de lectura
+                    </a>
+                  } @else if (
+                    libraryReadingStatus &&
+                    libraryProgressPercent < 100
+                  ) {
+                    <a class="comment-library-link" routerLink="/library">
+                      Actualizar mi progreso
+                    </a>
+                  }
+                }
+              </div>
             } @else {
               @for (comment of comments; track comment.idExternal; let i = $index) {
                 <article class="comment">
@@ -603,7 +678,13 @@
             }
           </div>
 
-          @if (!isStoryGroup) {
+          @if (!isStoryGroup && hasPercentageCommentProgress) {
+            <p class="comment-progress-info" role="status">
+              Tu avance guardado en Mi biblioteca es
+              <strong>{{ libraryProgressPercent }}%</strong>.
+              El comentario comienza en ese porcentaje. Podés ubicarlo en un porcentaje menor que ya hayas leído.
+            </p>
+
             <form class="comment-form" (ngSubmit)="publishComment()">
               <app-user-avatar class="comment-avatar avatar-lilac" />
 
@@ -620,32 +701,46 @@
                 required
               />
 
-              <label class="visually-hidden" for="commentProgress">
-                Tu progreso de lectura
-              </label>
-              <input
-                id="commentProgress"
-                class="comment-progress-input"
-                type="number"
-                min="0"
-                max="100"
-                name="commentProgress"
-                [(ngModel)]="commentProgress"
-                aria-label="Porcentaje de lectura"
-              />
-              <span class="comment-progress-suffix">%</span>
+              <div class="comment-progress-control">
+                <label for="commentProgress">
+                  Progreso al comentar
+                </label>
+
+                <div class="comment-progress-slider">
+                  <input
+                    id="commentProgress"
+                    type="range"
+                    min="1"
+                    [max]="libraryProgressPercent"
+                    step="1"
+                    [value]="commentProgress"
+                    (input)="onCommentProgressSliderInput($event)"
+                    aria-label="Porcentaje leído al que corresponde el comentario"
+                  />
+
+                  <output for="commentProgress">
+                    {{ commentProgress }}%
+                  </output>
+                </div>
+              </div>
 
               <button
                 class="button button-primary"
                 type="submit"
-                [disabled]="isSavingComment || !commentContent.trim()"
+                [disabled]="
+                  isSavingComment ||
+                  isCheckingLibraryStatus ||
+                  !!libraryStatusError ||
+                  isCommentProgressInvalid ||
+                  !commentContent.trim()
+                "
               >
                 {{ isSavingComment ? 'Publicando…' : 'Publicar' }}
               </button>
             </form>
-          } @else {
+          } @else if (isStoryGroup) {
             <p class="member-state">
-              El backend habilita comentarios para grupos vinculados a libros.
+              Los comentarios todavía están disponibles solo para grupos de libros.
             </p>
           }
 
