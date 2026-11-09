@@ -343,11 +343,31 @@
   padding: 19px 22px;
 }
 
+.goal-panel {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #fff 0%, #fdfbff 100%);
+  box-shadow: 0 10px 24px rgb(86 67 125 / 6%);
+}
+
+.goal-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(90deg, #a78dcc, #d9c8ed);
+}
+
 .panel-heading {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+}
+
+.goal-panel > .panel-heading {
+  padding-bottom: 15px;
+  border-bottom: 1px solid #f0ebf6;
 }
 
 .panel-label {
@@ -359,11 +379,12 @@
 }
 
 .goal-panel h2 {
-  margin: 14px 0 4px;
+  margin: 12px 0 0;
   font-family: var(--serif);
-  font-size: 35px;
+  font-size: clamp(27px, 3vw, 35px);
   font-weight: 400;
-  line-height: 1;
+  letter-spacing: -0.3px;
+  line-height: 1.05;
 }
 
 .goal-deadline {
@@ -397,12 +418,22 @@
 }
 
 .goal-book {
-  margin: 0 0 13px;
+  margin: 16px 0 0;
   color: #968ca2;
   font-size: 11px;
 }
 
+.goal-empty-state {
+  padding: 13px 14px;
+  border: 1px dashed #d9cce9;
+  border-radius: 10px;
+  background: #faf7fd;
+  color: #796b8d;
+  line-height: 1.45;
+}
+
 .progress-track {
+  margin-top: 18px;
   height: 11px;
   overflow: hidden;
   border-radius: 20px;
@@ -420,6 +451,7 @@
 .progress-caption {
   margin-top: 7px;
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
   gap: 10px;
   color: #8b8299;
@@ -438,10 +470,15 @@
 }
 
 .goal-create-form {
+  margin-top: 15px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
   gap: 10px;
+  padding: 14px;
+  border: 1px solid #eee7f5;
+  border-radius: 11px;
+  background: #faf8fd;
 }
 
 .goal-create-form label {
@@ -463,6 +500,13 @@
   font: inherit;
 }
 
+.goal-create-form input[readonly] {
+  border-color: #e8def2;
+  background: #f4eff9;
+  color: #74658e;
+  cursor: default;
+}
+
 .goal-create-form .progress-button {
   margin-top: 0;
   align-self: end;
@@ -478,7 +522,45 @@
 }
 
 .goal-actions {
-  margin-top: 14px;
+  margin-top: 16px;
+  padding-top: 13px;
+  border-top: 1px solid #eeeaf4;
+}
+
+.goal-actions .button {
+  flex: 1 1 150px;
+}
+
+.goal-history {
+  margin-top: 16px;
+  padding-top: 13px;
+  border-top: 1px solid #eeeaf4;
+}
+
+.goal-history .panel-label {
+  margin-bottom: 8px;
+}
+
+.goal-history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f8f5fc;
+}
+
+.goal-history-item strong {
+  color: #5f527b;
+  font-size: 12px;
+}
+
+.goal-history-item small {
+  color: #898397;
+  font-size: 10px;
+  text-align: right;
 }
 
 .member-state {
@@ -510,6 +592,7 @@
   flex: 1;
   min-width: 0;
   align-items: flex-start;
+  gap: 12px;
   overflow-x: auto;
   padding: 10px 4px 12px;
   scroll-behavior: smooth;
@@ -523,8 +606,8 @@
 }
 
 .member-card {
-  min-width: 0;
-  flex: 0 0 calc((100% - 36px) / 4);
+  flex: 0 0 max-content;
+  min-width: calc((100% - 36px) / 4);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -556,8 +639,13 @@
 }
 
 .member-name {
-  max-width: 100%;
-  overflow-wrap: anywhere;
+  display: block;
+  width: max-content;
+  max-width: none;
+  overflow: visible;
+  white-space: nowrap;
+  text-overflow: clip;
+  overflow-wrap: normal;
   font-size: 12px;
   line-height: 1.35;
 }

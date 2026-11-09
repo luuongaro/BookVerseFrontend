@@ -170,10 +170,22 @@
                   <span>
                     Promedio del grupo:
                     {{ progress.currentProgress | number: '1.0-1' }}
-                    {{ activeGoal.goalType === 'PERCENTAGE' ? '%' : ' capítulos' }}
+                    {{
+                      activeGoal.goalType === 'PERCENTAGE'
+                        ? '%'
+                        : progress.currentProgress === 1
+                          ? ' capítulo'
+                          : ' capítulos'
+                    }}
                     de
                     {{ activeGoal.targetProgress }}
-                    {{ activeGoal.goalType === 'PERCENTAGE' ? '%' : ' capítulos' }}
+                    {{
+                      activeGoal.goalType === 'PERCENTAGE'
+                        ? '%'
+                        : activeGoal.targetProgress === 1
+                          ? ' capítulo'
+                          : ' capítulos'
+                    }}
                   </span>
                   <strong>{{ goalCompletionPercent | number: '1.0-0' }}%</strong>
                 </div>
@@ -212,19 +224,31 @@
                 </div>
               }
             } @else {
-              <p class="goal-book">
+              <p class="goal-book goal-empty-state">
                 Todavía no hay una meta activa para este grupo.
               </p>
 
-              @if (canManageGoals) {
+              @if (canCreateGoal) {
                 <div class="goal-create-form">
-                <label>
-                  Tipo de meta
-                  <select [(ngModel)]="goalType" name="goalType">
-                    <option value="PERCENTAGE">Porcentaje</option>
-                    <option value="CHAPTER">Capítulos</option>
-                  </select>
-                </label>
+                @if (isStoryGroup) {
+                  <label>
+                    Tipo de meta
+                    <input
+                      type="text"
+                      value="Capítulos"
+                      readonly
+                      aria-label="Tipo de meta: capítulos"
+                    />
+                  </label>
+                } @else {
+                  <label>
+                    Tipo de meta
+                    <select [(ngModel)]="goalType" name="goalType">
+                      <option value="PERCENTAGE">Porcentaje</option>
+                      <option value="CHAPTER">Capítulos</option>
+                    </select>
+                  </label>
+                }
 
                 @if (!isStoryGroup && goalType === 'CHAPTER') {
                   <label>
@@ -277,7 +301,14 @@
                     <small>Máximo: {{ maxChapterTarget }} capítulos.</small>
 
                     @if (targetProgress > maxChapterTarget) {
-                      <small>El objetivo no puede superar el total de capítulos.</small>
+                      <small>
+                        @if (isStoryGroup) {
+                          La meta no puede superar los {{ maxChapterTarget }} capítulos publicados
+                          actualmente.
+                        } @else {
+                          El objetivo no puede superar el total de capítulos.
+                        }
+                      </small>
                     }
                   }
 
@@ -343,9 +374,39 @@
                 </div>
               } @else {
                 <p class="member-state">
-                  El creador del grupo puede establecer la meta de lectura.
+                  @if (isStoryGroup) {
+                    El creador del grupo puede establecer la meta de lectura.
+                  } @else {
+                    El creador, los moderadores y los administradores autorizados pueden
+                    establecer la meta de lectura.
+                  }
                 </p>
               }
+            }
+
+            @if (isStoryGroup && completedGoals.length > 0) {
+              <section class="goal-history" aria-labelledby="completed-goals-title">
+                <p class="panel-label" id="completed-goals-title">METAS CUMPLIDAS</p>
+
+                @for (goal of completedGoals; track goal.idExternal) {
+                  <div class="goal-history-item">
+                    <strong>
+                      {{ goal.targetProgress }}
+                      {{
+                        goal.goalType === 'PERCENTAGE'
+                          ? '%'
+                          : goal.targetProgress === 1
+                            ? ' capítulo'
+                            : ' capítulos'
+                      }}
+                    </strong>
+                    <small>
+                      Completada · Fecha límite
+                      {{ goal.targetDate | date: 'd MMM y' }}
+                    </small>
+                  </div>
+                }
+              </section>
             }
 
             @if (goalActionMessage) {
@@ -413,7 +474,9 @@
                         [decorative]="false"
                       />
 
-                      <span class="member-name">{{ member.userName }}</span>
+                      <span class="member-name" [title]="member.userName">
+                        {{ member.userName }}
+                      </span>
                     </a>
 
                     @if (member.memberType === 'CREATOR') {
