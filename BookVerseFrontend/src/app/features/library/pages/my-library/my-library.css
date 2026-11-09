@@ -243,7 +243,11 @@ h1 em {
   cursor: pointer;
 }
 .edit-status.has-progress {
-  min-width: 64px;
+  width: max-content;
+  max-width: min(170px, calc(100vw - 48px));
+  min-height: 44px;
+  height: auto;
+  padding: 6px 9px;
   border-radius: 10px;
 }
 .status-label {
@@ -282,9 +286,13 @@ h1 em {
   outline-offset: 3px;
 }
 .status-percentage {
+  max-width: 100%;
+  overflow: hidden;
   font:
     600 11px/1.4 'DM Sans',
     sans-serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .book-spine {
   position: relative;
@@ -474,28 +482,129 @@ h1 em {
 .selected-title {
   overflow-wrap: anywhere;
 }
-.status-dialog select {
-  width: 100%;
+
+.story-progress-summary {
+  margin: 18px 0;
+  padding: 15px 16px;
+  display: grid;
+  gap: 8px;
+  border: 1px solid #e3d9f0;
+  border-left: 3px solid #9a82bd;
+  border-radius: 11px;
+  background: #f5f1fa;
 }
+
+.story-progress-eyebrow {
+  color: #7968b1;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+}
+
+.story-progress-summary strong {
+  color: #514568;
+  font-size: 15px;
+}
+
+.story-progress-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #e7e0ef;
+}
+
+.story-progress-track span {
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: #9a82bd;
+  transition: width 0.25s ease;
+}
+
+.story-progress-summary p {
+  margin: 0;
+  color: #817590;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.status-dialog label:not(.visually-hidden) {
+  display: block;
+  margin: 16px 0 6px;
+  color: #4f4568;
+  font-weight: 600;
+}
+
+.status-dialog select,
+.status-dialog input:not([type='range']) {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid #d9cee9;
+  border-radius: 9px;
+  background: #fff;
+  color: #302b43;
+  font: inherit;
+}
+
+.percentage-slider-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px;
+  align-items: center;
+  gap: 14px;
+  margin: 8px 0 12px;
+}
+
+.percentage-slider-control input[type='range'] {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 24px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  accent-color: #7968b1;
+  cursor: pointer;
+}
+
 .percentage-field {
   position: relative;
+  width: 96px;
 }
+
 .percentage-field input {
   width: 100%;
-  padding-right: 48px;
+  margin: 0;
+  padding-right: 30px;
+  text-align: center;
 }
+
 .percentage-field > span {
   position: absolute;
-  right: 30px;
   top: 50%;
+  right: 12px;
   transform: translateY(-50%);
   color: #7465ad;
   pointer-events: none;
 }
+
 .percentage-help {
-  margin-top: 6px;
+  margin: 0 0 12px;
   color: #6d657c;
   font-size: 13px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
 }
 .status-dialog .actions {
   margin-bottom: 0;

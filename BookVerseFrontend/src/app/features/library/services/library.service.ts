@@ -12,6 +12,16 @@ import {
   ReadingStatus,
   ReadingState,
 } from '../models/library-book.model';
+type LibraryProgressUpdate =
+  | {
+      type: 'PERCENTAGE';
+      value: number | null;
+    }
+  | {
+      type: 'CHAPTER';
+      value: number;
+      total: number;
+    };
 export class LibrarySessionError extends Error {
   constructor() {
     super('Volvé a iniciar sesión para acceder a tu biblioteca.');
@@ -141,25 +151,89 @@ export class LibraryService {
   updateStatus(
     reading: ReadingStatus,
     status: ReadingState,
-    percentage?: number | null,
+    progressUpdate?: number | null | LibraryProgressUpdate,
   ): Observable<ReadingStatus> {
     const userId = localStorage.getItem('userId');
-    if (!userId || reading.userId !== userId) return throwError(() => new LibrarySessionError());
+    if (!userId || reading.userId !== userId) {
+      return throwError(() => new LibrarySessionError());
+    }
+
+    const chapterUpdate =
+      typeof progressUpdate === 'object' &&
+      progressUpdate !== null &&
+      progressUpdate.type === 'CHAPTER'
+        ? progressUpdate
+        : null;
+
+    const percentageUpdate =
+      typeof progressUpdate === 'number'
+        ? progressUpdate
+        : typeof progressUpdate === 'object' &&
+            progressUpdate !== null &&
+            progressUpdate.type === 'PERCENTAGE'
+          ? progressUpdate.value
+          : undefined;
+
+    if (chapterUpdate) {
+      if (!reading.bookId) {
+        return throwError(
+          () => new RangeError('El progreso por capítulos está disponible para libros.'),
+        );
+      }
+
+      if (status !== 'IN_PROGRESS' && status !== 'RE_READING') {
+        return throwError(
+          () => new RangeError('El progreso por capítulos solo se puede cargar en Leyendo o Releyendo.'),
+        );
+      }
+
+      if (
+        !Number.isInteger(chapterUpdate.total) ||
+        chapterUpdate.total < 1
+      ) {
+        return throwError(
+          () => new RangeError('El total de capítulos debe ser un número entero mayor que 0.'),
+        );
+      }
+
+      if (
+        !Number.isInteger(chapterUpdate.value) ||
+        chapterUpdate.value < 1 ||
+        chapterUpdate.value > chapterUpdate.total
+      ) {
+        return throwError(
+          () => new RangeError('El capítulo actual debe estar entre 1 y el total de capítulos.'),
+        );
+      }
+    }
+
     if (
-      percentage != null &&
-      percentage > 0 &&
+      percentageUpdate != null &&
+      percentageUpdate > 0 &&
       status !== 'IN_PROGRESS' &&
       status !== 'RE_READING' &&
-      !(status === 'FINISHED' && percentage === 100)
+      !(status === 'FINISHED' && percentageUpdate === 100)
     )
       return throwError(
         () => new RangeError('El porcentaje solo se puede cargar en Leyendo o Releyendo.'),
       );
-    if (percentage != null && (!Number.isInteger(percentage) || percentage < 0 || percentage > 100))
+
+    if (
+      percentageUpdate != null &&
+      (!Number.isInteger(percentageUpdate) ||
+        percentageUpdate < 0 ||
+        percentageUpdate > 100)
+    )
       return throwError(() => new RangeError('Ingresá un porcentaje entero entre 0 y 100.'));
-    if (percentage === 100 && status !== 'FINISHED')
+
+    if (percentageUpdate === 100 && status !== 'FINISHED')
       return throwError(() => new RangeError('El 100% leído corresponde al estado Finalizado.'));
-    const progress = this.progressForStatus(status, reading, percentage);
+
+    const progress = this.progressForStatus(
+      status,
+      reading,
+      progressUpdate,
+    );
     return this.http.put<ReadingStatus>(
       `${API_URL}/reading-statuses/${encodeURIComponent(reading.idExternal)}`,
       {
@@ -207,12 +281,34 @@ export class LibraryService {
   private progressForStatus(
     status: ReadingState,
     reading?: ReadingStatus,
-    percentage?: number | null,
+    progressUpdate?: number | null | LibraryProgressUpdate,
   ) {
     const empty = { progressType: null, progressValue: null, progressTotal: null };
     if (status === 'WANT_TO_READ') return empty;
     if (status === 'FINISHED')
       return { progressType: 'PERCENTAGE', progressValue: 100, progressTotal: null };
+
+    if (
+      typeof progressUpdate === 'object' &&
+      progressUpdate !== null &&
+      progressUpdate.type === 'CHAPTER'
+    ) {
+      return {
+        progressType: 'CHAPTER',
+        progressValue: progressUpdate.value,
+        progressTotal: progressUpdate.total,
+      };
+    }
+
+    const percentage =
+      typeof progressUpdate === 'number'
+        ? progressUpdate
+        : typeof progressUpdate === 'object' &&
+            progressUpdate !== null &&
+            progressUpdate.type === 'PERCENTAGE'
+          ? progressUpdate.value
+          : undefined;
+
     if (percentage !== undefined)
       return percentage === null || percentage === 0
         ? empty
