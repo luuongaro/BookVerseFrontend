@@ -17,6 +17,7 @@ describe('Visiting user profiles', () => {
   async function setup() {
     localStorage.setItem('userId', 'me');
     const users = {
+      getProfileBadge: vi.fn(() => of({ badge: null })),
       getProfile: vi.fn(() => of(reader)),
       getProfileStories: vi.fn(() => of(emptyPage)),
       getFavoriteStories: vi.fn(() => of(emptyPage)),

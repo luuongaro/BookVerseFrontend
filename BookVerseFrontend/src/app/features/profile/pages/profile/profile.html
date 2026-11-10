@@ -162,6 +162,7 @@
             @if (profile.email) {
               <p>{{ profile.email }}</p>
             }
+            <app-profile-badge [userId]="user.idExternal" />
           </div>
 
           <div class="identity-badges">

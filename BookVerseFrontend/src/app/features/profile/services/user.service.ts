@@ -15,10 +15,19 @@ import {
   UserProfileStory,
 } from '../models/user-profile.model';
 import { PageResponse } from '../../stories/models/page-response';
+import type { BadgeId } from '../components/profile-badge/profile-badge';
 
 @Service()
 export class UserService {
   private readonly http = inject(HttpClient);
+
+  getProfileBadge(id: string): Observable<{ badge: BadgeId | null }> {
+    return this.http.get<{ badge: BadgeId | null }>(`${API_URL}/users/profiles/${encodeURIComponent(id)}/badge`);
+  }
+
+  updateProfileBadge(id: string, badge: BadgeId | null): Observable<{ badge: BadgeId | null }> {
+    return this.http.put<{ badge: BadgeId | null }>(`${API_URL}/users/profiles/${encodeURIComponent(id)}/badge`, { badge });
+  }
 
   readonly currentUser = signal<User | null>(null);
   private readonly appearances = signal(new Map<string, ProfileAppearance>());
