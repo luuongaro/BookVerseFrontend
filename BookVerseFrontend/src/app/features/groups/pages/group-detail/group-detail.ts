@@ -11,7 +11,15 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
+import {
+  catchError,
+  finalize,
+  forkJoin,
+  map,
+  of,
+  switchMap,
+  timeout,
+} from 'rxjs';
 
 import { Book } from '../../../books/models/book.model';
 import { BooksService } from '../../../books/services/books.service';
@@ -21,7 +29,11 @@ import { GroupComment } from '../../models/group-comment.model';
 import { GroupGoal } from '../../models/group-goal.model';
 import { GroupMember } from '../../models/group-member.model';
 import { GroupProgress } from '../../models/group-progress.model';
-import { ReadingGroup } from '../../models/reading-group.model';
+import {
+  GroupReadingCycle,
+  GroupReadingParticipant,
+  ReadingGroup,
+} from '../../models/reading-group.model';
 
 import { GroupCommentsService } from '../../services/group-comments.service';
 import { GroupGoalsService } from '../../services/group-goals.service';
@@ -35,6 +47,8 @@ import { TokenService } from '../../../../core/services/token.service';
 
 import { StoryDetailResponse } from '../../../stories/models/story-detail-response';
 import { StoryService } from '../../../stories/services/story.services';
+
+type CycleWorkType = 'book' | 'story';
 
 @Component({
   selector: 'app-group-detail',
@@ -59,10 +73,25 @@ export class GroupDetail implements OnInit {
 
   readonly leaveGroupDialog =
     viewChild.required<ElementRef<HTMLDialogElement>>('leaveGroupDialog');
+  readonly newCycleDialog =
+    viewChild.required<ElementRef<HTMLDialogElement>>('newCycleDialog');
   readonly memberTrack =
     viewChild<ElementRef<HTMLDivElement>>('memberTrack');
 
   group: ReadingGroup | null = null;
+  currentCycle: GroupReadingCycle | null = null;
+  showNewCycleForm = false;
+  showCancelCycleConfirmation = false;
+  cycleWorkType: CycleWorkType = 'book';
+  cycleWorks: { idExternal: string; title: string }[] = [];
+  cycleReferenceId = '';
+  cycleEditionReference = '';
+  cycleTotalChapters = '';
+  isLoadingCycleWorks = false;
+  cycleParticipants: GroupReadingParticipant[] = [];
+  isLoadingCycleParticipants = false;
+  isChangingParticipation = false;
+  participantActionMessage = '';
   members: GroupMember[] = [];
   goals: GroupGoal[] = [];
   activeGoal: GroupGoal | null = null;
@@ -97,6 +126,8 @@ export class GroupDetail implements OnInit {
   isSavingGoal = false;
   isSavingComment = false;
   isChangingGoal = false;
+  isChangingCycle = false;
+  cycleActionInProgress: 'start' | 'complete' | 'cancel' | null = null;
   isUpdatingMembers = false;
 
   errorMessage = '';
@@ -106,6 +137,7 @@ export class GroupDetail implements OnInit {
   commentsErrorMessage = '';
   linkedContentError = '';
   goalActionMessage = '';
+  cycleActionMessage = '';
   commentActionMessage = '';
   memberActionMessage = '';
   memberSuccessMessage = '';
@@ -128,6 +160,57 @@ export class GroupDetail implements OnInit {
       (
         this.group.createdByUserId === currentUserId ||
         this.tokens.hasAnyRole('ROLE_ADMIN', 'ROLE_MODERATOR')
+      )
+    );
+  }
+
+  get canManageCycles(): boolean {
+    const currentUserId =
+      this.userService.currentUser()?.idExternal ?? localStorage.getItem('userId');
+
+    return (
+      !!this.group &&
+      (
+        this.group.createdByUserId === currentUserId ||
+        this.tokens.hasAnyRole('ROLE_ADMIN', 'ROLE_MODERATOR')
+      )
+    );
+  }
+
+  get currentUserCycleParticipation(): GroupReadingParticipant | null {
+    const userId =
+      this.userService.currentUser()?.idExternal ?? localStorage.getItem('userId');
+
+    return (
+      this.cycleParticipants.find(
+        (participant) => participant.userId === userId,
+      ) ?? null
+    );
+  }
+
+  get activeCycleParticipants(): GroupReadingParticipant[] {
+    return this.cycleParticipants.filter(
+      (participant) => participant.status === 'ACTIVE',
+    );
+  }
+
+  isParticipatingInCurrentCycle(userId: string): boolean {
+    return this.activeCycleParticipants.some(
+      (participant) => participant.userId === userId,
+    );
+  }
+
+  get canJoinCurrentCycle(): boolean {
+    const allowedReadingStatuses = ['IN_PROGRESS', 'RE_READING', 'FINISHED'];
+
+    return (
+      this.currentCycle?.status === 'ACTIVE' &&
+      this.isCurrentUserActiveMember &&
+      !!this.libraryReadingStatus &&
+      allowedReadingStatuses.includes(this.libraryReadingStatus.status) &&
+      (
+        !this.currentUserCycleParticipation ||
+        this.currentUserCycleParticipation.status === 'WITHDRAWN'
       )
     );
   }
@@ -236,6 +319,234 @@ export class GroupDetail implements OnInit {
     this.userService.logout();
   }
 
+  startCurrentCycle(): void {
+    this.changeCurrentCycleStatus('start');
+  }
+
+  completeCurrentCycle(): void {
+    this.changeCurrentCycleStatus('complete');
+  }
+
+  toggleNewCycleForm(): void {
+    const dialog = this.newCycleDialog().nativeElement;
+
+    if (dialog.open) {
+      dialog.close();
+      this.showNewCycleForm = false;
+      return;
+    }
+
+    this.showNewCycleForm = true;
+    this.cycleActionMessage = '';
+    this.loadCycleWorks();
+    dialog.showModal();
+  }
+
+  closeNewCycleForm(): void {
+    this.newCycleDialog().nativeElement.close();
+    this.showNewCycleForm = false;
+  }
+
+  loadCycleWorks(): void {
+    this.isLoadingCycleWorks = true;
+    this.cycleWorks = [];
+    this.cycleReferenceId = '';
+
+    this.libraryService
+      .getMyLibrary()
+      .pipe(
+        map((library) =>
+          this.cycleWorkType === 'book'
+            ? library.entries.map(({ book }) => ({
+                idExternal: book.idExternal,
+                title: book.title,
+              }))
+            : (library.stories ?? []).map(({ story }) => ({
+                idExternal: story.idExternal,
+                title: story.title,
+              })),
+        ),
+      )
+      .subscribe({
+        next: (works) => {
+          this.cycleWorks = works;
+          this.isLoadingCycleWorks = false;
+          this.changeDetector.markForCheck();
+        },
+        error: (error: unknown) => {
+          console.error('Error loading library works for a new cycle:', error);
+          this.cycleActionMessage = 'No se pudieron cargar las obras de tu biblioteca.';
+          this.isLoadingCycleWorks = false;
+          this.changeDetector.markForCheck();
+        },
+      });
+  }
+
+  createNextCycle(): void {
+    if (!this.group || !this.canManageCycles || this.isChangingCycle) {
+      return;
+    }
+
+    const editionReference = this.cycleEditionReference.trim();
+    const totalChapters = Number(this.cycleTotalChapters);
+
+    if (!this.cycleReferenceId) {
+      this.cycleActionMessage = 'Elegí una obra de tu biblioteca.';
+      return;
+    }
+
+    if (
+      this.cycleWorkType === 'book' &&
+      (!editionReference || !Number.isInteger(totalChapters) || totalChapters < 1)
+    ) {
+      this.cycleActionMessage =
+        'Para un libro, indicá la edición y una cantidad total de capítulos mayor que cero.';
+      return;
+    }
+
+    const request =
+      this.cycleWorkType === 'book'
+        ? {
+            bookId: this.cycleReferenceId,
+            editionReference,
+            totalChapters,
+          }
+        : { storyId: this.cycleReferenceId };
+
+    this.isChangingCycle = true;
+    this.cycleActionMessage = '';
+
+    this.readingGroupsService
+      .createCycle(this.group.idExternal, request)
+      .subscribe({
+        next: () => {
+          this.isChangingCycle = false;
+          this.closeNewCycleForm();
+          this.cycleEditionReference = '';
+          this.cycleTotalChapters = '';
+          this.cycleActionMessage =
+            'La próxima lectura quedó planificada. El creador puede iniciarla cuando estén listos.';
+          this.loadCurrentCycle(this.group!.idExternal);
+          this.changeDetector.markForCheck();
+        },
+        error: (error: unknown) => {
+          console.error('Error creating a new reading cycle:', error);
+          this.cycleActionMessage = 'No se pudo planificar la próxima lectura.';
+          this.isChangingCycle = false;
+          this.changeDetector.markForCheck();
+        },
+      });
+  }
+
+  requestCancelCurrentCycle(): void {
+    if (
+      !this.group ||
+      !this.currentCycle ||
+      !this.canManageCycles ||
+      this.isChangingCycle ||
+      !['PLANNED', 'ACTIVE'].includes(this.currentCycle.status)
+    ) {
+      return;
+    }
+
+    this.cycleActionMessage = '';
+    this.showCancelCycleConfirmation = true;
+  }
+
+  confirmCancelCurrentCycle(): void {
+    if (
+      !this.group ||
+      !this.currentCycle ||
+      !this.canManageCycles ||
+      this.isChangingCycle
+    ) {
+      return;
+    }
+
+    const groupId = this.group.idExternal;
+    const cycleId = this.currentCycle.idExternal;
+
+    this.isChangingCycle = true;
+    this.cycleActionInProgress = 'cancel';
+    this.cycleActionMessage = '';
+
+    this.readingGroupsService
+      .cancelCycle(groupId, cycleId)
+      .pipe(
+        timeout({ first: 15000 }),
+        finalize(() => {
+          this.isChangingCycle = false;
+          this.cycleActionInProgress = null;
+          this.changeDetector.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.cycleActionMessage = 'La lectura del grupo se canceló.';
+          this.showCancelCycleConfirmation = false;
+          this.loadCurrentCycle(groupId);
+        },
+        error: (error: unknown) => {
+          console.error('Error cancelling reading cycle:', error);
+          this.cycleActionMessage =
+            'No se pudo actualizar la lectura del grupo. Intentá nuevamente.';
+        },
+      });
+  }
+
+  dismissCancelCycleConfirmation(): void {
+    this.showCancelCycleConfirmation = false;
+  }
+
+  private changeCurrentCycleStatus(action: 'start' | 'complete'): void {
+    if (!this.group || !this.currentCycle || !this.canManageCycles || this.isChangingCycle) {
+      return;
+    }
+
+    const { idExternal: groupId } = this.group;
+    const cycleId = this.currentCycle.idExternal;
+
+    if (
+      (action === 'start' && this.currentCycle.status !== 'PLANNED') ||
+      (action === 'complete' && this.currentCycle.status !== 'ACTIVE')
+    ) {
+      return;
+    }
+
+    this.isChangingCycle = true;
+    this.cycleActionInProgress = action;
+    this.cycleActionMessage = '';
+
+    const request =
+      action === 'start'
+        ? this.readingGroupsService.startCycle(groupId, cycleId)
+        : this.readingGroupsService.completeCycle(groupId, cycleId);
+
+    request
+      .pipe(
+        timeout({ first: 15000 }),
+        finalize(() => {
+          this.isChangingCycle = false;
+          this.cycleActionInProgress = null;
+          this.changeDetector.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.cycleActionMessage =
+            action === 'start'
+              ? 'La lectura del grupo está en curso.'
+              : 'La lectura del grupo se completó.';
+          this.loadCurrentCycle(groupId);
+        },
+        error: (error: unknown) => {
+          console.error('Error changing reading cycle status:', error);
+          this.cycleActionMessage =
+            'No se pudo actualizar la lectura del grupo. Intentá nuevamente.';
+        },
+      });
+  }
+
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
       const groupId = params.get('id');
@@ -248,12 +559,26 @@ export class GroupDetail implements OnInit {
 
       this.loadGroup(groupId);
       this.loadMembers(groupId);
-      this.loadGoals(groupId);
     });
   }
 
   get isStoryGroup(): boolean {
-    return !!this.group?.storyId;
+    return !!this.currentCycle?.storyId;
+  }
+
+  get currentCycleStatusLabel(): string {
+    if (!this.currentCycle) {
+      return 'Sin lectura planificada';
+    }
+
+    const labels = {
+      PLANNED: 'Planificada',
+      ACTIVE: 'En curso',
+      COMPLETED: 'Completada',
+      CANCELLED: 'Cancelada',
+    };
+
+    return labels[this.currentCycle.status];
   }
 
   get libraryProgressPercent(): number {
@@ -309,6 +634,7 @@ export class GroupDetail implements OnInit {
 
     return (
       !this.isStoryGroup &&
+      this.currentCycle?.status === 'ACTIVE' &&
       reading !== null &&
       reading.progressType === 'PERCENTAGE' &&
       reading.progressValue !== null &&
@@ -317,6 +643,38 @@ export class GroupDetail implements OnInit {
   }
 
   get commentsEmptyStateMessage(): string {
+    if (!this.currentCycle) {
+      return 'Todavía no hay una lectura planificada. La conversación aparecerá cuando el creador inicie una lectura del grupo.';
+    }
+
+    if (this.currentCycle.status === 'PLANNED') {
+      if (this.isCheckingLibraryStatus) {
+        return 'La lectura está planificada. Estamos comprobando si el libro está en tu biblioteca.';
+      }
+
+      if (this.libraryStatusError) {
+        return 'La lectura está planificada, pero no pudimos comprobar si el libro está en tu biblioteca.';
+      }
+
+      if (this.isWorkInLibrary === false) {
+        return 'Este libro todavía no está en tu biblioteca. Agregalo para registrar tu avance; la conversación se habilitará cuando el creador inicie la lectura.';
+      }
+
+      if (this.isWorkInLibrary === true) {
+        return 'Este libro está en tu biblioteca. La conversación se habilitará cuando el creador inicie la lectura.';
+      }
+
+      return 'La lectura está planificada. La conversación se habilitará cuando el creador la inicie.';
+    }
+
+    if (this.currentCycle.status === 'COMPLETED') {
+      return 'Esta lectura del grupo se completó. Planificá otra lectura para abrir una nueva conversación.';
+    }
+
+    if (this.currentCycle.status === 'CANCELLED') {
+      return 'Esta lectura del grupo se canceló. La conversación estará disponible cuando se inicie otra lectura.';
+    }
+
     if (this.isCheckingLibraryStatus) {
       return 'Estamos comprobando el estado de lectura de este libro…';
     }
@@ -362,6 +720,7 @@ export class GroupDetail implements OnInit {
   get canCreateGoal(): boolean {
     return (
       this.canManageGoals &&
+      this.currentCycle?.status === 'ACTIVE' &&
       (!this.isStoryGroup || this.isCurrentUserCreator)
     );
   }
@@ -379,7 +738,7 @@ export class GroupDetail implements OnInit {
       return this.linkedStory?.publishedChaptersCount ?? 0;
     }
 
-    return this.bookTotalChapters ?? this.group?.totalChapters ?? 0;
+    return this.currentCycle?.totalChapters ?? 0;
   }
 
   get isChapterTargetInvalid(): boolean {
@@ -555,6 +914,8 @@ export class GroupDetail implements OnInit {
 
     if (
       !this.group ||
+      !this.currentCycle ||
+      this.currentCycle.status !== 'ACTIVE' ||
       !this.canManageGoals ||
       this.isSavingGoal ||
       !this.targetDate ||
@@ -571,22 +932,20 @@ export class GroupDetail implements OnInit {
     this.goalActionMessage = '';
 
     this.groupGoalsService
-      .create(this.group.idExternal, {
-        groupId: this.group.idExternal,
+      .create(this.group.idExternal, this.currentCycle.idExternal, {
         goalType: this.goalType,
         targetProgress: Number(this.targetProgress),
         targetDate: this.targetDate,
-        totalChapters:
-          !this.isStoryGroup && this.goalType === 'CHAPTER'
-            ? this.bookTotalChapters
-            : null,
       })
       .subscribe({
         next: (goal) => {
           this.activeGoal = goal;
           this.goals = [goal, ...this.goals];
           this.isSavingGoal = false;
-          this.loadProgress(this.group!.idExternal);
+          this.loadProgress(
+            this.group!.idExternal,
+            this.currentCycle!.idExternal,
+          );
           this.changeDetector.markForCheck();
         },
         error: (error: unknown) => {
@@ -621,7 +980,12 @@ export class GroupDetail implements OnInit {
     this.isChangingGoal = true;
 
     this.groupGoalsService
-      .changeStatus(this.activeGoal.idExternal, { status: 'COMPLETED' })
+      .changeStatus(
+        this.group!.idExternal,
+        this.currentCycle!.idExternal,
+        this.activeGoal.idExternal,
+        { status: 'COMPLETED' },
+      )
       .subscribe({
         next: (goal) => this.onGoalStatusChanged(goal),
         error: (error: unknown) => this.onGoalActionError(error),
@@ -635,16 +999,25 @@ export class GroupDetail implements OnInit {
 
     this.isChangingGoal = true;
 
-    this.groupGoalsService.cancel(this.activeGoal.idExternal).subscribe({
-      next: () => {
-        this.activeGoal = null;
-        this.progress = null;
-        this.isChangingGoal = false;
-        this.loadGoals(this.group!.idExternal);
-        this.changeDetector.markForCheck();
-      },
-      error: (error: unknown) => this.onGoalActionError(error),
-    });
+    this.groupGoalsService
+      .cancel(
+        this.group!.idExternal,
+        this.currentCycle!.idExternal,
+        this.activeGoal.idExternal,
+      )
+      .subscribe({
+        next: () => {
+          this.activeGoal = null;
+          this.progress = null;
+          this.isChangingGoal = false;
+          this.loadGoals(
+            this.group!.idExternal,
+            this.currentCycle!.idExternal,
+          );
+          this.changeDetector.markForCheck();
+        },
+        error: (error: unknown) => this.onGoalActionError(error),
+      });
   }
 
   onCommentProgressSliderInput(event: Event): void {
@@ -654,6 +1027,12 @@ export class GroupDetail implements OnInit {
 
   publishComment(): void {
     if (!this.group || !this.commentContent.trim() || this.isSavingComment) {
+      return;
+    }
+
+    if (this.currentCycle?.status !== 'ACTIVE' || !this.currentCycle?.bookId) {
+      this.commentActionMessage =
+        'Los comentarios están disponibles cuando la lectura del grupo está en curso y es de un libro.';
       return;
     }
 
@@ -711,32 +1090,159 @@ export class GroupDetail implements OnInit {
     this.readingGroupsService.getById(groupId).subscribe({
       next: (group) => {
         this.group = group;
-        this.goalType = group.storyId ? 'CHAPTER' : 'PERCENTAGE';
-        this.checkLinkedWorkInLibrary(group);
-        this.loadLinkedContent(group);
-
-        this.isLoading = false;
-        this.changeDetector.markForCheck();
+        this.loadCurrentCycle(groupId);
       },
       error: (error: unknown) => {
         console.error('Error loading reading group:', error);
         this.errorMessage = 'No se pudo cargar el grupo de lectura.';
         this.isLoading = false;
         this.isLoadingComments = false;
+        this.isLoadingGoals = false;
         this.changeDetector.markForCheck();
       },
     });
   }
 
-  private loadLinkedContent(group: ReadingGroup): void {
+  private loadCurrentCycle(groupId: string): void {
+    this.readingGroupsService.getCycles(groupId).subscribe({
+      next: (cycles) => {
+        const latestCycle = [...cycles].sort(
+          (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
+        )[0];
+
+        this.currentCycle =
+          cycles.find((cycle) => cycle.status === 'ACTIVE') ??
+          cycles.find((cycle) => cycle.status === 'PLANNED') ??
+          latestCycle ??
+          null;
+
+        const cycle = this.currentCycle;
+
+        if (!cycle) {
+          this.linkedContentError =
+            'Todavía no hay una lectura planificada. El creador puede elegir una obra para empezar.';
+          this.isLoading = false;
+          this.isLoadingGoals = false;
+          this.isLoadingComments = false;
+          this.changeDetector.markForCheck();
+          return;
+        }
+
+        this.goalType = cycle.storyId ? 'CHAPTER' : 'PERCENTAGE';
+        this.loadLinkedContent(cycle);
+        this.checkLinkedWorkInLibrary(cycle);
+
+        if (cycle.status === 'ACTIVE') {
+          this.loadGoals(groupId, cycle.idExternal);
+          this.loadCycleParticipants(groupId, cycle.idExternal);
+        } else {
+          this.goals = [];
+          this.activeGoal = null;
+          this.progress = null;
+          this.isLoadingGoals = false;
+          this.cycleParticipants = [];
+          this.isLoadingCycleParticipants = false;
+        }
+
+        this.isLoading = false;
+        this.changeDetector.markForCheck();
+      },
+      error: (error: unknown) => {
+        console.error('Error loading group reading cycles:', error);
+        this.linkedContentError = 'No se pudo cargar la lectura del grupo.';
+        this.isLoading = false;
+        this.isLoadingGoals = false;
+        this.isLoadingComments = false;
+        this.changeDetector.markForCheck();
+      },
+    });
+  }
+
+  private loadCycleParticipants(groupId: string, cycleId: string): void {
+    this.isLoadingCycleParticipants = true;
+    this.participantActionMessage = '';
+
+    this.readingGroupsService
+      .getCycleParticipants(groupId, cycleId)
+      .subscribe({
+        next: (participants) => {
+          this.cycleParticipants = participants;
+          this.isLoadingCycleParticipants = false;
+          this.changeDetector.markForCheck();
+        },
+        error: (error: unknown) => {
+          console.error('Error loading cycle participants:', error);
+          this.cycleParticipants = [];
+          this.isLoadingCycleParticipants = false;
+          this.changeDetector.markForCheck();
+        },
+      });
+  }
+
+  joinCurrentCycle(): void {
+    if (!this.group || !this.currentCycle || !this.canJoinCurrentCycle) {
+      return;
+    }
+
+    this.isChangingParticipation = true;
+    this.participantActionMessage = '';
+
+    this.readingGroupsService
+      .joinCycle(this.group.idExternal, this.currentCycle.idExternal)
+      .subscribe({
+        next: () => {
+          this.isChangingParticipation = false;
+          this.loadCycleParticipants(
+            this.group!.idExternal,
+            this.currentCycle!.idExternal,
+          );
+        },
+        error: (error: unknown) => {
+          console.error('Error joining reading cycle:', error);
+          this.participantActionMessage =
+            'No se pudo sumar a esta lectura. Revisá que la obra esté en tu biblioteca y figure como En curso, Releyendo o Finalizada.';
+          this.isChangingParticipation = false;
+          this.changeDetector.markForCheck();
+        },
+      });
+  }
+
+  leaveCurrentCycle(): void {
+    if (!this.group || !this.currentCycle || !this.currentUserCycleParticipation) {
+      return;
+    }
+
+    this.isChangingParticipation = true;
+    this.participantActionMessage = '';
+
+    this.readingGroupsService
+      .leaveCycle(this.group.idExternal, this.currentCycle.idExternal)
+      .subscribe({
+        next: () => {
+          this.isChangingParticipation = false;
+          this.loadCycleParticipants(
+            this.group!.idExternal,
+            this.currentCycle!.idExternal,
+          );
+        },
+        error: (error: unknown) => {
+          console.error('Error leaving reading cycle:', error);
+          this.participantActionMessage = 'No se pudo salir de la lectura.';
+          this.isChangingParticipation = false;
+          this.changeDetector.markForCheck();
+        },
+      });
+  }
+
+  private loadLinkedContent(cycle: GroupReadingCycle): void {
     this.linkedBook = null;
     this.linkedStory = null;
     this.linkedContentError = '';
 
-    if (group.bookId) {
+    if (cycle.bookId) {
       this.isLoadingLinkedContent = true;
 
-      this.booksService.getById(group.bookId).subscribe({
+      this.booksService.getById(cycle.bookId).subscribe({
         next: (book) => {
           this.linkedBook = book;
           this.isLoadingLinkedContent = false;
@@ -753,10 +1259,10 @@ export class GroupDetail implements OnInit {
       return;
     }
 
-    if (group.storyId) {
+    if (cycle.storyId) {
       this.isLoadingLinkedContent = true;
 
-      this.storyService.getById(group.storyId).subscribe({
+      this.storyService.getById(cycle.storyId).subscribe({
         next: (story) => {
           this.linkedStory = story;
           this.isLoadingLinkedContent = false;
@@ -774,10 +1280,10 @@ export class GroupDetail implements OnInit {
     }
 
     this.linkedContentError =
-      'Este grupo no tiene un libro o una historia asociados.';
+      'Esta lectura no tiene un libro o una historia asociados.';
   }
 
-  private checkLinkedWorkInLibrary(group: ReadingGroup): void {
+  private checkLinkedWorkInLibrary(cycle: GroupReadingCycle): void {
     this.isWorkInLibrary = null;
     this.libraryReadingStatus = null;
     this.commentProgress = 0;
@@ -785,12 +1291,12 @@ export class GroupDetail implements OnInit {
     this.commentsErrorMessage = '';
     this.comments = [];
     this.isCheckingLibraryStatus = true;
-    this.isLoadingComments = !!group.bookId;
+    this.isLoadingComments = cycle.status === 'ACTIVE' && !!cycle.bookId;
 
-    const statusRequest = group.bookId
-      ? this.libraryService.getBookStatus(group.bookId)
-      : group.storyId
-        ? this.libraryService.getStoryStatus(group.storyId)
+    const statusRequest = cycle.bookId
+      ? this.libraryService.getBookStatus(cycle.bookId)
+      : cycle.storyId
+        ? this.libraryService.getStoryStatus(cycle.storyId)
         : null;
 
     if (!statusRequest) {
@@ -806,8 +1312,8 @@ export class GroupDetail implements OnInit {
         this.commentProgress = this.libraryProgressPercent;
         this.isCheckingLibraryStatus = false;
 
-        if (group.bookId && this.hasPercentageCommentProgress) {
-          this.loadComments(group.idExternal);
+        if (cycle.bookId && this.hasPercentageCommentProgress) {
+          this.loadComments(cycle.groupId);
         } else {
           this.comments = [];
           this.commentsErrorMessage = '';
@@ -861,11 +1367,11 @@ export class GroupDetail implements OnInit {
     });
   }
 
-  private loadGoals(groupId: string): void {
+  private loadGoals(groupId: string, cycleId: string): void {
     this.isLoadingGoals = true;
     this.goalsErrorMessage = '';
 
-    this.groupGoalsService.getByGroup(groupId).subscribe({
+    this.groupGoalsService.getByCycle(groupId, cycleId).subscribe({
       next: (goals) => {
         this.goals = goals;
         this.activeGoal =
@@ -873,7 +1379,7 @@ export class GroupDetail implements OnInit {
         this.isLoadingGoals = false;
 
         if (this.activeGoal) {
-          this.loadProgress(groupId);
+          this.loadProgress(groupId, cycleId);
         }
 
         this.changeDetector.markForCheck();
@@ -887,10 +1393,10 @@ export class GroupDetail implements OnInit {
     });
   }
 
-  private loadProgress(groupId: string): void {
+  private loadProgress(groupId: string, cycleId: string): void {
     this.progressErrorMessage = '';
 
-    this.groupProgressService.getByGroup(groupId).subscribe({
+    this.groupProgressService.getByCycle(groupId, cycleId).subscribe({
       next: (progress) => {
         this.progress = progress;
         this.changeDetector.markForCheck();
@@ -997,7 +1503,10 @@ export class GroupDetail implements OnInit {
     );
     this.isChangingGoal = false;
     this.progress = null;
-    this.loadGoals(this.group!.idExternal);
+    this.loadGoals(
+      this.group!.idExternal,
+      this.currentCycle!.idExternal,
+    );
     this.changeDetector.markForCheck();
   }
 

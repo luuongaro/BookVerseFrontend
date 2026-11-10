@@ -21,7 +21,10 @@ import { UserService } from '../../../profile/services/user.service';
 import { LibraryService } from '../../../library/services/library.service';
 import { TokenService } from '../../../../core/services/token.service';
 import { GroupMember } from '../../models/group-member.model';
-import { ReadingGroup } from '../../models/reading-group.model';
+import {
+  GroupReadingCycle,
+  ReadingGroup,
+} from '../../models/reading-group.model';
 import { GroupMembersService } from '../../services/group-members.service';
 
 type GroupWorkType = 'book' | 'story';
@@ -53,6 +56,7 @@ export class GroupForm implements OnInit {
   works: { idExternal: string; title: string }[] = [];
   isLoadingWorks = false;
   group: ReadingGroup | null = null;
+  groupCycle: GroupReadingCycle | null = null;
   members: GroupMember[] = [];
   isLoadingMembers = false;
   removingUserId: string | null = null;
@@ -183,6 +187,7 @@ export class GroupForm implements OnInit {
     ],
     workType: ['book' as GroupWorkType, Validators.required],
     referenceId: ['', Validators.required],
+    editionReference: [''],
     totalChapters: ['', [Validators.pattern(/^\d+$/), Validators.min(1)]],
   });
 
@@ -263,25 +268,30 @@ export class GroupForm implements OnInit {
     this.readingGroupsService
       .getById(groupId)
       .pipe(
+        switchMap((group) =>
+          this.readingGroupsService
+            .getCycles(group.idExternal)
+            .pipe(map((cycles) => ({ group, cycles }))),
+        ),
         finalize(() => {
           this.isLoading = false;
           this.cdr.markForCheck();
         }),
       )
       .subscribe({
-        next: (group) => {
+        next: ({ group, cycles }) => {
           this.group = group;
+          this.groupCycle =
+            cycles.find((cycle) => cycle.status === 'ACTIVE') ??
+            cycles.find((cycle) => cycle.status === 'PLANNED') ??
+            null;
 
           this.groupForm.patchValue({
             name: group.name,
-            workType: group.storyId ? 'story' : 'book',
-            referenceId: group.storyId ?? group.bookId ?? '',
-            totalChapters: group.totalChapters?.toString() ?? '',
+            workType: this.groupCycle?.storyId ? 'story' : 'book',
+            editionReference: this.groupCycle?.editionReference ?? '',
+            totalChapters: this.groupCycle?.totalChapters?.toString() ?? '',
           });
-
-          // El backend solo permite cambiar el nombre del grupo.
-          this.groupForm.controls.workType.disable();
-          this.groupForm.controls.referenceId.disable();
 
           if (this.canManageGroup) {
             this.loadMembers(group.idExternal);
@@ -306,8 +316,10 @@ export class GroupForm implements OnInit {
       return;
     }
 
-    const { name, workType, referenceId } = this.groupForm.getRawValue();
+    const { name, workType, referenceId, editionReference } =
+      this.groupForm.getRawValue();
     const normalizedName = name.trim();
+    const normalizedEditionReference = editionReference.trim();
     const rawTotalChapters: unknown =
       this.groupForm.controls.totalChapters.value;
 
@@ -315,6 +327,20 @@ export class GroupForm implements OnInit {
       rawTotalChapters === '' || rawTotalChapters == null
         ? null
         : Number(rawTotalChapters);
+
+    const needsBookReference = this.isEditing
+      ? !!this.groupCycle?.bookId
+      : workType === 'book';
+
+    if (needsBookReference && !normalizedEditionReference) {
+      this.errorMessage = 'Indicá la edición del libro.';
+      return;
+    }
+
+    if (needsBookReference && parsedTotalChapters === null) {
+      this.errorMessage = 'Ingresá la cantidad total de capítulos.';
+      return;
+    }
 
     if (
       parsedTotalChapters !== null &&
@@ -327,16 +353,13 @@ export class GroupForm implements OnInit {
     this.errorMessage = '';
     this.isSaving = true;
 
-    if (this.groupId) {
-      const updateRequest = this.group?.bookId
-        ? {
-            name: normalizedName,
-            totalChapters: parsedTotalChapters,
-          }
-        : { name: normalizedName };
+    const groupId = this.groupId;
+
+    if (groupId) {
+      const updateRequest = { name: normalizedName };
 
       this.readingGroupsService
-        .update(this.groupId, updateRequest)
+        .update(groupId, updateRequest)
         .pipe(
           finalize(() => {
             this.isSaving = false;
@@ -345,10 +368,34 @@ export class GroupForm implements OnInit {
         )
         .subscribe({
           next: () => {
+            if (this.groupCycle?.bookId) {
+              this.readingGroupsService
+                .updateCycleBookReference(groupId, this.groupCycle.idExternal, {
+                  editionReference: normalizedEditionReference,
+                  totalChapters: parsedTotalChapters!,
+                })
+                .subscribe({
+                  next: () => {
+                    this.groupForm.markAsPristine();
+                    this.groupForm.markAsUntouched();
+                    void this.router.navigate(['/groups', groupId]);
+                  },
+                  error: (error: unknown) => {
+                    console.error('Error updating book cycle reference:', error);
+                    this.errorMessage =
+                      'Se actualizó el nombre, pero no se pudo actualizar la edición del libro.';
+                    this.isSaving = false;
+                    this.cdr.markForCheck();
+                  },
+                });
+
+              return;
+            }
+
             this.groupForm.markAsPristine();
             this.groupForm.markAsUntouched();
 
-            void this.router.navigate(['/groups', this.groupId]);
+            void this.router.navigate(['/groups', groupId]);
           },
           error: (error: unknown) => {
             console.error('Error updating reading group:', error);
@@ -360,15 +407,35 @@ export class GroupForm implements OnInit {
       return;
     }
 
+    const cycleRequest =
+      workType === 'book'
+        ? {
+            bookId: referenceId,
+            editionReference: normalizedEditionReference,
+            totalChapters: parsedTotalChapters!,
+          }
+        : {
+            storyId: referenceId,
+          };
+
     this.readingGroupsService
-      .create({
-        name: normalizedName,
-        bookId: workType === 'book' ? referenceId : null,
-        storyId: workType === 'story' ? referenceId : null,
-      })
+      .create({ name: normalizedName })
       .subscribe({
         next: (group) => {
-          void this.router.navigate(['/groups', group.idExternal]);
+          this.readingGroupsService
+            .createCycle(group.idExternal, cycleRequest)
+            .subscribe({
+              next: () => {
+                void this.router.navigate(['/groups', group.idExternal]);
+              },
+              error: (error: unknown) => {
+                console.error('Error creating reading cycle:', error);
+                this.errorMessage =
+                  'El grupo se creó, pero no se pudo crear el ciclo de lectura.';
+                this.isSaving = false;
+                this.cdr.markForCheck();
+              },
+            });
         },
         error: (error: unknown) => {
           console.error('Error creating reading group:', error);

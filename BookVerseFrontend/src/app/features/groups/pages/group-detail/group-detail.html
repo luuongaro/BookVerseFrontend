@@ -55,8 +55,11 @@
               <span class="cover-art" aria-hidden="true">✧</span>
             } @else if (isLoadingLinkedContent) {
               <span class="cover-title">Cargando lectura…</span>
-            } @else {
+            } @else if (currentCycle) {
               <span class="cover-title">Portada no disponible</span>
+            } @else {
+              <span class="cover-title">Lectura por definir</span>
+              <span class="cover-art" aria-hidden="true">✧</span>
             }
           </div>
 
@@ -65,11 +68,17 @@
 
             <div class="group-meta">
               <span>
-                {{ group.storyId ? 'Grupo de lectura de una historia' : 'Grupo de lectura de un libro' }}
+                @if (currentCycle?.storyId) {
+                  Grupo de lectura de una historia
+                } @else if (currentCycle?.bookId) {
+                  Grupo de lectura de un libro
+                } @else {
+                  Grupo de lectura
+                }
               </span>
               <span class="status-badge">
                 <span></span>
-                {{ group.isActive ? 'Activo' : 'Inactivo' }}
+                {{ group.isActive ? 'Grupo activo' : 'Grupo inactivo' }}
               </span>
             </div>
 
@@ -94,7 +103,7 @@
                 />
               </svg>
               <div>
-                <strong>Lectura elegida por el grupo</strong>
+                <strong>Lectura del grupo</strong>
                 @if (linkedBook; as book) {
                   <small>{{ book.title }}</small>
                 } @else if (linkedStory; as story) {
@@ -102,10 +111,20 @@
                 } @else if (isLoadingLinkedContent) {
                   <small>Cargando lectura…</small>
                 } @else if (linkedContentError) {
-                  <small>{{ linkedContentError }}</small>
+                  <small class="cycle-message">{{ linkedContentError }}</small>
+                }
+
+                @if (currentCycle) {
+                  <small class="cycle-status-label">{{ currentCycleStatusLabel }}</small>
                 }
               </div>
             </div>
+
+            @if (currentCycle?.status === 'PLANNED') {
+              <p class="group-library-status cycle-message" role="status">
+                Lectura planificada. El creador puede iniciarla para habilitar la meta, la participación y la conversación.
+              </p>
+            }
 
             @if (isCheckingLibraryStatus) {
               <p class="group-library-status" role="status">
@@ -117,7 +136,7 @@
               </p>
             } @else if (
               isWorkInLibrary === false &&
-              (group.bookId || group.storyId)
+              (currentCycle?.bookId || currentCycle?.storyId)
             ) {
               <aside class="group-library-notice" role="note">
                 <div class="group-library-notice__text">
@@ -130,9 +149,9 @@
                 <a
                   class="button button-outline"
                   [routerLink]="
-                    group.bookId
-                      ? ['/books', group.bookId]
-                      : ['/stories', group.storyId]
+                    isStoryGroup
+                      ? ['/stories', currentCycle?.storyId]
+                      : ['/books', currentCycle?.bookId]
                   "
                 >
                   Agregar a mi biblioteca
@@ -142,18 +161,33 @@
           </div>
 
           <div class="heading-actions">
-            <p class="edit-permission-note" role="note">
-              Solo el creador, administradores y moderadores pueden modificar el grupo.
-            </p>
+            <div class="heading-action-buttons">
+              @if (canManageCycles) {
+                <button
+                  class="button button-outline"
+                  type="button"
+                  (click)="toggleNewCycleForm()"
+                  [disabled]="isChangingCycle"
+                >
+                  Planificar lectura
+                </button>
+              }
 
-            @if (canEditGroup) {
-              <a
-                class="button button-outline"
-                [routerLink]="['/groups', group.idExternal, 'edit']"
-              >
-                <span aria-hidden="true">✎</span>
-                Editar grupo
-              </a>
+              @if (canEditGroup) {
+                <a
+                  class="button button-outline"
+                  [routerLink]="['/groups', group.idExternal, 'edit']"
+                >
+                  <span aria-hidden="true">✎</span>
+                  Editar grupo
+                </a>
+              }
+            </div>
+
+            @if (!canEditGroup) {
+              <p class="edit-permission-note" role="note">
+                Solo el creador puede modificar el grupo.
+              </p>
             }
           </div>
         </section>
@@ -258,7 +292,15 @@
               }
             } @else {
               <p class="goal-book goal-empty-state">
-                Todavía no hay una meta activa para este grupo.
+                @if (!currentCycle) {
+                  Primero hay que planificar una lectura para este grupo.
+                } @else if (currentCycle.status === 'PLANNED') {
+                  La lectura está planificada. Al iniciar la lectura, podrán definir una meta compartida.
+                } @else if (currentCycle.status === 'ACTIVE') {
+                  Todavía no hay una meta activa para esta lectura.
+                } @else {
+                  Esta lectura terminó. Planificá otra lectura para crear una nueva meta.
+                }
               </p>
 
               @if (canCreateGoal) {
@@ -280,28 +322,6 @@
                       <option value="PERCENTAGE">Porcentaje</option>
                       <option value="CHAPTER">Capítulos</option>
                     </select>
-                  </label>
-                }
-
-                @if (!isStoryGroup && goalType === 'CHAPTER') {
-                  <label>
-                    Cantidad total de capítulos
-                    <input
-                      type="number"
-                      min="1"
-                      step="1"
-                      [(ngModel)]="bookTotalChapters"
-                      name="bookTotalChapters"
-                      required
-                    />
-                    <small>
-                      Cargá el total de capítulos del libro. Se usará para validar y calcular
-                      esta meta.
-                    </small>
-
-                    @if (bookTotalChapters === null || bookTotalChapters < 1) {
-                      <small>Ingresá un número entero mayor que cero.</small>
-                    }
                   </label>
                 }
 
@@ -422,12 +442,7 @@
                 </div>
               } @else {
                 <p class="member-state">
-                  @if (isStoryGroup) {
-                    El creador del grupo puede establecer la meta de lectura.
-                  } @else {
-                    El creador, los moderadores y los administradores autorizados pueden
-                    establecer la meta de lectura.
-                  }
+                  El creador del grupo puede establecer la meta de lectura.
                 </p>
               }
             }
@@ -533,6 +548,13 @@
                         Creador
                       </span>
                     }
+
+                    @if (isParticipatingInCurrentCycle(member.userId)) {
+                      <span class="participant-badge">
+                        <span aria-hidden="true">✓</span>
+                        Participa en esta lectura
+                      </span>
+                    }
                   </article>
                 }
                 </div>
@@ -599,6 +621,54 @@
                 </p>
               }
             }
+
+            @if (currentCycle?.status === 'ACTIVE') {
+              <div class="member-management">
+                @if (currentUserCycleParticipation?.status === 'ACTIVE') {
+                  <button
+                    class="button button-outline"
+                    type="button"
+                    (click)="leaveCurrentCycle()"
+                    [disabled]="isChangingParticipation"
+                  >
+                    {{ isChangingParticipation ? 'Saliendo…' : 'Salir de esta lectura' }}
+                  </button>
+                } @else if (currentUserCycleParticipation?.status === 'COMPLETED') {
+                  <p class="member-state">Ya completaste esta lectura.</p>
+                } @else if (canJoinCurrentCycle) {
+                  <button
+                    class="button button-primary"
+                    type="button"
+                    (click)="joinCurrentCycle()"
+                    [disabled]="isChangingParticipation"
+                  >
+                    {{ isChangingParticipation ? 'Sumándote…' : 'Sumarme a esta lectura' }}
+                  </button>
+                } @else {
+                  <p class="member-state">
+                    Para participar, tenés que ser miembro activo y tener la obra en tu biblioteca
+                    como En curso, Releyendo o Finalizada.
+                  </p>
+                }
+
+                @if (isLoadingCycleParticipants) {
+                  <p class="member-state" role="status">Cargando participantes de esta lectura…</p>
+                } @else {
+                  <p class="member-state">
+                    {{ activeCycleParticipants.length }}
+                    {{ activeCycleParticipants.length === 1 ? 'participante' : 'participantes' }}
+                    en esta lectura.
+                  </p>
+
+                }
+
+                @if (participantActionMessage) {
+                  <p class="member-state state-error" role="alert">
+                    {{ participantActionMessage }}
+                  </p>
+                }
+              </div>
+            }
             @if (memberSuccessMessage) {
               <p class="member-state member-success" role="status">{{ memberSuccessMessage }}</p>
             }
@@ -627,10 +697,10 @@
                 </p>
 
                 @if (!isCheckingLibraryStatus && !libraryStatusError) {
-                  @if (!libraryReadingStatus && group.bookId) {
+                  @if (!libraryReadingStatus && currentCycle?.bookId) {
                     <a
                       class="comment-library-link"
-                      [routerLink]="['/books', group.bookId]"
+                      [routerLink]="['/books', currentCycle?.bookId]"
                     >
                       Agregar el libro a mi biblioteca
                     </a>
@@ -678,7 +748,11 @@
             }
           </div>
 
-          @if (!isStoryGroup && hasPercentageCommentProgress) {
+          @if (
+            currentCycle?.status === 'ACTIVE' &&
+            !isStoryGroup &&
+            hasPercentageCommentProgress
+          ) {
             <p class="comment-progress-info" role="status">
               Tu avance guardado en Mi biblioteca es
               <strong>{{ libraryProgressPercent }}%</strong>.
@@ -741,6 +815,11 @@
           } @else if (isStoryGroup) {
             <p class="member-state">
               Los comentarios todavía están disponibles solo para grupos de libros.
+            </p>
+          } @else if (currentCycle?.status === 'PLANNED') {
+            <p class="member-state">
+              La conversación se habilitará al iniciar esta lectura. Para comentar sobre una
+              libro, cada lector debe tenerlo en su biblioteca y registrar su avance.
             </p>
           }
 
@@ -874,4 +953,243 @@
       {{ isUpdatingMembers ? 'Saliendo…' : 'Sí, salir' }}
     </button>
   </div>
+</dialog>
+
+<dialog
+  #newCycleDialog
+  class="cycle-create-dialog"
+  aria-labelledby="new-cycle-title"
+  (close)="showNewCycleForm = false"
+>
+  <button
+    class="cycle-dialog-close"
+    type="button"
+    aria-label="Cerrar"
+    (click)="closeNewCycleForm()"
+  >
+    ×
+  </button>
+
+  @if (showCancelCycleConfirmation) {
+    <section
+      class="cycle-cancel-confirmation"
+      role="alertdialog"
+      aria-labelledby="cancel-cycle-title"
+    >
+      <p class="cycle-form-eyebrow">CONFIRMAR ACCIÓN</p>
+
+      <h2 id="cancel-cycle-title" class="cycle-form-title">
+        <span>¿Cancelar esta</span>
+        <em>lectura del grupo?</em>
+      </h2>
+
+      <p class="cycle-form-description">
+        La lectura quedará cancelada. El grupo seguirá activo.
+      </p>
+
+      @if (cycleActionMessage) {
+        <p class="member-state state-error" role="alert">
+          {{ cycleActionMessage }}
+        </p>
+      }
+
+      <div class="cycle-form-actions">
+        <button
+          class="button button-outline"
+          type="button"
+          (click)="dismissCancelCycleConfirmation()"
+          [disabled]="isChangingCycle"
+        >
+          Volver
+        </button>
+
+        <button
+          class="button button-danger"
+          type="button"
+          (click)="confirmCancelCurrentCycle()"
+          [disabled]="isChangingCycle"
+        >
+          {{ isChangingCycle ? 'Cancelando…' : 'Sí, cancelar lectura' }}
+        </button>
+      </div>
+    </section>
+  } @else {
+  <h2 id="new-cycle-title" class="cycle-form-title">
+    <span>Planificar</span>
+    <em>lectura.</em>
+  </h2>
+
+  <p class="cycle-form-description">
+    @if (!currentCycle) {
+      Elegí la obra que el grupo va a leer.
+    } @else if (currentCycle.status === 'PLANNED') {
+      Ya hay una lectura planificada. Podés iniciarla o cancelarla desde acá.
+    } @else if (currentCycle.status === 'ACTIVE') {
+      La lectura actual está en curso. Podés completarla o cancelarla, y planificar la siguiente.
+    } @else {
+      Elegí una obra para planificar la próxima lectura del grupo.
+    }
+  </p>
+
+  @if (currentCycle; as cycle) {
+    <section class="cycle-current-card" aria-label="Estado de la lectura del grupo">
+      <p class="cycle-current-card__label">LECTURA DEL GRUPO</p>
+
+      <div class="cycle-current-card__heading">
+        <h3>
+          {{ linkedBook?.title ?? linkedStory?.title ?? 'Lectura seleccionada' }}
+        </h3>
+
+        <span class="cycle-status-pill">
+          {{
+            cycle.status === 'PLANNED'
+              ? 'Planificada'
+              : cycle.status === 'ACTIVE'
+                ? 'En curso'
+                : cycle.status === 'COMPLETED'
+                  ? 'Completada'
+                  : 'Cancelada'
+          }}
+        </span>
+      </div>
+
+      @if (cycle.status === 'PLANNED' && canManageCycles) {
+        <div class="cycle-current-card__actions">
+          <button
+            class="button button-primary"
+            type="button"
+            (click)="startCurrentCycle()"
+            [disabled]="isChangingCycle"
+          >
+            {{ cycleActionInProgress === 'start' ? 'Iniciando…' : 'Iniciar lectura' }}
+          </button>
+
+          <button
+            class="button button-outline"
+            type="button"
+              (click)="requestCancelCurrentCycle()"
+            [disabled]="isChangingCycle"
+          >
+            {{ cycleActionInProgress === 'cancel' ? 'Cancelando…' : 'Cancelar lectura' }}
+          </button>
+        </div>
+      } @else if (cycle.status === 'ACTIVE' && canManageCycles) {
+        <div class="cycle-current-card__actions">
+          <button
+            class="button button-primary"
+            type="button"
+            (click)="completeCurrentCycle()"
+            [disabled]="isChangingCycle"
+          >
+            {{ cycleActionInProgress === 'complete' ? 'Completando…' : 'Completar lectura' }}
+          </button>
+
+          <button
+            class="button button-outline"
+            type="button"
+            (click)="requestCancelCurrentCycle()"
+            [disabled]="isChangingCycle"
+          >
+            {{ cycleActionInProgress === 'cancel' ? 'Cancelando…' : 'Cancelar lectura' }}
+          </button>
+        </div>
+      }
+
+      @if (cycleActionMessage) {
+        <p class="cycle-current-card__message" role="status">
+          {{ cycleActionMessage }}
+        </p>
+      }
+    </section>
+  }
+
+  @if (currentCycle?.status !== 'PLANNED') {
+    @if (currentCycle) {
+      <h3 class="cycle-form-section-title">Próxima lectura</h3>
+    }
+
+    <form class="cycle-form" (ngSubmit)="createNextCycle()">
+    <div class="cycle-form-grid">
+      <label>
+        ¿Qué van a leer?
+        <select
+          [(ngModel)]="cycleWorkType"
+          name="cycleWorkType"
+          (change)="loadCycleWorks()"
+        >
+          <option value="book">Un libro</option>
+          <option value="story">Una historia</option>
+        </select>
+      </label>
+
+      <label>
+        Elegí una obra de Mi biblioteca
+        <select
+          [(ngModel)]="cycleReferenceId"
+          name="cycleReferenceId"
+          [disabled]="isLoadingCycleWorks || cycleWorks.length === 0"
+        >
+          <option value="" disabled>Seleccioná una obra</option>
+          @for (work of cycleWorks; track work.idExternal) {
+            <option [value]="work.idExternal">{{ work.title }}</option>
+          }
+        </select>
+      </label>
+
+      @if (!isLoadingCycleWorks && cycleWorks.length === 0) {
+        <p class="member-state">
+          No tenés obras de este tipo en Mi biblioteca.
+          <a routerLink="/library">Agregá una para poder elegirla.</a>
+        </p>
+      }
+
+      @if (cycleWorkType === 'book') {
+        <label>
+          Edición del libro
+          <input
+            type="text"
+            [(ngModel)]="cycleEditionReference"
+            name="cycleEditionReference"
+          />
+        </label>
+
+        <label>
+          Cantidad total de capítulos
+          <input
+            type="number"
+            min="1"
+            step="1"
+            [(ngModel)]="cycleTotalChapters"
+            name="cycleTotalChapters"
+          />
+        </label>
+      }
+    </div>
+
+    @if (cycleActionMessage) {
+      <p class="member-state state-error" role="alert">
+        {{ cycleActionMessage }}
+      </p>
+    }
+
+    <div class="cycle-form-actions">
+      <button
+        class="button button-outline"
+        type="button"
+        (click)="closeNewCycleForm()"
+      >
+        Cerrar
+      </button>
+
+      <button
+        class="button button-primary"
+        type="submit"
+        [disabled]="isChangingCycle || isLoadingCycleWorks"
+      >
+        {{ isChangingCycle ? 'Planificando…' : 'Planificar lectura' }}
+      </button>
+    </div>
+    </form>
+  }
+  }
 </dialog>

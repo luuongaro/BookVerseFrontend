@@ -139,7 +139,12 @@
                     stroke-linejoin="round"
                     aria-hidden="true"
                   >
-                    @if (i % 3 === 0) {
+                    @if (!group.currentCycle) {
+                      <circle cx="9" cy="8" r="3" />
+                      <path d="M3 20c0-3 2.5-5 6-5s6 2 6 5" />
+                      <path d="M16 11a3 3 0 0 0 0-6" />
+                      <path d="M17 15c2.5.5 4 2.2 4 5" />
+                    } @else if (i % 3 === 0) {
                       <path
                         d="M20.8 13A8.5 8.5 0 0 1 11 3.2 8.5 8.5 0 1 0 20.8 13Z"
                       />
@@ -157,9 +162,11 @@
 
                   <span>
                     {{
-                      group.storyId
-                        ? 'GRUPO DE LECTURA DE HISTORIA'
-                        : 'GRUPO DE LECTURA DE LIBRO'
+                      !group.currentCycle
+                        ? 'GRUPO DE LECTURA'
+                        : group.currentCycle.storyId
+                          ? 'GRUPO DE LECTURA DE HISTORIA'
+                          : 'GRUPO DE LECTURA DE LIBRO'
                     }}
                   </span>
                 </div>
@@ -167,17 +174,25 @@
                 <div class="card-content">
                   <p class="card-type">
                     {{
-                      group.storyId
-                        ? 'HISTORIA DE LA COMUNIDAD'
-                        : 'LIBRO PUBLICADO'
+                      !group.currentCycle
+                        ? 'LECTURA POR DEFINIR'
+                        : group.currentCycle.storyId
+                          ? 'HISTORIA DE LA COMUNIDAD'
+                          : 'LIBRO PUBLICADO'
                     }}
                   </p>
 
                   <h3>{{ group.name }}</h3>
 
-                  <p class="card-description">
-                    Un espacio para compartir lecturas, ideas y conversaciones.
-                  </p>
+                  @if (!group.currentCycle) {
+                    <p class="card-description">
+                      Este grupo todavía no tiene una lectura planificada.
+                    </p>
+                  } @else {
+                    <p class="card-description">
+                      Un espacio para compartir lecturas, ideas y conversaciones.
+                    </p>
+                  }
 
                   <div class="card-divider"></div>
 
