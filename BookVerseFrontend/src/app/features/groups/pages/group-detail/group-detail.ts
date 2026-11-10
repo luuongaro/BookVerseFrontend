@@ -851,16 +851,13 @@ export class GroupDetail implements OnInit {
     this.isUpdatingMembers = true;
 
     this.groupMembersService
-      .addMember(this.group.idExternal, {
-        userId: user.idExternal,
-      })
+      .invite(this.group.idExternal, user.idExternal)
       .subscribe({
         next: () => {
           this.selectedInviteUser = null;
           this.showInviteForm = false;
           this.isUpdatingMembers = false;
-          this.memberSuccessMessage = `Agregaste a @${user.username} al grupo.`;
-          this.loadMembers(this.group!.idExternal);
+          this.memberSuccessMessage = `Invitaste a @${user.username} al grupo.`;
           this.changeDetector.markForCheck();
         },
         error: (error: unknown) => {

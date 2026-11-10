@@ -13,10 +13,26 @@ import {
   UpdateReadingGroupRequest,
 } from '../models/reading-group.model';
 
+export interface DiscoveredGroup {
+  idExternal: string;
+  name: string;
+  activeMembersCount: number;
+  activeContentTitle: string | null;
+  membershipState: 'NOT_MEMBER' | 'MEMBER' | 'JOIN_REQUEST_PENDING' | 'INVITATION_PENDING';
+}
+
 @Service()
 export class ReadingGroupsService {
   private readonly http = inject(HttpClient);
   private readonly url = `${API_URL}/reading-groups`;
+
+  discover(): Observable<DiscoveredGroup[]> {
+    return this.http.get<DiscoveredGroup[]>(`${this.url}/discover`);
+  }
+
+  requestMembership(groupId: string): Observable<unknown> {
+    return this.http.post(`${this.url}/${groupId}/membership-requests`, {});
+  }
 
   getAll(): Observable<ReadingGroup[]> {
     return this.http.get<ReadingGroup[]>(this.url);

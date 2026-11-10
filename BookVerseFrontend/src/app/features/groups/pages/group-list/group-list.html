@@ -69,6 +69,35 @@
         </div>
       </section>
 
+      <nav class="group-tabs" aria-label="Secciones de grupos">
+        <button type="button" [class.selected]="view === 'mine'" [attr.aria-current]="view === 'mine' ? 'page' : null" (click)="view = 'mine'">Mis grupos de lectura</button>
+        <button type="button" [class.selected]="view === 'discover'" [attr.aria-current]="view === 'discover' ? 'page' : null" (click)="showDiscover()">Buscar grupos</button>
+      </nav>
+
+      @if (view === 'discover') {
+        <section class="reading-groups" aria-labelledby="discover-title">
+          <div class="reading-groups-heading">
+            <div><h2 id="discover-title">Buscá grupos sobre tus lecturas</h2><p>Encontrá grupos por nombre o lectura.</p></div>
+            <label class="group-search"><span class="visually-hidden">Buscar grupos o lecturas</span><input type="search" [(ngModel)]="discoverSearch" placeholder="Buscar grupo o lectura…" /></label>
+          </div>
+          @if (discoverLoading) { <p class="state-message" role="status">Cargando grupos…</p> }
+          @else if (discoverError) { <p class="state-message state-error" role="alert">{{ discoverError }}</p><button type="button" (click)="showDiscover()">Reintentar</button> }
+          @else if (!filteredDiscover.length) { <p class="state-message">No encontramos grupos.</p> }
+          @else {
+            <div class="discover-cards">
+              @for (group of filteredDiscover; track group.idExternal) {
+                <article class="discover-card">
+                  <h3>{{ group.name }}</h3><p>{{ group.activeContentTitle || 'Lectura por definir' }}</p><p>{{ group.activeMembersCount }} integrantes</p>
+                  @if (group.membershipState === 'NOT_MEMBER') { <button type="button" [disabled]="!!requestingId" (click)="requestGroup(group)">{{ requestingId === group.idExternal ? 'Enviando…' : 'Solicitar acceso' }}</button> }
+                  @else if (group.membershipState === 'JOIN_REQUEST_PENDING') { <span>Solicitud enviada</span> }
+                  @else if (group.membershipState === 'INVITATION_PENDING') { <span>Tenés una invitación pendiente</span> }
+                  @else { <a [routerLink]="['/groups', group.idExternal]">Ver grupo</a> }
+                </article>
+              }
+            </div>
+          }
+        </section>
+      } @else {
       <section class="reading-groups">
         <div class="reading-groups-heading">
           <div>
@@ -245,6 +274,7 @@
         }
       </section>
 
+      }
       <footer class="app-footer">
         <span>Un pequeño mundo propio.</span>
         <span>BOOKVERSE ✦</span>

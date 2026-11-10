@@ -793,14 +793,14 @@ export class Profile implements OnInit {
     this.adding.set(true);
     this.groupsError.set('');
     this.membersService
-      .addMember(group.idExternal, { userId: user.idExternal })
+      .invite(group.idExternal, user.idExternal)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.adding.set(false);
           if (this.viewedUser()?.idExternal !== user.idExternal) return;
           this.showGroupPicker.set(false);
-          this.groupMessage.set(`Agregaste a @${user.username} a ${group.name}.`);
+          this.groupMessage.set(`Invitaste a @${user.username} a ${group.name}.`);
           this.selectedGroupId = '';
         },
         error: (error: HttpErrorResponse) => {

@@ -22,11 +22,11 @@ describe('Adding group members by selected user', () => {
         provideRouter([]),
         { provide: ActivatedRoute, useValue: { paramMap: EMPTY } },
         { provide: ReadingGroupsService, useValue: {} },
-        { provide: GroupMembersService, useValue: { addMember, getActiveByGroup: () => of([]) } },
+        { provide: GroupMembersService, useValue: { invite: addMember, getActiveByGroup: () => of([]) } },
         { provide: GroupGoalsService, useValue: {} },
         { provide: GroupCommentsService, useValue: {} },
         { provide: GroupProgressService, useValue: {} },
-        { provide: UserService, useValue: { currentUser: () => null } },
+        { provide: UserService, useValue: { currentUser: () => null, getCachedProfileAppearance: () => undefined, getProfileAppearance: () => of({ avatarIndex: 0 }) } },
         { provide: BooksService, useValue: {} },
         { provide: StoryService, useValue: {} },
         { provide: TokenService, useValue: tokens },
@@ -39,11 +39,10 @@ describe('Adding group members by selected user', () => {
       name: 'Lecturas',
       createdByUserId: 'creator',
       isActive: true,
-      bookId: 'book',
-      storyId: null,
       createdAt: '',
     };
     component.selectedInviteUser = { idExternal: 'reader', username: 'Marina' };
+    component.members = [{ idExternal: 'creator-member', groupId: 'group', groupName: 'Lecturas', userId: 'creator', userName: 'Creador', memberType: 'CREATOR', status: 'ACTIVE', joinedAt: '' }];
     component.isLoading = false;
     component.isLoadingMembers = false;
     return { fixture, component, addMember, tokens };
@@ -55,7 +54,7 @@ describe('Adding group members by selected user', () => {
     const { component, addMember } = setup();
     component.inviteMember();
     component.inviteMember();
-    expect(addMember).toHaveBeenCalledExactlyOnceWith('group', { userId: 'reader' });
+    expect(addMember).toHaveBeenCalledExactlyOnceWith('group', 'reader');
   });
 
   it('does not offer or perform member management to a regular group member', () => {
