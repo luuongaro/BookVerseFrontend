@@ -4,8 +4,12 @@ import { Observable } from 'rxjs';
 
 import { API_URL } from '../../../core/api/api.config';
 import {
+  CreateGroupReadingCycleRequest,
+  GroupReadingCycle,
+  GroupReadingParticipant,
   CreateReadingGroupRequest,
   ReadingGroup,
+  UpdateGroupReadingCycleBookReferenceRequest,
   UpdateReadingGroupRequest,
 } from '../models/reading-group.model';
 
@@ -56,5 +60,93 @@ export class ReadingGroupsService {
 
   deactivate(idExternal: string): Observable<void> {
     return this.http.delete<void>(`${this.url}/${idExternal}`);
+  }
+
+  getCycles(groupId: string): Observable<GroupReadingCycle[]> {
+    return this.http.get<GroupReadingCycle[]>(
+      `${this.url}/${groupId}/cycles`,
+    );
+  }
+
+  getActiveCycle(groupId: string): Observable<GroupReadingCycle> {
+    return this.http.get<GroupReadingCycle>(
+      `${this.url}/${groupId}/cycles/active`,
+    );
+  }
+
+  createCycle(
+    groupId: string,
+    request: CreateGroupReadingCycleRequest,
+  ): Observable<GroupReadingCycle> {
+    return this.http.post<GroupReadingCycle>(
+      `${this.url}/${groupId}/cycles`,
+      request,
+    );
+  }
+
+  updateCycleBookReference(
+    groupId: string,
+    cycleId: string,
+    request: UpdateGroupReadingCycleBookReferenceRequest,
+  ): Observable<GroupReadingCycle> {
+    return this.http.put<GroupReadingCycle>(
+      `${this.url}/${groupId}/cycles/${cycleId}/book-reference`,
+      request,
+    );
+  }
+
+  startCycle(
+    groupId: string,
+    cycleId: string,
+  ): Observable<GroupReadingCycle> {
+    return this.http.patch<GroupReadingCycle>(
+      `${this.url}/${groupId}/cycles/${cycleId}/start`,
+      {},
+    );
+  }
+
+  completeCycle(
+    groupId: string,
+    cycleId: string,
+  ): Observable<GroupReadingCycle> {
+    return this.http.patch<GroupReadingCycle>(
+      `${this.url}/${groupId}/cycles/${cycleId}/complete`,
+      {},
+    );
+  }
+
+  cancelCycle(
+    groupId: string,
+    cycleId: string,
+  ): Observable<GroupReadingCycle> {
+    return this.http.patch<GroupReadingCycle>(
+      `${this.url}/${groupId}/cycles/${cycleId}/cancel`,
+      {},
+    );
+  }
+
+  getCycleParticipants(
+    groupId: string,
+    cycleId: string,
+  ): Observable<GroupReadingParticipant[]> {
+    return this.http.get<GroupReadingParticipant[]>(
+      `${this.url}/${groupId}/cycles/${cycleId}/participants`,
+    );
+  }
+
+  joinCycle(
+    groupId: string,
+    cycleId: string,
+  ): Observable<GroupReadingParticipant> {
+    return this.http.post<GroupReadingParticipant>(
+      `${this.url}/${groupId}/cycles/${cycleId}/participants/me`,
+      null,
+    );
+  }
+
+  leaveCycle(groupId: string, cycleId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.url}/${groupId}/cycles/${cycleId}/participants/me`,
+    );
   }
 }

@@ -10,7 +10,10 @@ import { GroupGoal } from '../../../groups/models/group-goal.model';
 import { GroupGoalsService } from '../../../groups/services/group-goals.service';
 import { GroupProgress } from '../../../groups/models/group-progress.model';
 import { GroupProgressService } from '../../../groups/services/group-progress.service';
-import { ReadingGroup } from '../../../groups/models/reading-group.model';
+import {
+  GroupReadingCycle,
+  ReadingGroup,
+} from '../../../groups/models/reading-group.model';
 import { GroupMembersService } from '../../../groups/services/group-members.service';
 import { ReadingGroupsService } from '../../../groups/services/reading-groups.service';
 import { UserService } from '../../../profile/services/user.service';
@@ -36,6 +39,7 @@ export class Dashboard implements OnInit {
   groups: ReadingGroup[] = [];
   isLoadingGroups = true;
   groupsError = '';
+  featuredCycle: GroupReadingCycle | null = null;
   groupBook: Book | null = null;
   groupStory: StoryDetailResponse | null = null;
   activeGoal: GroupGoal | null = null;
@@ -151,37 +155,71 @@ export class Dashboard implements OnInit {
   private loadFeaturedGroupData(group: ReadingGroup): void {
     this.isLoadingGroupData = true;
 
-    const bookRequest = group.bookId
-      ? this.booksService.getById(group.bookId).pipe(catchError(() => of(null)))
-      : of(null);
-
-    const storyRequest = group.storyId
-      ? this.storyService
-          .getById(group.storyId)
-          .pipe(catchError(() => of(null)))
-      : of(null);
-
-    const goalRequest = this.groupGoalsService
-      .getActiveByGroup(group.idExternal)
-      .pipe(catchError(() => of(null)));
-
-    forkJoin({
-      book: bookRequest,
-      story: storyRequest,
-      goal: goalRequest,
-    })
+    this.readingGroupsService
+      .getCycles(group.idExternal)
       .pipe(
-        switchMap(({ book, story, goal }) => {
-          if (!goal) {
-            return of({ book, story, goal: null, progress: null });
+        catchError(() => of([])),
+        switchMap((cycles) => {
+          const latestCycle = [...cycles].sort(
+            (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
+          )[0];
+
+          const cycle =
+            cycles.find((item) => item.status === 'ACTIVE') ??
+            cycles.find((item) => item.status === 'PLANNED') ??
+            latestCycle ??
+            null;
+
+          this.featuredCycle = cycle;
+
+          if (!cycle) {
+            return of({
+              book: null,
+              story: null,
+              goal: null,
+              progress: null,
+            });
           }
 
-          return this.groupProgressService
-            .getByGroup(group.idExternal)
-            .pipe(
-              map((progress) => ({ book, story, goal, progress })),
-              catchError(() => of({ book, story, goal, progress: null })),
-            );
+          const bookRequest = cycle.bookId
+            ? this.booksService
+                .getById(cycle.bookId)
+                .pipe(catchError(() => of(null)))
+            : of(null);
+
+          const storyRequest = cycle.storyId
+            ? this.storyService
+                .getById(cycle.storyId)
+                .pipe(catchError(() => of(null)))
+            : of(null);
+
+          const goalRequest =
+            cycle.status === 'ACTIVE'
+              ? this.groupGoalsService
+                  .getActiveByCycle(group.idExternal, cycle.idExternal)
+                  .pipe(catchError(() => of(null)))
+              : of(null);
+
+          return forkJoin({
+            book: bookRequest,
+            story: storyRequest,
+            goal: goalRequest,
+          }).pipe(
+            switchMap(({ book, story, goal }) => {
+              if (!goal || cycle.status !== 'ACTIVE') {
+                return of({ book, story, goal: null, progress: null });
+              }
+
+              return this.groupProgressService
+                .getByCycle(group.idExternal, cycle.idExternal)
+                .pipe(
+                  map((progress) => ({ book, story, goal, progress })),
+                  catchError(() =>
+                    of({ book, story, goal, progress: null }),
+                  ),
+                );
+            }),
+          );
         }),
       )
       .subscribe(({ book, story, goal, progress }) => {

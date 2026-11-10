@@ -1,21 +1,63 @@
 export interface ReadingGroup {
   idExternal: string;
-  bookId: string | null;
-  storyId: string | null;
   createdByUserId: string;
   name: string;
-  totalChapters: number | null;
   isActive: boolean;
   createdAt: string;
 }
 
 export interface CreateReadingGroupRequest {
-  bookId?: string | null;
-  storyId?: string | null;
   name: string;
 }
 
 export interface UpdateReadingGroupRequest {
   name: string;
+}
+
+export type GroupReadingCycleStatus =
+  | 'PLANNED'
+  | 'ACTIVE'
+  | 'COMPLETED'
+  | 'CANCELLED';
+
+export interface GroupReadingCycle {
+  idExternal: string;
+  groupId: string;
+  bookId: string | null;
+  storyId: string | null;
+  editionReference: string | null;
+  totalChapters: number | null;
+  status: GroupReadingCycleStatus;
+  startedAt: string | null;
+  completedAt: string | null;
+  createdAt: string;
+}
+
+export interface CreateGroupReadingCycleRequest {
+  bookId?: string | null;
+  storyId?: string | null;
+  editionReference?: string | null;
   totalChapters?: number | null;
+}
+
+export interface UpdateGroupReadingCycleBookReferenceRequest {
+  editionReference: string;
+  totalChapters: number;
+}
+
+export type GroupReadingParticipantStatus =
+  | 'ACTIVE'
+  | 'COMPLETED'
+  | 'WITHDRAWN';
+
+export interface GroupReadingParticipant {
+  idExternal: string;
+  readingCycleId: string;
+  groupId: string;
+  groupMemberId: string;
+  userId: string;
+  userName: string;
+  status: GroupReadingParticipantStatus;
+  joinedAt: string;
+  completedAt: string | null;
 }

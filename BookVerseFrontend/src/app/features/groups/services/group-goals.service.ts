@@ -5,14 +5,6 @@ import { Observable } from 'rxjs';
 import { API_URL } from '../../../core/api/api.config';
 import { GroupGoal } from '../models/group-goal.model';
 
-export interface CreateGroupGoalRequest {
-  groupId: string;
-  goalType: string;
-  targetProgress: number;
-  targetDate: string;
-  totalChapters?: number | null;
-}
-
 export interface ChangeGroupGoalStatusRequest {
   status: string;
 }
@@ -20,43 +12,61 @@ export interface ChangeGroupGoalStatusRequest {
 @Service()
 export class GroupGoalsService {
   private readonly http = inject(HttpClient);
-  private readonly url = `${API_URL}/group-goals`;
+  private readonly url = `${API_URL}/reading-groups`;
 
   getById(goalId: string): Observable<GroupGoal> {
     return this.http.get<GroupGoal>(`${this.url}/${goalId}`);
   }
 
-  getByGroup(groupId: string): Observable<GroupGoal[]> {
-    return this.http.get<GroupGoal[]>(`${this.url}/group/${groupId}`);
+  getByCycle(groupId: string, cycleId: string): Observable<GroupGoal[]> {
+    return this.http.get<GroupGoal[]>(
+      `${this.url}/${groupId}/cycles/${cycleId}/goals`,
+    );
   }
 
-  getActiveByGroup(groupId: string): Observable<GroupGoal> {
+  getActiveByCycle(
+    groupId: string,
+    cycleId: string,
+  ): Observable<GroupGoal> {
     return this.http.get<GroupGoal>(
-      `${this.url}/group/${groupId}/active`,
+      `${this.url}/${groupId}/cycles/${cycleId}/goals/active`,
     );
   }
 
   create(
     groupId: string,
-    request: CreateGroupGoalRequest,
+    cycleId: string,
+    request: {
+      goalType: string;
+      targetProgress: number;
+      targetDate: string;
+    },
   ): Observable<GroupGoal> {
     return this.http.post<GroupGoal>(
-      `${this.url}/group/${groupId}`,
+      `${this.url}/${groupId}/cycles/${cycleId}/goals`,
       request,
     );
   }
 
   changeStatus(
+    groupId: string,
+    cycleId: string,
     goalId: string,
     request: ChangeGroupGoalStatusRequest,
   ): Observable<GroupGoal> {
     return this.http.patch<GroupGoal>(
-      `${this.url}/${goalId}/status`,
+      `${this.url}/${groupId}/cycles/${cycleId}/goals/${goalId}/status`,
       request,
     );
   }
 
-  cancel(goalId: string): Observable<void> {
-    return this.http.delete<void>(`${this.url}/${goalId}`);
+  cancel(
+    groupId: string,
+    cycleId: string,
+    goalId: string,
+  ): Observable<void> {
+    return this.http.delete<void>(
+      `${this.url}/${groupId}/cycles/${cycleId}/goals/${goalId}`,
+    );
   }
 }

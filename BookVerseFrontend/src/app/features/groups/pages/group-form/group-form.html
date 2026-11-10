@@ -28,8 +28,6 @@
 
       <section class="form-card">
         <div class="form-heading">
-          <p class="eyebrow">UNA HISTORIA SE DISFRUTA MÁS EN COMPAÑÍA</p>
-
           <h1>
             {{ isEditing ? 'Editá tu' : 'Empezá un' }}<br />
             <em>grupo de lectura.</em>
@@ -52,8 +50,7 @@
           <section class="permission-notice" role="alert">
             <h2>Acceso restringido</h2>
             <p>
-              Solo el creador del grupo, los moderadores y los administradores
-              pueden editar el nombre y administrar sus miembros.
+              Solo el creador puede editar el nombre y administrar los miembros del grupo.
             </p>
             <a [routerLink]="['/groups', groupId]">Volver al grupo</a>
           </section>
@@ -72,31 +69,6 @@
                 placeholder="Por ejemplo: Los búhos nocturnos"
                 maxlength="60"
               />
-
-              @if (isEditing) {
-                <div class="group-name-hint" role="note">
-                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="9"
-                      stroke="currentColor"
-                      stroke-width="1.7"
-                    />
-                    <path
-                      d="M12 11v5"
-                      stroke="currentColor"
-                      stroke-width="1.7"
-                      stroke-linecap="round"
-                    />
-                    <circle cx="12" cy="8" r="0.85" fill="currentColor" />
-                  </svg>
-
-                  <p>
-                    Actualizá el nombre del grupo. La obra vinculada no se puede cambiar.
-                  </p>
-                </div>
-              }
 
               @if (
                 groupForm.controls.name.touched &&
@@ -126,10 +98,23 @@
               }
             </div>
 
-            @if (isEditing && group?.bookId) {
+            @if (
+              isEditing &&
+              groupCycle?.bookId &&
+              (groupCycle.status === 'PLANNED' || groupCycle.status === 'ACTIVE')
+            ) {
+              <div class="field">
+                <label for="editionReference">Edición del libro</label>
+                <input
+                  id="editionReference"
+                  type="text"
+                  formControlName="editionReference"
+                  placeholder="Por ejemplo: edición de bolsillo"
+                />
+              </div>
+
               <div class="field">
                 <label for="totalChapters">Cantidad total de capítulos</label>
-
                 <input
                   id="totalChapters"
                   type="number"
@@ -138,20 +123,6 @@
                   formControlName="totalChapters"
                   placeholder="Por ejemplo: 24"
                 />
-
-                <small class="field-hint">
-                  Cargá el total de capítulos de la obra. Se usará para las metas del grupo
-                  medidas en capítulos.
-                </small>
-
-                @if (
-                  groupForm.controls.totalChapters.touched &&
-                  groupForm.controls.totalChapters.invalid
-                ) {
-                  <small class="field-error">
-                    Ingresá una cantidad entera mayor que cero.
-                  </small>
-                }
               </div>
             }
 
@@ -224,6 +195,33 @@
                   </small>
                 }
               </div>
+
+              @if (groupForm.controls.workType.value === 'book') {
+                <div class="field">
+                  <label for="editionReference">Edición del libro</label>
+                  <input
+                    id="editionReference"
+                    type="text"
+                    formControlName="editionReference"
+                    placeholder="Por ejemplo: edición de bolsillo"
+                  />
+                  <small class="field-hint">
+                    Indicá la edición que van a leer en el grupo.
+                  </small>
+                </div>
+
+                <div class="field">
+                  <label for="totalChapters">Cantidad total de capítulos</label>
+                  <input
+                    id="totalChapters"
+                    type="number"
+                    min="1"
+                    step="1"
+                    formControlName="totalChapters"
+                    placeholder="Por ejemplo: 24"
+                  />
+                </div>
+              }
             }
 
             @if (errorMessage) {

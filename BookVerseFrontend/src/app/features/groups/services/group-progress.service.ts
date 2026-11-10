@@ -8,11 +8,11 @@ import { GroupProgress } from '../models/group-progress.model';
 @Service()
 export class GroupProgressService {
   private readonly http = inject(HttpClient);
-  private readonly url = `${API_URL}/group-progress`;
+  private readonly url = `${API_URL}/reading-groups`;
 
-  getByGroup(groupId: string): Observable<GroupProgress> {
+  getByCycle(groupId: string, cycleId: string): Observable<GroupProgress> {
     return this.http.get<GroupProgress>(
-      `${this.url}/group/${groupId}`,
+      `${this.url}/${groupId}/cycles/${cycleId}/progress`,
     );
   }
 }

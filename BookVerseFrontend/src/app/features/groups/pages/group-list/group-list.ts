@@ -10,10 +10,17 @@ import {
 import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
-import { ReadingGroup } from '../../models/reading-group.model';
+import {
+  GroupReadingCycle,
+  ReadingGroup,
+} from '../../models/reading-group.model';
 import { GroupMembersService } from '../../services/group-members.service';
 import { ReadingGroupsService } from '../../services/reading-groups.service';
 import { UserService } from '../../../profile/services/user.service';
+
+interface ReadingGroupListItem extends ReadingGroup {
+  currentCycle: GroupReadingCycle | null;
+}
 
 @Component({
   selector: 'app-group-list',
@@ -27,7 +34,7 @@ export class GroupList implements OnInit {
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly userService = inject(UserService);
 
-  groups: ReadingGroup[] = [];
+  groups: ReadingGroupListItem[] = [];
   searchTerm = '';
   readonly pageSize = 6;
   currentPage = 0;
@@ -78,13 +85,39 @@ export class GroupList implements OnInit {
         }),
         map((groups) =>
           groups.filter(
-            (group): group is ReadingGroup => group !== null,
+            (group): group is ReadingGroup => group !== null && group.isActive,
           ),
         ),
+        switchMap((groups) => {
+          if (groups.length === 0) {
+            return of([]);
+          }
+
+          return forkJoin(
+            groups.map((group) =>
+              this.readingGroupsService.getCycles(group.idExternal).pipe(
+                map((cycles) => {
+                  const latestCycle = [...cycles].sort(
+                    (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
+                  )[0];
+
+                  const currentCycle =
+                    cycles.find((cycle) => cycle.status === 'ACTIVE') ??
+                    cycles.find((cycle) => cycle.status === 'PLANNED') ??
+                    latestCycle ??
+                    null;
+
+                  return { ...group, currentCycle };
+                }),
+                catchError(() => of({ ...group, currentCycle: null })),
+              ),
+            ),
+          );
+        }),
       )
       .subscribe({
         next: (groups) => {
-          this.groups = groups.filter((group) => group.isActive);
+          this.groups = groups;
           this.isLoading = false;
           this.changeDetector.markForCheck();
         },
@@ -97,7 +130,7 @@ export class GroupList implements OnInit {
       });
   }
 
-  get filteredGroups(): ReadingGroup[] {
+  get filteredGroups(): ReadingGroupListItem[] {
     const query = this.searchTerm.trim().toLowerCase();
 
     if (!query) {
@@ -117,7 +150,7 @@ export class GroupList implements OnInit {
     return Array.from({ length: this.totalPages }, (_, index) => index);
   }
 
-  get paginatedGroups(): ReadingGroup[] {
+  get paginatedGroups(): ReadingGroupListItem[] {
     const start = this.currentPage * this.pageSize;
     return this.filteredGroups.slice(start, start + this.pageSize);
   }
