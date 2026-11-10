@@ -5,7 +5,6 @@
   --muted: #898397;
   --line: #e7dfef;
   --paper: #fcfafd;
-  --sidebar-bg: #f5f2f9;
   --serif: 'Libre Caslon Display', Georgia, 'Times New Roman', serif;
   --sans: 'DM Sans', Arial, sans-serif;
 
@@ -37,26 +36,6 @@
   color: #6b5a94;
   font-size: 11px;
   font-weight: 600;
-}
-
-.account-info {
-  display: grid;
-  gap: 3px;
-}
-
-.account-info strong {
-  font-size: 12px;
-}
-
-.account-info small {
-  color: #9790a1;
-  font-size: 10px;
-}
-
-.account-arrow {
-  margin-left: auto;
-  color: #a99db6;
-  font-size: 20px;
 }
 
 .detail-body {
@@ -195,11 +174,6 @@
   gap: 9px;
   color: #827995;
   font-size: 13px;
-}
-
-.meta-icon {
-  color: var(--lavender);
-  font-size: 20px;
 }
 
 .status-badge {
@@ -824,14 +798,6 @@
   font-weight: 600;
 }
 
-.member-avatar small {
-  position: absolute;
-  top: 46px;
-  color: #857992;
-  font-size: 9px;
-  font-weight: 400;
-}
-
 .avatar-lilac {
   background: #ded2ef;
 }
@@ -854,11 +820,6 @@
 .avatar-pink {
   background: #f2dede;
   color: #9b7070;
-}
-
-.avatar-more {
-  background: #f0edf5;
-  color: #8d819c;
 }
 
 .member-management {
@@ -1121,10 +1082,6 @@
 }
 
 @media (max-width: 1100px) {
-  .detail-layout {
-    grid-template-columns: 225px minmax(0, 1fr);
-  }
-
   .group-heading {
     grid-template-columns: 120px minmax(0, 1fr);
     gap: 18px;
@@ -1146,28 +1103,6 @@
 @media (max-width: 700px) {
   .detail-layout {
     display: block;
-  }
-
-  .sidebar {
-    min-height: auto;
-    padding: 14px 16px;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .sidebar-label,
-  .sidebar-quote,
-  .sidebar-bottom,
-  .sidebar-nav .sidebar-link:not(.active) {
-    display: none;
-  }
-
-  .sidebar-nav {
-    margin-top: 12px;
-  }
-
-  .sidebar-nav .sidebar-link.active {
-    min-height: 38px;
   }
 
   .topbar {
