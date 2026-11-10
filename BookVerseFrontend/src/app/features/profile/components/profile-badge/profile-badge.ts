@@ -6,10 +6,10 @@ import { UserService } from '../../services/user.service';
 
 export type BadgeId = 'FOUNDING_WRITER' | 'FOUNDING_PARTNERS' | 'FOUNDING_READER_1' | 'FOUNDING_READER_2' | 'FOUNDING_READER_3';
 const BADGES: { id: BadgeId; name: string; image: string }[] = [
-  { id: 'FOUNDING_WRITER', name: 'Escritor fundador', image: '/assets/badges/founding-writer.jpg' },
-  { id: 'FOUNDING_PARTNERS', name: 'Socias fundadoras', image: '/assets/badges/founding-partners.jpg' },
-  { id: 'FOUNDING_READER_1', name: 'Lector fundador · 1', image: '/assets/badges/founding-reader-1.jpg' },
-  { id: 'FOUNDING_READER_2', name: 'Lector fundador · 2', image: '/assets/badges/founding-reader-2.jpg' },
+  { id: 'FOUNDING_WRITER', name: 'Escritor fundador', image: '/assets/badges/founding-writer.png' },
+  { id: 'FOUNDING_PARTNERS', name: 'Socias fundadoras', image: '/assets/badges/founding-partners.png' },
+  { id: 'FOUNDING_READER_1', name: 'Lector fundador · 1', image: '/assets/badges/founding-reader-1.png' },
+  { id: 'FOUNDING_READER_2', name: 'Lector fundador · 2', image: '/assets/badges/founding-reader-2.png' },
   { id: 'FOUNDING_READER_3', name: 'Lector fundador · 3', image: '/assets/badges/founding-reader-3.png' },
 ];
 

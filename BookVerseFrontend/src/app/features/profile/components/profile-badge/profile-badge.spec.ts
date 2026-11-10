@@ -24,7 +24,7 @@ describe('Profile badge', () => {
   it('shows the assigned badge without editing controls to a non-admin', () => {
     const { fixture, users } = setup(false);
     expect(fixture.nativeElement.textContent).toContain('Escritor fundador');
-    expect(fixture.nativeElement.querySelector('img').getAttribute('src')).toContain('founding-writer.jpg');
+    expect(fixture.nativeElement.querySelector('img').getAttribute('src')).toContain('founding-writer.png');
     expect(fixture.nativeElement.querySelector('.edit')).toBeNull();
     fixture.componentInstance.setBadge('FOUNDING_READER_1');
     expect(users.updateProfileBadge).not.toHaveBeenCalled();
