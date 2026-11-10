@@ -27,7 +27,6 @@
           <path [attr.d]="iconPaths[item.icon]" />
         </svg>
         <span>{{ item.label }}</span>
-        <span class="active-dot"></span>
       </a>
     }
 
@@ -35,7 +34,7 @@
       <span class="sidebar-section-label">MODERACIÓN</span>
       <a class="sidebar-link" routerLink="/reports" routerLinkActive="active" ariaCurrentWhenActive="page">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path [attr.d]="iconPaths['report']" /></svg>
-        <span>Reportes de reseñas</span><span class="active-dot"></span>
+        <span>Reportes de reseñas</span>
       </a>
     }
 
@@ -43,7 +42,7 @@
       <span class="sidebar-section-label">ADMINISTRACIÓN</span>
       <a class="sidebar-link" routerLink="/role-management" routerLinkActive="active" ariaCurrentWhenActive="page">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path [attr.d]="iconPaths['roles']" /></svg>
-        <span>Gestión de roles</span><span class="active-dot"></span>
+        <span>Gestión de roles</span>
       </a>
     }
   </nav>
@@ -52,7 +51,7 @@
   <div class="sidebar-bottom">
     <a class="sidebar-link" routerLink="/profile" routerLinkActive="active" ariaCurrentWhenActive="page">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path [attr.d]="iconPaths['profile']" /></svg>
-      <span>Mi perfil</span><span class="active-dot"></span>
+      <span>Mi perfil</span>
     </a>
     <button class="sidebar-link logout-link" type="button" (click)="logout()">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path [attr.d]="iconPaths['logout']" /></svg>

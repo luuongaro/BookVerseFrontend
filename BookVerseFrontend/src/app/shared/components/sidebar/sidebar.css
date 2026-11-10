@@ -123,15 +123,6 @@
   flex: 0 0 18px;
 }
 
-.active-dot {
-  position: absolute;
-  right: 13px;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--lavender);
-}
-
 .sidebar-quote {
   display: flex;
   min-height: 125px;
@@ -363,7 +354,4 @@
     flex-basis: 15px;
   }
 
-  .active-dot {
-    display: none;
-  }
 }
