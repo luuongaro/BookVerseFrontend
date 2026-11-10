@@ -18,6 +18,10 @@ export class GroupMembersService {
   private readonly http = inject(HttpClient);
   private readonly url = `${API_URL}/group-members`;
 
+  invite(groupId: string, userId: string): Observable<unknown> {
+    return this.http.post(`${API_URL}/reading-groups/${groupId}/membership-invitations`, { targetUserId: userId });
+  }
+
   getActiveByGroup(groupId: string): Observable<GroupMember[]> {
     return this.http.get<GroupMember[]>(
       `${this.url}/group/${groupId}`,

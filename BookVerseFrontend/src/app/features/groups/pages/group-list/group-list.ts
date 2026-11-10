@@ -15,7 +15,7 @@ import {
   ReadingGroup,
 } from '../../models/reading-group.model';
 import { GroupMembersService } from '../../services/group-members.service';
-import { ReadingGroupsService } from '../../services/reading-groups.service';
+import { DiscoveredGroup, ReadingGroupsService } from '../../services/reading-groups.service';
 import { UserService } from '../../../profile/services/user.service';
 
 interface ReadingGroupListItem extends ReadingGroup {
@@ -40,6 +40,37 @@ export class GroupList implements OnInit {
   currentPage = 0;
   isLoading = true;
   errorMessage = '';
+  view: 'mine' | 'discover' = 'mine';
+  discoverSearch = '';
+  discovered: DiscoveredGroup[] = [];
+  discoverLoading = false;
+  discoverError = '';
+  requestingId = '';
+
+  showDiscover(): void {
+    this.view = 'discover';
+    this.discoverLoading = true;
+    this.discoverError = '';
+    this.readingGroupsService.discover().subscribe({
+      next: groups => { this.discovered = groups; this.discoverLoading = false; this.changeDetector.markForCheck(); },
+      error: () => { this.discoverError = 'No pudimos cargar los grupos. Intentá de nuevo.'; this.discoverLoading = false; this.changeDetector.markForCheck(); },
+    });
+  }
+
+  get filteredDiscover(): DiscoveredGroup[] {
+    const query = this.discoverSearch.trim().toLocaleLowerCase();
+    return this.discovered.filter(group => `${group.name} ${group.activeContentTitle ?? ''}`.toLocaleLowerCase().includes(query));
+  }
+
+  requestGroup(group: DiscoveredGroup): void {
+    if (this.requestingId || group.membershipState !== 'NOT_MEMBER') return;
+    this.requestingId = group.idExternal;
+    this.discoverError = '';
+    this.readingGroupsService.requestMembership(group.idExternal).subscribe({
+      next: () => { group.membershipState = 'JOIN_REQUEST_PENDING'; this.requestingId = ''; this.changeDetector.markForCheck(); },
+      error: () => { this.discoverError = 'No pudimos enviar la solicitud. Intentá de nuevo.'; this.requestingId = ''; this.changeDetector.markForCheck(); },
+    });
+  }
 
   get currentUsername(): string {
     return this.userService.currentUser()?.username ?? 'Usuario';

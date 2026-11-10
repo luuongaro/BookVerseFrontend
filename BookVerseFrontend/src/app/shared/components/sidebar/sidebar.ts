@@ -38,11 +38,13 @@ export class Sidebar implements OnInit {
     { label: 'Libros', route: '/books', icon: 'book' },
     { label: 'Reseñas', route: '/reviews', icon: 'review' },
     { label: 'Grupos de lectura', route: '/groups', icon: 'people' },
+    { label: 'Notificaciones', route: '/notifications', icon: 'bell' },
     { label: 'Lectores', route: '/users', icon: 'profile' },
   ];
 
   readonly iconPaths: Record<string, string> = {
     home: 'm3 10 9-7 9 7v10H3Zm6 10v-7h6v7',
+    bell: 'M18 8a6 6 0 0 0-12 0c0 7-2 7-2 9h16c0-2-2-2-2-9ZM10 20a2 2 0 0 0 4 0',
     library: 'M3 4h4v16H3Zm7 0h4v16h-4Zm7 0 4-1 4 16-4 1Z',
     story:
       'M8 21h12a2 2 0 0 0 2-2v-2H10v2a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2h4M6 3h12a2 2 0 0 1 2 2v12M10 7h6m-6 4h6',

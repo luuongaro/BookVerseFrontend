@@ -1,0 +1,19 @@
+<main class="notifications">
+  <h1>Notificaciones</h1>
+  <p class="intro">Solicitudes e invitaciones de tus grupos de lectura.</p>
+  @if (loading()) { <p role="status">Cargando notificaciones…</p> }
+  @if (error()) { <p class="error" role="alert">{{ error() }}</p><button type="button" class="secondary" (click)="load()">Reintentar</button> }
+  @if (!loading() && !error() && !notices().length) { <p class="empty">No tenés notificaciones pendientes.</p> }
+  <div class="notice-list">
+    @for (notice of notices(); track notice.idExternal) {
+      <article class="notice">
+        <div>
+          @if (notice.type === 'INVITATION') { <p><strong>{{ notice.userName }}</strong> te invitó a <strong>{{ notice.groupName }}</strong>.</p> }
+          @else { <p><strong>{{ notice.userName }}</strong> solicitó unirse a <strong>{{ notice.groupName }}</strong>.</p> }
+          <time>{{ notice.createdAt | date:'d MMM yyyy' }}</time>
+        </div>
+        <div class="actions"><button type="button" class="secondary" [disabled]="!!busy()" (click)="respond(notice, 'reject')">Rechazar</button><button type="button" [disabled]="!!busy()" (click)="respond(notice, 'accept')">Aceptar</button></div>
+      </article>
+    }
+  </div>
+</main>

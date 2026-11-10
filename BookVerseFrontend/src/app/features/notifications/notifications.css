@@ -1,0 +1,14 @@
+:host { display: block; min-height: 100vh; background: #fbf9fd; color: #302b43; font-family: 'DM Sans', Arial, sans-serif; }
+.notifications { max-width: 1050px; padding: 54px 40px; margin: 0 auto; }
+h1 { margin: 0; font: 400 48px/1.1 'Libre Caslon Display', Georgia, serif; }
+.intro, .empty, time { color: #797486; }
+.notice-list { display: grid; gap: 14px; margin-top: 28px; }
+.notice { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 22px; background: #fff; border: 1px solid #e8e2ef; border-radius: 16px; }
+.notice p { margin: 0 0 8px; line-height: 1.5; }
+time { font-size: 13px; }
+.actions { display: flex; gap: 8px; }
+button { border: 1px solid #7465ad; border-radius: 9px; padding: 10px 16px; background: #7465ad; color: white; font: inherit; cursor: pointer; }
+button.secondary { color: #665498; background: white; border-color: #e1d9ec; }
+button:disabled { opacity: .6; cursor: default; }
+.error { color: #a33e57; }
+@media (max-width: 600px) { .notifications { padding: 32px 20px; } h1 { font-size: 38px; } .notice { align-items: flex-start; flex-direction: column; } }
