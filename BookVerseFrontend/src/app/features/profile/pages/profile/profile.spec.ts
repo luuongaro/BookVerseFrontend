@@ -12,6 +12,7 @@ describe('Preserving the profile layout and personal appearance', () => {
   async function setup() {
     localStorage.setItem('userId', 'me');
     const users = {
+      getProfileBadge: vi.fn(() => of({ badge: null })),
       getProfile: vi.fn(() => of({ idExternal: 'me', username: 'Lu' })),
       loadCurrentUser: () =>
         of({ idExternal: 'me', username: 'Lu', email: 'me@example.test', status: 'ACTIVE' }),

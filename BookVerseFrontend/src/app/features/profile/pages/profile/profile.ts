@@ -43,6 +43,7 @@ import { StoryResponse } from '../../../stories/models/story-response';
 import { StoryService } from '../../../stories/services/story.services';
 import { UserService } from '../../services/user.service';
 import { SendTip } from '../../../tips/components/send-tip/send-tip';
+import { ProfileBadge } from '../../components/profile-badge/profile-badge';
 
 interface CreatorTransferOption {
   groupId: string;
@@ -54,7 +55,7 @@ interface CreatorTransferOption {
 }
 
 @Component({
-  imports: [UserAvatar, RouterLink, FormsModule, FavoriteStories, SendTip],
+  imports: [UserAvatar, RouterLink, FormsModule, FavoriteStories, SendTip, ProfileBadge],
   selector: 'app-profile',
   styleUrls: [
     './profile.css',
