@@ -394,6 +394,12 @@
   font-size: 25px;
 }
 
+.library-icon {
+  display: block;
+  width: 25px;
+  height: 25px;
+}
+
 .room-description h2 {
   margin: 13px 0 8px;
   font-family: var(--serif);

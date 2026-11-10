@@ -1,13 +1,28 @@
-@if (selected; as chosen) {
-  <div class="badge-display">
-    <img [src]="chosen.image" alt="" />
-    <span>{{ chosen.name }}</span>
-    @if (admin) { <button class="edit" type="button" aria-label="Cambiar insignia" (click)="open()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15l-1 6Z" /></svg></button> }
+<section class="badge-section" aria-labelledby="profile-badges-title">
+  <div class="section-heading">
+    <h2 id="profile-badges-title">Badges</h2>
+    @if (admin && !loading()) {
+      @if (selected) {
+        <button class="edit" type="button" aria-label="Cambiar insignia" title="Cambiar insignia" (click)="open()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15l-1 6Z" /></svg></button>
+      } @else {
+        <button class="assign" type="button" (click)="open()">Asignar insignia</button>
+      }
+    }
   </div>
-} @else if (admin && !loading()) {
-  <button class="assign" type="button" (click)="open()" aria-label="Asignar insignia">✎ <span>Asignar insignia</span></button>
-}
-@if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+  @if (selected; as chosen) {
+    <div class="badge-collection">
+      <figure class="badge-display">
+        <img [src]="chosen.image" [alt]="chosen.name" />
+        <figcaption>{{ chosen.name }}</figcaption>
+      </figure>
+    </div>
+  } @else if (loading()) {
+    <p class="empty" role="status">Cargando badges…</p>
+  } @else if (!error()) {
+    <p class="empty">Todavía no hay badges.</p>
+  }
+  @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+</section>
 @if (admin) {
   <dialog #picker aria-labelledby="badge-title" (cancel)="saving() && $event.preventDefault()">
     <div class="heading"><h2 id="badge-title">Elegir insignia</h2><button type="button" class="close" aria-label="Cerrar" (click)="close()" [disabled]="saving()">×</button></div>

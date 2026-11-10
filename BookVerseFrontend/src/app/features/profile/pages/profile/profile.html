@@ -162,7 +162,6 @@
             @if (profile.email) {
               <p>{{ profile.email }}</p>
             }
-            <app-profile-badge [userId]="user.idExternal" />
           </div>
 
           <div class="identity-badges">
@@ -903,6 +902,7 @@
           }
         </section>
 
+        <app-profile-badge [userId]="user.idExternal" />
         <app-favorite-stories [userId]="user.idExternal" [editable]="canEditProfile()" />
 
         <footer class="page-footer">
