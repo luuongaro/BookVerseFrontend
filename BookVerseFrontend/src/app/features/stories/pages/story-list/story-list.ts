@@ -20,6 +20,9 @@ export class StoryList implements OnInit {
   readonly result = signal<PageResponse<StoryResponse> | null>(null);
   readonly loading = signal(false);
   readonly error = signal('');
+  readonly genres = signal<string[]>([]);
+  readonly genresLoading = signal(false);
+  readonly genresError = signal(false);
   titleFilter = '';
   authorFilter = '';
   genreFilter = '';
@@ -31,6 +34,23 @@ export class StoryList implements OnInit {
   private request?: Subscription;
   ngOnInit(): void {
     this.load();
+    this.loadGenres();
+  }
+  loadGenres(): void {
+    this.genresLoading.set(true);
+    this.genresError.set(false);
+    this.service.getExploreGenres().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: genres => {
+        const unique = new Map<string, string>();
+        for (const value of genres) {
+          const genre = value.trim();
+          if (genre && !unique.has(genre.toLocaleLowerCase())) unique.set(genre.toLocaleLowerCase(), genre);
+        }
+        this.genres.set([...unique.values()].sort((a, b) => a.localeCompare(b, 'es')));
+        this.genresLoading.set(false);
+      },
+      error: () => { this.genresError.set(true); this.genresLoading.set(false); },
+    });
   }
   load(page = 0): void {
     if (page < 0) return;
