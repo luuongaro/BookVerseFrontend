@@ -1276,3 +1276,245 @@
 .comment-author a { color: inherit; text-decoration: none; text-underline-offset: 3px; }
 .comment-author a:hover { color: #665498; text-decoration: underline; }
 .member-success { color: #416c59; }
+
+.reference-update-dialog {
+  width: min(92vw, 560px);
+  max-width: 560px;
+  max-height: 90vh;
+  padding: 28px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 24px 70px rgb(48 43 67 / 24%);
+}
+
+.reference-update-dialog::backdrop {
+  background: rgb(39 32 54 / 48%);
+  backdrop-filter: blur(3px);
+}
+
+.reference-dialog-form {
+  display: grid;
+  gap: 22px;
+}
+
+.reference-dialog-heading {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.reference-dialog-heading__icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  place-items: center;
+  border-radius: 17px;
+  background: #eee8f7;
+  color: var(--violet);
+}
+
+.reference-dialog-heading__icon svg {
+  width: 27px;
+  height: 27px;
+}
+
+.reference-dialog-eyebrow {
+  margin: 0 0 3px;
+  color: var(--lavender);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.reference-dialog-heading h2 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: clamp(25px, 5vw, 32px);
+  line-height: 1.05;
+}
+
+.reference-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.reference-card {
+  min-width: 0;
+  padding: 17px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: 0 5px 16px rgb(48 43 67 / 5%);
+}
+
+.reference-card--group {
+  border-color: #4e3b7e;
+  background: linear-gradient(145deg, #4c3978, #6d55a0);
+  color: #fff;
+}
+
+.reference-card--personal {
+  border-color: #d8cceb;
+  background: #faf8fd;
+  color: #403653;
+}
+
+.reference-card h3 {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.reference-card h3 svg {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 19px;
+}
+
+.reference-card--group h3,
+.reference-card--group .reference-edition,
+.reference-card--group .reference-total {
+  color: #fff !important;
+}
+
+.reference-card--group h3 {
+  opacity: 1;
+  text-shadow: 0 1px 2px rgb(35 24 64 / 28%);
+}
+
+.reference-card--group h3 svg {
+  color: #fff !important;
+  opacity: 1;
+}
+
+.reference-card--personal h3 {
+  color: #514077;
+}
+
+.reference-edition {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.reference-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0;
+  padding-top: 11px;
+  border-top: 1px solid rgb(255 255 255 / 25%);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.reference-card--group .reference-total {
+  border-color: rgb(255 255 255 / 45%);
+}
+
+.reference-card--personal .reference-total {
+  border-color: #ded5eb;
+  color: #5f527b;
+}
+
+.reference-total strong {
+  color: inherit;
+  font-size: 23px;
+  font-weight: 800;
+}
+
+.reference-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 15px;
+  border: 1px solid #e4d9f0;
+  border-left: 4px solid var(--lavender);
+  border-radius: 13px;
+  background: #f5f1fa;
+  color: #4d4265;
+}
+
+.reference-info svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  margin-top: 1px;
+  color: var(--lavender);
+}
+
+.reference-info p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.reference-dialog-form > label {
+  margin-bottom: -12px;
+  color: #403653;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.reference-chapter-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.reference-chapter-input input {
+  width: 112px;
+  min-height: 49px;
+  padding: 0 12px;
+  border: 2px solid #b9a8d8;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 21px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.reference-chapter-input input:focus {
+  border-color: var(--violet);
+  outline: 3px solid rgb(116 101 173 / 22%);
+  outline-offset: 1px;
+}
+
+.reference-chapter-input span {
+  color: #5f527b;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 4px;
+  border-top: 1px solid #eee8f5;
+}
+
+@media (max-width: 520px) {
+  .reference-update-dialog {
+    padding: 21px 17px;
+    border-radius: 20px;
+  }
+
+  .reference-comparison {
+    grid-template-columns: 1fr;
+  }
+}
