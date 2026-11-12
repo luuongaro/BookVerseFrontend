@@ -75,6 +75,8 @@ export class GroupDetail implements OnInit {
     viewChild.required<ElementRef<HTMLDialogElement>>('leaveGroupDialog');
   readonly newCycleDialog =
     viewChild.required<ElementRef<HTMLDialogElement>>('newCycleDialog');
+  readonly referenceUpdateDialog =
+    viewChild.required<ElementRef<HTMLDialogElement>>('referenceUpdateDialog');
   readonly memberTrack =
     viewChild<ElementRef<HTMLDivElement>>('memberTrack');
 
@@ -92,6 +94,9 @@ export class GroupDetail implements OnInit {
   isLoadingCycleParticipants = false;
   isChangingParticipation = false;
   participantActionMessage = '';
+  cycleSuccessMessage = '';
+  referenceUpdatedForJoin = false;
+  referenceUpdateErrorMessage = '';
   members: GroupMember[] = [];
   goals: GroupGoal[] = [];
   activeGoal: GroupGoal | null = null;
@@ -104,6 +109,7 @@ export class GroupDetail implements OnInit {
   isCheckingLibraryStatus = false;
   libraryStatusError = '';
   libraryReadingStatus: ReadingStatus | null = null;
+  groupChapterAtJoin: number | null = null;
 
   goalType: 'CHAPTER' | 'PERCENTAGE' = 'PERCENTAGE';
   targetProgress = 1;
@@ -212,6 +218,33 @@ export class GroupDetail implements OnInit {
         !this.currentUserCycleParticipation ||
         this.currentUserCycleParticipation.status === 'WITHDRAWN'
       )
+    );
+  }
+
+  get hasDifferentBookChapterReference(): boolean {
+    const reading = this.libraryReadingStatus;
+    const groupTotal = this.currentCycle?.totalChapters;
+    const userTotal = reading?.progressTotal;
+
+    return (
+      !!this.currentCycle?.bookId &&
+      reading?.progressType === 'CHAPTER' &&
+      userTotal != null &&
+      groupTotal != null &&
+      userTotal !== groupTotal
+    );
+  }
+
+  get isGroupChapterAtJoinValid(): boolean {
+    const total = this.currentCycle?.totalChapters;
+    const chapter = this.groupChapterAtJoin;
+
+    return (
+      Number.isInteger(chapter) &&
+      chapter !== null &&
+      total != null &&
+      chapter >= 1 &&
+      chapter <= total
     );
   }
 
@@ -1176,6 +1209,95 @@ export class GroupDetail implements OnInit {
       });
   }
 
+  requestJoinCurrentCycle(): void {
+    if (!this.group || !this.currentCycle || !this.canJoinCurrentCycle) {
+      return;
+    }
+
+    // Las historias no tienen edición y total de capítulos de libro.
+    if (!this.currentCycle.bookId) {
+      this.joinCurrentCycle();
+      return;
+    }
+
+    this.isCheckingLibraryStatus = true;
+    this.participantActionMessage = '';
+
+    this.libraryService.getBookStatus(this.currentCycle.bookId).subscribe({
+      next: (readingStatus) => {
+        this.libraryReadingStatus = readingStatus;
+        this.isWorkInLibrary = readingStatus !== null;
+        this.isCheckingLibraryStatus = false;
+
+        if (!this.canJoinCurrentCycle) {
+          this.participantActionMessage =
+            'Revisá que el libro siga en tu biblioteca y tenga un estado válido para participar.';
+          this.changeDetector.markForCheck();
+          return;
+        }
+
+        if (this.hasDifferentBookChapterReference) {
+          this.groupChapterAtJoin = null;
+          this.referenceUpdateDialog().nativeElement.showModal();
+          this.changeDetector.markForCheck();
+          return;
+        }
+
+        this.joinCurrentCycle();
+      },
+      error: (error: unknown) => {
+        console.error('Error comprobando la referencia del libro:', error);
+        this.isCheckingLibraryStatus = false;
+        this.participantActionMessage =
+          'No se pudo comprobar tu referencia en Mi biblioteca. Intentá de nuevo.';
+        this.changeDetector.markForCheck();
+      },
+    });
+  }
+
+  confirmJoinWithGroupReference(): void {
+    const reading = this.libraryReadingStatus;
+    const totalChapters = this.currentCycle?.totalChapters;
+    const currentChapter = this.groupChapterAtJoin;
+
+    if (
+      !reading ||
+      totalChapters == null ||
+      currentChapter == null ||
+      !this.isGroupChapterAtJoinValid
+    ) {
+      return;
+    }
+
+    this.referenceUpdateErrorMessage = '';
+    this.isChangingParticipation = true;
+
+    this.libraryService
+      .updateStatus(reading, reading.status, {
+        type: 'CHAPTER',
+        value: currentChapter,
+        total: totalChapters,
+      })
+      .subscribe({
+        next: (updatedReading) => {
+          this.libraryReadingStatus = updatedReading;
+          this.isWorkInLibrary = true;
+          this.referenceUpdateDialog().nativeElement.close();
+          this.referenceUpdatedForJoin = true;
+
+          // El progreso ya está actualizado; ahora se usa la unión existente.
+          this.joinCurrentCycle();
+        },
+        error: (error: unknown) => {
+          console.error('No se pudo actualizar el progreso del libro:', error);
+          this.isChangingParticipation = false;
+          this.referenceUpdateErrorMessage =
+            'No se pudo guardar tu progreso. Revisá los datos e intentá de nuevo.';
+          this.changeDetector.markForCheck();
+        },
+      });
+  }
+
   joinCurrentCycle(): void {
     if (!this.group || !this.currentCycle || !this.canJoinCurrentCycle) {
       return;
@@ -1183,12 +1305,21 @@ export class GroupDetail implements OnInit {
 
     this.isChangingParticipation = true;
     this.participantActionMessage = '';
+    this.cycleSuccessMessage = '';
 
     this.readingGroupsService
       .joinCycle(this.group.idExternal, this.currentCycle.idExternal)
       .subscribe({
         next: () => {
           this.isChangingParticipation = false;
+
+          this.cycleSuccessMessage = this.referenceUpdatedForJoin
+            ? `Actualizaste tu referencia a ${this.groupChapterAtJoin} de ${this.currentCycle?.totalChapters} capítulos y ya te sumaste a la lectura.`
+            : 'Ya te sumaste a esta lectura.';
+
+          this.referenceUpdatedForJoin = false;
+          this.groupChapterAtJoin = null;
+
           this.loadCycleParticipants(
             this.group!.idExternal,
             this.currentCycle!.idExternal,
