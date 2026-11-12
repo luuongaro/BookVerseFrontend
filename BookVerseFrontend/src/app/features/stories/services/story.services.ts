@@ -18,6 +18,11 @@ export class StoryService {
       params: { page, size: 12 },
     });
   }
+  searchExplore(title: string, author: string, genre: string, friendsOnly: boolean, page = 0) {
+    return this.http.get<PageResponse<StoryResponse>>(`${this.url}/explore/search`, {
+      params: { title, author, genre, friendsOnly, page, size: 12 },
+    });
+  }
   getById(id: string) {
     return this.http.get<StoryDetailResponse>(`${this.url}/${encodeURIComponent(id)}`);
   }

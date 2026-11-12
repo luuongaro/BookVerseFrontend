@@ -13,6 +13,10 @@
   -webkit-font-smoothing: antialiased;
 }
 
+.story-genre-field { display: grid; gap: 8px; max-width: 360px; margin: 24px 0; color: #665498; font-size: 14px; }
+.story-genre-field input { width: 100%; padding: 10px 12px; border: 1px solid #e3daee; border-radius: 9px; color: #302b43; background: white; font: inherit; }
+.story-genre-field input:focus-visible { outline: 2px solid #7465ad; outline-offset: 2px; }
+
 .story-editor,
 .story-editor * {
   box-sizing: border-box;
