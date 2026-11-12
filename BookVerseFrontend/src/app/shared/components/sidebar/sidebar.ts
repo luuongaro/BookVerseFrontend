@@ -1,7 +1,10 @@
 import { UserAvatar } from '../user-avatar/user-avatar';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { EMPTY, switchMap, timer } from 'rxjs';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { UserService } from '../../../features/profile/services/user.service';
+import { NotificationIndicatorService } from '../../../features/notifications/notification-indicator.service';
 
 interface SidebarLink {
   label: string;
@@ -19,6 +22,8 @@ interface SidebarLink {
 export class Sidebar implements OnInit {
   readonly userService = inject(UserService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly notifications = inject(NotificationIndicatorService);
 
   readonly roles = signal<string[]>([]);
 
@@ -61,6 +66,11 @@ export class Sidebar implements OnInit {
   };
 
   ngOnInit(): void {
+    this.notifications.reset();
+    timer(0, 60000).pipe(
+      switchMap(() => { const userId = localStorage.getItem('userId'); return userId ? this.notifications.refresh(userId) : EMPTY; }),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe();
     this.readRolesFromToken();
     this.userService.loadCurrentUser().subscribe({
       error: () => undefined,

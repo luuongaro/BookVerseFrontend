@@ -27,6 +27,9 @@
           <path [attr.d]="iconPaths[item.icon]" />
         </svg>
         <span>{{ item.label }}</span>
+        @if (item.route === '/notifications' && notifications.hasPending()) {
+          <span class="notification-dot" aria-hidden="true"></span><span class="visually-hidden">Solicitudes pendientes</span>
+        }
       </a>
     }
 

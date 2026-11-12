@@ -5,6 +5,7 @@ import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { API_URL } from '../../core/api/api.config';
 import { ReadingGroupsService } from '../groups/services/reading-groups.service';
 import { UserService } from '../profile/services/user.service';
+import { NotificationIndicatorService } from './notification-indicator.service';
 
 interface MembershipRequest {
   idExternal: string; groupId: string; targetUserId: string; createdById: string;
@@ -21,6 +22,7 @@ export class Notifications implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly groups = inject(ReadingGroupsService);
   private readonly users = inject(UserService);
+  private readonly indicator = inject(NotificationIndicatorService);
   readonly notices = signal<Notice[]>([]);
   readonly loading = signal(true);
   readonly error = signal('');
@@ -35,7 +37,7 @@ export class Notifications implements OnInit {
   loadFriends(): void {
     this.friendsLoading.set(true); this.friendsError.set('');
     this.http.get<FriendRequest[]>(`${API_URL}/friendships/requests`).subscribe({
-      next: requests => { this.friendRequests.set(requests); this.friendsLoading.set(false); },
+      next: requests => { this.friendRequests.set(requests); this.indicator.setFriends(requests.length); this.friendsLoading.set(false); },
       error: () => { this.friendsError.set('No pudimos cargar las solicitudes de amistad.'); this.friendsLoading.set(false); },
     });
   }
@@ -44,7 +46,7 @@ export class Notifications implements OnInit {
     if (this.friendBusy()) return;
     this.friendBusy.set(request.id); this.friendsError.set('');
     this.http.post(`${API_URL}/friendships/${request.id}/${action}`, {}).subscribe({
-      next: () => { this.friendRequests.update(items => items.filter(item => item.id !== request.id)); this.friendBusy.set(''); },
+      next: () => { this.friendRequests.update(items => items.filter(item => item.id !== request.id)); this.indicator.setFriends(this.friendRequests().length); this.friendBusy.set(''); },
       error: () => { this.friendsError.set('No pudimos responder la solicitud de amistad.'); this.friendBusy.set(''); },
     });
   }
@@ -66,7 +68,7 @@ export class Notifications implements OnInit {
         }).pipe(map(({group, user}) => ({...item, groupName: group?.name ?? 'Grupo de lectura', userName: user?.username ?? 'Una persona'}))))) : of([] as Notice[]);
       }),
     ).subscribe({
-      next: notices => { this.notices.set(notices.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))); this.loading.set(false); },
+      next: notices => { this.notices.set(notices.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))); this.indicator.setGroups(notices.length); this.loading.set(false); },
       error: () => { this.error.set('No pudimos cargar las notificaciones. Intentá de nuevo.'); this.loading.set(false); },
     });
   }
@@ -75,7 +77,7 @@ export class Notifications implements OnInit {
     if (this.busy()) return;
     this.busy.set(notice.idExternal); this.error.set('');
     this.http.post(`${API_URL}/membership-requests/${notice.idExternal}/${action}`, {}).subscribe({
-      next: () => { this.notices.update(items => items.filter(item => item.idExternal !== notice.idExternal)); this.busy.set(''); },
+      next: () => { this.notices.update(items => items.filter(item => item.idExternal !== notice.idExternal)); this.indicator.setGroups(this.notices().length); this.busy.set(''); },
       error: () => { this.error.set('No pudimos responder la solicitud. Intentá de nuevo.'); this.busy.set(''); },
     });
   }

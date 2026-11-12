@@ -123,6 +123,9 @@
   flex: 0 0 18px;
 }
 
+.notification-dot { width: 6px; height: 6px; flex: 0 0 6px; margin-left: auto; border-radius: 50%; background: #7465ad; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
 .sidebar-quote {
   display: flex;
   min-height: 125px;
