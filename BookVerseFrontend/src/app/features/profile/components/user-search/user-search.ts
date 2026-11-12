@@ -24,10 +24,11 @@ import {
 import { PageResponse } from '../../../stories/models/page-response';
 import { UserProfile } from '../../models/user-profile.model';
 import { UserService } from '../../services/user.service';
+import { FriendAction } from '../friend-action/friend-action';
 
 @Component({
   selector: 'app-user-search',
-  imports: [UserAvatar, RouterLink],
+  imports: [UserAvatar, RouterLink, FriendAction],
   templateUrl: './user-search.html',
   styleUrl: './user-search.css',
 })
@@ -38,6 +39,7 @@ export class UserSearch implements OnInit {
 
   @Input() selectable = false;
   @Input() searchOnly = false;
+  @Input() showFriendAction = false;
   @Input() hidePagination = false;
   @Input() hideExistingMembers = false;
   @Input() memberIds: readonly string[] = [];

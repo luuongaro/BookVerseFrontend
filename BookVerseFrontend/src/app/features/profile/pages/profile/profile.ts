@@ -45,7 +45,6 @@ import { UserService } from '../../services/user.service';
 import { SendTip } from '../../../tips/components/send-tip/send-tip';
 import { ProfileBadge } from '../../components/profile-badge/profile-badge';
 import { FriendAction } from '../../components/friend-action/friend-action';
-import { FriendList } from '../../components/friend-list/friend-list';
 
 interface CreatorTransferOption {
   groupId: string;
@@ -57,7 +56,7 @@ interface CreatorTransferOption {
 }
 
 @Component({
-  imports: [UserAvatar, RouterLink, FormsModule, FavoriteStories, SendTip, ProfileBadge, FriendAction, FriendList],
+  imports: [UserAvatar, RouterLink, FormsModule, FavoriteStories, SendTip, ProfileBadge, FriendAction],
   selector: 'app-profile',
   styleUrls: [
     './profile.css',

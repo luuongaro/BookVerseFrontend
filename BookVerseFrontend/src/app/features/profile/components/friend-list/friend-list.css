@@ -1,8 +1,10 @@
-section { margin: 48px 0; padding: 28px 32px; background: white; border: 1px solid #e8e2ef; border-radius: 18px; }
-h2 { margin: 0 0 20px; font: 400 36px/1.15 'Libre Caslon Display', Georgia, serif; }
+section { margin: 0; }
+h2 { margin: 0 0 22px; font: 400 25px/1.2 'Libre Caslon Display', Georgia, serif; }
 p { color: #797486; }
-.friends { display: flex; flex-wrap: wrap; gap: 16px; }
-.friends a { display: flex; align-items: center; gap: 10px; color: #665498; text-decoration: none; }
-app-user-avatar { width: 42px; height: 42px; }
+.friends { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); gap: 16px; }
+.friend-card { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 24px 16px; border: 1px solid #e8e2ef; border-radius: 16px; background: white; text-align: center; }
+.friend-avatar { width: 96px; height: 96px; border-radius: 50%; color: #665498; background: #eee7f6; font-size: 28px; }
+.friend-card h3 { margin: 0; overflow-wrap: anywhere; font: 400 24px 'Libre Caslon Display', Georgia, serif; }
+.friend-card a { padding: 8px 14px; border: 1px solid #d8cae8; border-radius: 9px; color: #665498; text-decoration: none; font-size: 13px; }
+.friend-card a:focus-visible { outline: 2px solid #7465ad; outline-offset: 3px; }
 button { font: inherit; color: #665498; border: 1px solid #e8e2ef; border-radius: 8px; background: white; padding: 6px 10px; cursor: pointer; }
-@media (max-width: 600px) { section { padding: 22px; margin: 32px 0; } h2 { font-size: 30px; } }

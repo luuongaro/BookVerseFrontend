@@ -904,7 +904,6 @@
         </section>
 
         <app-profile-badge [userId]="user.idExternal" />
-        @if (isOwnProfile()) { <app-friend-list /> }
         <app-favorite-stories [userId]="user.idExternal" [editable]="canEditProfile()" />
 
         <footer class="page-footer">
