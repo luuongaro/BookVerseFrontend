@@ -639,10 +639,16 @@
                   <button
                     class="button button-primary"
                     type="button"
-                    (click)="joinCurrentCycle()"
-                    [disabled]="isChangingParticipation"
+                    (click)="requestJoinCurrentCycle()"
+                    [disabled]="isChangingParticipation || isCheckingLibraryStatus"
                   >
-                    {{ isChangingParticipation ? 'Sumándote…' : 'Sumarme a esta lectura' }}
+                    {{
+                      isCheckingLibraryStatus
+                        ? 'Comprobando referencia…'
+                        : isChangingParticipation
+                          ? 'Sumándote…'
+                          : 'Sumarme a esta lectura'
+                    }}
                   </button>
                 } @else {
                   <p class="member-state">
@@ -665,6 +671,12 @@
                 @if (participantActionMessage) {
                   <p class="member-state state-error" role="alert">
                     {{ participantActionMessage }}
+                  </p>
+                }
+
+                @if (cycleSuccessMessage) {
+                  <p class="member-state member-success" role="status">
+                    {{ cycleSuccessMessage }}
                   </p>
                 }
               </div>
@@ -1192,4 +1204,67 @@
     </form>
   }
   }
+</dialog>
+
+<dialog #referenceUpdateDialog class="reference-update-dialog">
+  <form (ngSubmit)="confirmJoinWithGroupReference()">
+    <h2>Referencia utilizada por el grupo</h2>
+
+    <p>
+      Edición: {{ currentCycle?.editionReference }}
+    </p>
+    <p>
+      Total de capítulos: {{ currentCycle?.totalChapters }}
+    </p>
+
+    <h3>Tu referencia actual</h3>
+    <p>Edición: No registrada en Mi biblioteca</p>
+    <p>
+      Total de capítulos: {{ libraryReadingStatus?.progressTotal }}
+    </p>
+
+    <p>
+      La estructura que usás para registrar tu progreso es diferente a la
+      utilizada por este grupo. Para participar del seguimiento grupal indicá
+      tu posición según la referencia del grupo.
+    </p>
+
+    @if (referenceUpdateErrorMessage) {
+      <p class="state-error" role="alert">
+        {{ referenceUpdateErrorMessage }}
+      </p>
+    }
+
+    <label for="groupChapterAtJoin">Capítulo actual:</label>
+    <div class="reference-chapter-input">
+      <input
+        id="groupChapterAtJoin"
+        name="groupChapterAtJoin"
+        type="number"
+        min="1"
+        [max]="currentCycle?.totalChapters ?? null"
+        [(ngModel)]="groupChapterAtJoin"
+        required
+      />
+      <span>/ {{ currentCycle?.totalChapters }}</span>
+    </div>
+
+    <div class="dialog-actions">
+      <button
+        class="button button-outline"
+        type="button"
+        (click)="referenceUpdateDialog.close()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        class="button button-primary"
+        type="submit"
+        [disabled]="!isGroupChapterAtJoinValid || isChangingParticipation"
+      >
+        {{ isChangingParticipation ? 'Guardando…' : 'Unirme a la lectura' }}
+      </button>
+    </div>
+  </form>
 </dialog>
