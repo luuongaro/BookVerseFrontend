@@ -1207,27 +1207,112 @@
 </dialog>
 
 <dialog #referenceUpdateDialog class="reference-update-dialog">
-  <form (ngSubmit)="confirmJoinWithGroupReference()">
-    <h2>Referencia utilizada por el grupo</h2>
+  <form
+    class="reference-dialog-form"
+    (ngSubmit)="confirmJoinWithGroupReference()"
+  >
+    <header class="reference-dialog-heading">
+      <span class="reference-dialog-heading__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path
+            d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21V5.5Z"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M4 17.5A2.5 2.5 0 0 1 6.5 15H20M8 7h8M8 10h6"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </span>
+      <div>
+        <p class="reference-dialog-eyebrow">Lectura grupal</p>
+        <h2>Adaptá tu progreso para unirte</h2>
+      </div>
+    </header>
 
-    <p>
-      Edición: {{ currentCycle?.editionReference }}
-    </p>
-    <p>
-      Total de capítulos: {{ currentCycle?.totalChapters }}
-    </p>
+    <div class="reference-comparison">
+      <section class="reference-card reference-card--group">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21V5.5Z"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M4 17.5A2.5 2.5 0 0 1 6.5 15H20"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+            />
+          </svg>
+          Referencia utilizada por el grupo
+        </h3>
 
-    <h3>Tu referencia actual</h3>
-    <p>Edición: No registrada en Mi biblioteca</p>
-    <p>
-      Total de capítulos: {{ libraryReadingStatus?.progressTotal }}
-    </p>
+        <p class="reference-edition">
+          Edición: {{ currentCycle?.editionReference }}
+        </p>
 
-    <p>
-      La estructura que usás para registrar tu progreso es diferente a la
-      utilizada por este grupo. Para participar del seguimiento grupal indicá
-      tu posición según la referencia del grupo.
-    </p>
+        <p class="reference-total">
+          <span>Total de capítulos</span>
+          <strong>{{ currentCycle?.totalChapters }}</strong>
+        </p>
+      </section>
+
+      <section class="reference-card reference-card--personal">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle
+              cx="12"
+              cy="12"
+              r="9"
+              stroke="currentColor"
+              stroke-width="1.7"
+            />
+            <path
+              d="M12 11v5M12 8h.01"
+              stroke="currentColor"
+              stroke-width="1.9"
+              stroke-linecap="round"
+            />
+          </svg>
+          Tu referencia actual
+        </h3>
+
+        <p class="reference-total">
+          <span>Total de capítulos</span>
+          <strong>{{ libraryReadingStatus?.progressTotal }}</strong>
+        </p>
+      </section>
+    </div>
+
+    <div class="reference-info">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle
+          cx="12"
+          cy="12"
+          r="9"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+        <path
+          d="M12 11v5M12 8h.01"
+          stroke="currentColor"
+          stroke-width="1.9"
+          stroke-linecap="round"
+        />
+      </svg>
+      <p>
+        Tu progreso está registrado sobre una cantidad de capítulos diferente de
+        la que utiliza este grupo. Para participar del seguimiento grupal, adaptá
+        tu progreso a la referencia del grupo e indicá por qué capítulo vas.
+      </p>
+    </div>
 
     @if (referenceUpdateErrorMessage) {
       <p class="state-error" role="alert">
