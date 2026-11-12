@@ -23,6 +23,9 @@ export class StoryService {
       params: { title, author, genre, friendsOnly, page, size: 12 },
     });
   }
+  getExploreGenres() {
+    return this.http.get<string[]>(`${this.url}/explore/genres`);
+  }
   getById(id: string) {
     return this.http.get<StoryDetailResponse>(`${this.url}/${encodeURIComponent(id)}`);
   }

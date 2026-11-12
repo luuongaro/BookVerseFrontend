@@ -7,10 +7,11 @@ import { StoryService } from '../../services/story.services';
 describe('Story search', () => {
   it('shows the public author and applies filters before pagination', () => {
     const page = { content: [{ idExternal: 'story', title: 'Una historia', authorUsername: 'Luna', genre: 'Fantasía', description: '', accessType: 'FREE' }], number: 0, totalElements: 1, totalPages: 1, first: true, last: true };
-    const stories = { getToExplore: vi.fn(() => of(page)), searchExplore: vi.fn(() => of(page)) };
+    const stories = { getToExplore: vi.fn(() => of(page)), searchExplore: vi.fn(() => of(page)), getExploreGenres: vi.fn(() => of(['Fantasía', 'fantasía', 'Romance'])) };
     TestBed.configureTestingModule({ providers: [provideRouter([]), { provide: StoryService, useValue: stories }] });
     const fixture = TestBed.createComponent(StoryList);
     fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('select[name="genre"] option')).toHaveLength(3);
     expect(fixture.nativeElement.querySelector('.story-cover').textContent).toContain('Luna');
     fixture.componentInstance.titleFilter = ' historia ';
     fixture.componentInstance.authorFilter = ' Luna ';

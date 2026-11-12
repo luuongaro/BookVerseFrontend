@@ -5,10 +5,11 @@
   <form class="story-filters" (ngSubmit)="search()" aria-label="Buscar historias">
     <label>Título<input name="title" [(ngModel)]="titleFilter" type="search" placeholder="Título de la historia" /></label>
     <label>Autor<input name="author" [(ngModel)]="authorFilter" type="search" placeholder="Nombre de usuario" /></label>
-    <label>Género<input name="genre" [(ngModel)]="genreFilter" type="search" placeholder="Por ejemplo, fantasía" /></label>
+    <label>Género<select name="genre" [(ngModel)]="genreFilter" [disabled]="genresLoading() || genresError()"><option value="">Todos los géneros</option>@for (genre of genres(); track genre) { <option [value]="genre">{{ genre }}</option> }</select></label>
     <label class="friends-filter"><input name="friendsOnly" [(ngModel)]="friendsOnly" type="checkbox" /> Solo autores que son mis amigos</label>
     <button type="submit">Buscar</button><button type="button" class="clear-filters" (click)="clear()">Limpiar</button>
   </form>
+  @if (genresError()) { <p class="genres-error" role="alert">No pudimos cargar los géneros. <button type="button" (click)="loadGenres()">Reintentar</button></p> }
   @if (loading()) {
     <p class="story-state" role="status">Cargando historias…</p>
   } @else if (error()) {
