@@ -52,6 +52,7 @@
             </button>
           } @else {
             <a class="profile-link" [routerLink]="['/users', user.idExternal]">Ver perfil</a>
+            @if (showFriendAction) { <app-friend-action [userId]="user.idExternal" /> }
           }
         </article>
       }
