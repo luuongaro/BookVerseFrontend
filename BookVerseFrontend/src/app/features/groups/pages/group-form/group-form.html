@@ -309,6 +309,17 @@
           }
 
           <div class="form-actions">
+            @if (isEditing && canManageGroup) {
+              <button
+                class="danger-button"
+                type="button"
+                [disabled]="isSaving"
+                (click)="requestDeleteGroup()"
+              >
+                Eliminar grupo
+              </button>
+            }
+
             @if (isEditing) {
               <a class="secondary-button" [routerLink]="['/groups', groupId]">
                 Cancelar
@@ -359,6 +370,33 @@
             (click)="confirmRemoveMember()"
           >
             Eliminar del grupo
+          </button>
+        </div>
+      </dialog>
+
+      <dialog #deleteGroupDialog class="confirmation-dialog">
+        <h2>¿Eliminar este grupo?</h2>
+
+        <p>
+          Esta acción desactivará el grupo y sus integrantes ya no podrán participar.
+        </p>
+
+        <div class="confirmation-actions">
+          <button
+            class="secondary-button"
+            type="button"
+            (click)="cancelDeleteGroup()"
+          >
+            Cancelar
+          </button>
+
+          <button
+            class="danger-button"
+            type="button"
+            [disabled]="isSaving"
+            (click)="confirmDeleteGroup()"
+          >
+            {{ isSaving ? 'Eliminando…' : 'Eliminar grupo' }}
           </button>
         </div>
       </dialog>

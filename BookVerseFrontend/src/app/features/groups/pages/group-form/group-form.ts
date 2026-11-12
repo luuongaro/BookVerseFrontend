@@ -38,6 +38,8 @@ type GroupWorkType = 'book' | 'story';
 export class GroupForm implements OnInit {
   @ViewChild('removeMemberDialog')
   removeMemberDialog?: ElementRef<HTMLDialogElement>;
+  @ViewChild('deleteGroupDialog')
+  deleteGroupDialog?: ElementRef<HTMLDialogElement>;
 
   private readonly formBuilder = inject(FormBuilder);
   private readonly readingGroupsService = inject(ReadingGroupsService);
@@ -146,6 +148,49 @@ export class GroupForm implements OnInit {
           console.error('Error removing group member:', error);
           this.memberMessage =
             'No se pudo quitar al miembro. Revisá tus permisos e intentá nuevamente.';
+        },
+      });
+  }
+
+  requestDeleteGroup(): void {
+    if (!this.isEditing || !this.canManageGroup || this.isSaving) {
+      return;
+    }
+
+    this.deleteGroupDialog?.nativeElement.showModal();
+  }
+
+  cancelDeleteGroup(): void {
+    this.deleteGroupDialog?.nativeElement.close();
+  }
+
+  confirmDeleteGroup(): void {
+    const groupId = this.groupId;
+
+    if (!groupId || !this.isEditing || !this.canManageGroup || this.isSaving) {
+      return;
+    }
+
+    this.deleteGroupDialog?.nativeElement.close();
+    this.errorMessage = '';
+    this.isSaving = true;
+
+    this.readingGroupsService
+      .deactivate(groupId)
+      .pipe(
+        finalize(() => {
+          this.isSaving = false;
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: () => {
+          void this.router.navigate(['/groups']);
+        },
+        error: (error: unknown) => {
+          console.error('Error deleting reading group:', error);
+          this.errorMessage =
+            'No se pudo eliminar el grupo. Revisá tus permisos e intentá nuevamente.';
         },
       });
   }
@@ -311,7 +356,12 @@ export class GroupForm implements OnInit {
   }
 
   onSubmit(): void {
-    if (this.groupForm.invalid || this.isSaving) {
+    const formIsInvalid = this.isEditing
+      ? this.groupForm.controls.name.invalid ||
+        this.groupForm.controls.totalChapters.invalid
+      : this.groupForm.invalid;
+
+    if (formIsInvalid || this.isSaving) {
       this.groupForm.markAllAsTouched();
       return;
     }

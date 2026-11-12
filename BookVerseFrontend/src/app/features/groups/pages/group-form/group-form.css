@@ -411,7 +411,8 @@ form {
 }
 
 .primary-button,
-.secondary-button {
+.secondary-button,
+.danger-button {
   min-height: 44px;
   padding: 0 17px;
   display: inline-flex;
@@ -456,6 +457,22 @@ form {
 .secondary-button:hover {
   border-color: var(--lavender);
   color: var(--lavender);
+}
+
+.danger-button {
+  border: 1px solid #d7a0b2;
+  background: #fff;
+  color: #a44d68;
+}
+
+.danger-button:hover:not(:disabled) {
+  border-color: #a44d68;
+  background: #fff7f9;
+}
+
+.danger-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
 }
 
 .app-footer {
