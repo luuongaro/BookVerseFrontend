@@ -11,6 +11,7 @@ interface MembershipRequest {
   type: 'JOIN_REQUEST' | 'INVITATION'; createdAt: string;
 }
 interface Notice extends MembershipRequest { groupName: string; userName: string; }
+interface FriendRequest { id: string; userId: string; username: string; createdAt: string; }
 
 @Component({
   selector: 'app-notifications', imports: [DatePipe],
@@ -24,8 +25,29 @@ export class Notifications implements OnInit {
   readonly loading = signal(true);
   readonly error = signal('');
   readonly busy = signal('');
+  readonly friendRequests = signal<FriendRequest[]>([]);
+  readonly friendsLoading = signal(true);
+  readonly friendsError = signal('');
+  readonly friendBusy = signal('');
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void { this.load(); this.loadFriends(); }
+
+  loadFriends(): void {
+    this.friendsLoading.set(true); this.friendsError.set('');
+    this.http.get<FriendRequest[]>(`${API_URL}/friendships/requests`).subscribe({
+      next: requests => { this.friendRequests.set(requests); this.friendsLoading.set(false); },
+      error: () => { this.friendsError.set('No pudimos cargar las solicitudes de amistad.'); this.friendsLoading.set(false); },
+    });
+  }
+
+  respondFriend(request: FriendRequest, action: 'accept' | 'reject'): void {
+    if (this.friendBusy()) return;
+    this.friendBusy.set(request.id); this.friendsError.set('');
+    this.http.post(`${API_URL}/friendships/${request.id}/${action}`, {}).subscribe({
+      next: () => { this.friendRequests.update(items => items.filter(item => item.id !== request.id)); this.friendBusy.set(''); },
+      error: () => { this.friendsError.set('No pudimos responder la solicitud de amistad.'); this.friendBusy.set(''); },
+    });
+  }
 
   load(): void {
     const userId = localStorage.getItem('userId');

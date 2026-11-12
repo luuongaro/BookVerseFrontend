@@ -1,0 +1,7 @@
+@if (relationship(); as friend) {
+  @if (friend.state === 'NONE') { <button type="button" [disabled]="busy()" (click)="send()">{{ busy() ? 'Enviando…' : 'Agregar a amigos' }}</button> }
+  @else if (friend.state === 'OUTGOING') { <span>Solicitud enviada</span> }
+  @else if (friend.state === 'INCOMING') { <span>Solicitud recibida · Revisá Notificaciones</span> }
+  @else { <span>Amigos</span> }
+}
+@if (error()) { <p role="alert">{{ error() }} <button type="button" (click)="load()">Reintentar</button></p> }

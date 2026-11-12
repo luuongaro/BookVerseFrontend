@@ -1,0 +1,8 @@
+section { margin: 48px 0; padding: 28px 32px; background: white; border: 1px solid #e8e2ef; border-radius: 18px; }
+h2 { margin: 0 0 20px; font: 400 36px/1.15 'Libre Caslon Display', Georgia, serif; }
+p { color: #797486; }
+.friends { display: flex; flex-wrap: wrap; gap: 16px; }
+.friends a { display: flex; align-items: center; gap: 10px; color: #665498; text-decoration: none; }
+app-user-avatar { width: 42px; height: 42px; }
+button { font: inherit; color: #665498; border: 1px solid #e8e2ef; border-radius: 8px; background: white; padding: 6px 10px; cursor: pointer; }
+@media (max-width: 600px) { section { padding: 22px; margin: 32px 0; } h2 { font-size: 30px; } }
