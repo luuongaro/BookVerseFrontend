@@ -21,6 +21,7 @@ describe('Group notifications', () => {
     const fixture = TestBed.createComponent(Notifications);
     const http = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
+    http.expectOne(req => req.url.endsWith('/friendships/requests')).flush([{ id: 'friend-request', userId: 'other', username: 'Lu', createdAt: '2026-01-01' }]);
     http.expectOne(req => req.url.endsWith('/membership-invitations/me')).flush([]);
     http.expectOne(req => req.url.endsWith('/reading-groups/group/membership-requests/pending')).flush([
       { idExternal: 'request', groupId: 'group', targetUserId: 'reader', type: 'JOIN_REQUEST', createdAt: '2026-01-01' },
@@ -28,6 +29,10 @@ describe('Group notifications', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Ana');
     expect(fixture.nativeElement.textContent).toContain('Lecturas');
+    expect(fixture.nativeElement.textContent).toContain('Lu');
+    fixture.componentInstance.respondFriend(fixture.componentInstance.friendRequests()[0], 'accept');
+    http.expectOne(req => req.url.endsWith('/friendships/friend-request/accept') && req.method === 'POST').flush(null);
+    expect(fixture.componentInstance.friendRequests()).toHaveLength(0);
     fixture.componentInstance.respond(fixture.componentInstance.notices()[0], 'accept');
     http.expectOne(req => req.url.endsWith('/membership-requests/request/accept') && req.method === 'POST').flush({});
     expect(fixture.componentInstance.notices()).toHaveLength(0);

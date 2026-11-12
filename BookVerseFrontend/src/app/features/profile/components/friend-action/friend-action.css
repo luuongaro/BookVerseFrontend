@@ -1,0 +1,5 @@
+:host { display: block; }
+button { padding: 9px 14px; border: 1px solid #7465ad; border-radius: 9px; background: #7465ad; color: #fff; font: inherit; cursor: pointer; }
+button:disabled { opacity: .6; cursor: default; }
+span { color: #665498; font-size: 14px; }
+p { color: #a33e57; font-size: 13px; }

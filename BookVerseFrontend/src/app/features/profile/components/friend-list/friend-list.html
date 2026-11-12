@@ -1,0 +1,7 @@
+<section aria-labelledby="friends-title">
+  <h2 id="friends-title">Mis amigos</h2>
+  @if (loading()) { <p role="status">Cargando amigos…</p> }
+  @else if (error()) { <p role="alert">{{ error() }} <button type="button" (click)="load()">Reintentar</button></p> }
+  @else if (!friends().length) { <p>Todavía no tenés amigos agregados.</p> }
+  @else { <div class="friends">@for (friend of friends(); track friend.id) { <a [routerLink]="['/users', friend.userId]"><app-user-avatar [userId]="friend.userId" [username]="friend.username" /> <span>{{ friend.username }}</span></a> }</div> }
+</section>
