@@ -55,6 +55,7 @@ const ALIGNMENT_ORDER: TextAlignment[] = ['left', 'center', 'right', 'justify'];
 
 type StoryFormSnapshot = {
   title: string;
+  genre: string;
   description: string;
   accessType: StoryAccessType;
 };
@@ -99,6 +100,7 @@ export class StoryForm implements OnInit {
   });
   private readonly emptySnapshot: StoryFormSnapshot = {
     title: '',
+    genre: '',
     description: '',
     accessType: StoryAccessType.FREE,
   };
@@ -111,7 +113,7 @@ export class StoryForm implements OnInit {
     const current = this.currentValues();
 
     return {
-      main: current.title === original.title ? 'Sin cambios' : 'Modificado',
+      main: current.title === original.title && current.genre === original.genre ? 'Sin cambios' : 'Modificado',
       description:
         current.description === original.description ? 'Sin cambios' : 'Modificado',
       accessType:
@@ -127,6 +129,7 @@ export class StoryForm implements OnInit {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(/\S/), Validators.maxLength(150)],
     }),
+    genre: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(80)] }),
     description: new FormControl('', {
       nonNullable: true,
       validators: [
@@ -152,6 +155,7 @@ export class StoryForm implements OnInit {
       .subscribe(() => {
         this.currentValues.set({
           title: this.form.controls.title.value.trim(),
+          genre: this.form.controls.genre.value.trim(),
           description: this.form.controls.description.value.trim(),
           accessType: this.form.controls.accessType.value,
         });
@@ -164,6 +168,7 @@ export class StoryForm implements OnInit {
       this.isEditMode.set(!!id);
       this.form.reset({
         title: '',
+        genre: '',
         description: '',
         accessType: StoryAccessType.FREE,
       });
@@ -200,11 +205,13 @@ export class StoryForm implements OnInit {
           this.allowed.set(this.permissions.canManage(story));
           this.form.patchValue({
             title: story.title,
+            genre: story.genre ?? '',
             description: story.description,
             accessType: story.accessType,
           });
           const loadedValues: StoryFormSnapshot = {
             title: story.title.trim(),
+            genre: (story.genre ?? '').trim(),
             description: story.description.trim(),
             accessType: story.accessType,
           };
@@ -243,7 +250,7 @@ export class StoryForm implements OnInit {
     const sections = [
       {
         label: 'Datos principales',
-        changed: current.title !== original.title,
+        changed: current.title !== original.title || current.genre !== original.genre,
       },
       {
         label: 'Descripción',
@@ -327,6 +334,7 @@ export class StoryForm implements OnInit {
         key,
         JSON.stringify({
           title: value.title,
+          genre: value.genre,
           description: value.description,
           accessType: value.accessType,
         }),
@@ -346,6 +354,7 @@ export class StoryForm implements OnInit {
 
       const draft = JSON.parse(saved) as {
         title?: unknown;
+        genre?: unknown;
         description?: unknown;
         accessType?: unknown;
       };
@@ -364,6 +373,7 @@ export class StoryForm implements OnInit {
 
       this.form.patchValue({
         title: draft.title,
+        genre: typeof draft.genre === 'string' ? draft.genre : this.form.controls.genre.value,
         description,
         accessType: draft.accessType,
       });
@@ -486,6 +496,7 @@ export class StoryForm implements OnInit {
     if (this.isLoading() || this.isSaving() || this.loadFailed() || !this.allowed()) return;
     this.updateDescription();
     this.form.controls.title.setValue(this.form.controls.title.value.trim());
+    this.form.controls.genre.setValue(this.form.controls.genre.value.trim());
     this.form.controls.description.setValue(this.form.controls.description.value.trim());
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -521,6 +532,7 @@ export class StoryForm implements OnInit {
           if (id) {
             this.form.patchValue({
               title: story.title,
+              genre: story.genre ?? '',
               description: story.description,
               accessType: story.accessType,
             });
@@ -530,6 +542,7 @@ export class StoryForm implements OnInit {
 
             const savedValues: StoryFormSnapshot = {
               title: story.title.trim(),
+              genre: (story.genre ?? '').trim(),
               description: story.description.trim(),
               accessType: story.accessType,
             };

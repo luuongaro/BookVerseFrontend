@@ -6,6 +6,7 @@ export interface StoryDetailResponse {
   authorId: string;
   authorUsername: string;
   title: string;
+  genre?: string | null;
   description: string;
   accessType: StoryAccessType;
   hidden: boolean;

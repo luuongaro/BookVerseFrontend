@@ -2,6 +2,13 @@
   <section class="page-heading">
     <h1>Historias</h1>
   </section>
+  <form class="story-filters" (ngSubmit)="search()" aria-label="Buscar historias">
+    <label>Título<input name="title" [(ngModel)]="titleFilter" type="search" placeholder="Título de la historia" /></label>
+    <label>Autor<input name="author" [(ngModel)]="authorFilter" type="search" placeholder="Nombre de usuario" /></label>
+    <label>Género<input name="genre" [(ngModel)]="genreFilter" type="search" placeholder="Por ejemplo, fantasía" /></label>
+    <label class="friends-filter"><input name="friendsOnly" [(ngModel)]="friendsOnly" type="checkbox" /> Solo autores que son mis amigos</label>
+    <button type="submit">Buscar</button><button type="button" class="clear-filters" (click)="clear()">Limpiar</button>
+  </form>
   @if (loading()) {
     <p class="story-state" role="status">Cargando historias…</p>
   } @else if (error()) {
@@ -18,18 +25,20 @@
           <div class="story-cover" aria-hidden="true">
             <span class="cover-symbol">✧</span>
             <h3>{{ story.title }}</h3>
+            <span class="cover-author">{{ story.authorUsername || 'Autor no disponible' }}</span>
           </div>
           <div class="story-content">
             <span class="story-badge" [class.premium]="story.accessType === 'PREMIUM'">{{
               story.accessType === 'PREMIUM' ? 'Premium' : 'Gratuita'
             }}</span>
             <h2>{{ story.title }}</h2>
+            <p class="story-author">{{ story.authorUsername ? '@' + story.authorUsername : 'Autor no disponible' }} @if (story.genre) { · {{ story.genre }} }</p>
             <div class="story-description" [innerHTML]="story.description"></div>
             <a class="story-link" [routerLink]="['/stories', story.idExternal]">Ver historia</a>
           </div>
         </article>
       } @empty {
-        <p class="story-state">Todavía no hay historias de otros autores disponibles.</p>
+        <p class="story-state">{{ hasFilters ? 'No encontramos historias con esos filtros.' : 'Todavía no hay historias de otros autores disponibles.' }}</p>
       }
     </section>
     @if (page.totalPages > 1) {
