@@ -19,6 +19,7 @@
           {{ activeCategory() === 'REVIEWS' ? 'Reportes de reseñas' : 'Reportes de historias' }}
         </h1>
         <p>Revisá los reportes recibidos y registrá la decisión de moderación.</p>
+        <a routerLink="/reports/comments">Ver reportes de comentarios de grupos</a>
       </div>
 
       <aside class="head-note">
@@ -524,6 +525,18 @@
             Este reporte fue
             {{ report.status === 'APPROVED' ? 'aprobado' : 'rechazado' }}.
           </p>
+          @if (report.status === 'APPROVED') {
+            @if (restoredReports().has(report.reportId)) {
+              <p role="status">La reseña fue restaurada.</p>
+            } @else if (confirmRestore()) {
+              <p>¿Querés volver a mostrar esta reseña?</p>
+              <button type="button" class="btn btn-approve" [disabled]="saving()" (click)="restoreReview()">{{ saving() ? 'Restaurando…' : 'Sí, restaurar' }}</button>
+              <button type="button" class="btn btn-reject" [disabled]="saving()" (click)="confirmRestore.set(false)">Cancelar</button>
+            } @else {
+              <button type="button" class="btn btn-approve" (click)="confirmRestore.set(true)">Restaurar reseña</button>
+            }
+            @if (actionError()) { <p class="state error" role="alert">{{ actionError() }}</p> }
+          }
         }
       </div>
 

@@ -29,6 +29,8 @@ export class ReviewReportList implements OnInit {
   toastMessage = signal('');
   saving = signal(false);
   actionError = signal('');
+  restoredReports = signal<Set<string>>(new Set());
+  confirmRestore = signal(false);
 
   resolutionForm = this.formBuilder.nonNullable.group({
     resolutionComment: ['', Validators.maxLength(3000)],
@@ -262,6 +264,7 @@ export class ReviewReportList implements OnInit {
   openReport(report: ReviewReport): void {
     this.selectedReport.set(report);
     this.actionError.set('');
+    this.confirmRestore.set(false);
     this.resolutionForm.reset({
       resolutionComment: report.resolutionComment ?? '',
     });
@@ -280,6 +283,26 @@ export class ReviewReportList implements OnInit {
       this.selectedReport.set(null);
       this.selectedStoryReport.set(null);
     }
+  }
+
+  restoreReview(): void {
+    const report = this.selectedReport();
+    if (!report || report.status !== 'APPROVED' || this.saving()) return;
+    this.saving.set(true);
+    this.actionError.set('');
+    this.service.restore(report.reportId).subscribe({
+      next: () => {
+        this.restoredReports.update(ids => new Set([...ids, report.reportId]));
+        this.confirmRestore.set(false);
+        this.saving.set(false);
+        this.toastMessage.set('La reseña volvió a estar disponible.');
+        window.setTimeout(() => this.toastMessage.set(''), 2500);
+      },
+      error: () => {
+        this.saving.set(false);
+        this.actionError.set('No se pudo restaurar la reseña. Es posible que ya esté disponible o que haya sido eliminada.');
+      },
+    });
   }
 
   moderate(action: 'approve' | 'reject'): void {

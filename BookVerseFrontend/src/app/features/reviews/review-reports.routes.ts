@@ -7,5 +7,6 @@ import { authenticatedGuard, moderatorGuard } from '../../core/guards/session-ro
 export const reviewReportsRoutes: Routes = [
   { path: '', component: ReviewReportList, canActivate: [moderatorGuard] },
   { path: 'new', component: ReviewReportForm, canActivate: [authenticatedGuard] },
+  { path: 'comments', loadComponent: () => import('./pages/comment-reports/comment-reports').then(m => m.CommentReports), canActivate: [moderatorGuard] },
   { path: ':id', component: ReviewReportDetail, canActivate: [moderatorGuard] },
 ];

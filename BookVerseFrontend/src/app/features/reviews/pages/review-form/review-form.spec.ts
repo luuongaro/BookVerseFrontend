@@ -24,7 +24,7 @@ describe('ReviewForm rules', () => {
     } as Review;
     const service = {
       getById: vi.fn(() => of(review)),
-      getByBook: vi.fn(() => of([])),
+      getByBook: vi.fn(() => of([] as Review[])),
       create: vi.fn(() => of(review)),
       update: vi.fn(() => of(review)),
     };
@@ -125,7 +125,7 @@ describe('ReviewForm rules', () => {
       reviewerId: userId,
       bookId,
       storyId: null,
-    }]));
+    } as Review]));
     form.form.patchValue({ content: 'Una reseña válida' });
 
     form.submit();

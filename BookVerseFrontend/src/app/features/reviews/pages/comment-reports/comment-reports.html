@@ -1,0 +1,40 @@
+<main class="comment-reports">
+  <a routerLink="/reports">← Volver a reportes</a>
+  <h1>Reportes de comentarios</h1>
+  <p>Revisá los comentarios reportados en grupos de lectura.</p>
+  <label for="comment-report-filter">Estado</label>
+  <select id="comment-report-filter" [ngModel]="filter()" (ngModelChange)="filter.set($event)">
+    <option value="ALL">Todos</option><option value="PENDING">Pendientes</option><option value="APPROVED">Aprobados</option><option value="REJECTED">Rechazados</option>
+  </select>
+  @if (loading()) { <p role="status">Cargando reportes…</p> }
+  @if (error() && !selected()) { <p role="alert">{{ error() }} <button type="button" (click)="load()">Reintentar</button></p> }
+  @if (!loading() && !error()) {
+    @for (report of filteredReports(); track report.reportId) {
+        <article class="report-card">
+          <div><strong>{{ report.commentAuthorUsername || 'Usuario' }}</strong><p>{{ report.commentContent }}</p><small>{{ report.reason }} · {{ report.createdAt | date:'dd/MM/yyyy' }} · {{ report.status === 'PENDING' ? 'Pendiente' : report.status === 'APPROVED' ? 'Aprobado' : 'Rechazado' }}</small></div>
+          <button type="button" (click)="open(report)">Ver reporte</button>
+        </article>
+    } @empty { <p>No hay reportes de comentarios en este estado.</p> }
+  }
+  @if (selected(); as report) {
+    <div class="modal-backdrop" (click)="close()">
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="comment-report-title" (click)="$event.stopPropagation()">
+        <h2 id="comment-report-title">Reporte de comentario</h2>
+        <p><strong>Comentario de {{ report.commentAuthorUsername || 'Usuario' }}:</strong> {{ report.commentContent }}</p>
+        <p><strong>Reportado por:</strong> {{ report.reporterUsername || 'Usuario' }}</p>
+        <p><strong>Motivo:</strong> {{ report.reason }}</p>
+        @if (report.details) { <p><strong>Detalle:</strong> {{ report.details }}</p> }
+        @if (report.status === 'PENDING') {
+          <label for="comment-resolution">Comentario de resolución (opcional)</label>
+          <textarea id="comment-resolution" [(ngModel)]="resolution" maxlength="3000" [disabled]="busy()"></textarea>
+          @if (error()) { <p role="alert">{{ error() }}</p> }
+          <div class="actions">
+            <button type="button" [disabled]="busy()" (click)="moderate('reject')">Rechazar reporte</button>
+            <button type="button" [disabled]="busy()" (click)="moderate('approve')">Aprobar y retirar comentario</button>
+          </div>
+        } @else { <p>Este reporte ya fue moderado.</p> }
+        <button type="button" [disabled]="busy()" (click)="close()">Cerrar</button>
+      </section>
+    </div>
+  }
+</main>

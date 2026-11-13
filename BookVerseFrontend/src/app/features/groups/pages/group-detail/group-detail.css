@@ -1958,3 +1958,6 @@
   color: #a44d68;
   font-weight: 600;
 }
+.comment-report-form { display: grid; gap: 8px; margin-top: 14px; }
+.comment-report-form textarea, .comment-content > textarea { width: 100%; min-height: 80px; box-sizing: border-box; padding: 10px; border: 1px solid #ddd4e9; border-radius: 8px; font: inherit; resize: vertical; }
+.comment-report-form small { color: #797486; }
