@@ -12,33 +12,50 @@ img {
   height: 100%;
   object-fit: contain;
 }
-div {
+.book-cover-fallback {
   box-sizing: border-box;
+  width: 100%;
   height: 100%;
   min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 14px;
-  padding: 20px;
-  text-align: center;
+  padding: 18px 14px;
+  border: 1px solid #dfd2ed;
+  background:
+    radial-gradient(circle at 80% 18%, #ffffff8c, transparent 30%),
+    linear-gradient(145deg, #f3edf8, #e6dcef);
   color: #665498;
+  text-align: center;
 }
-div > span:not([aria-hidden]) {
+
+.book-cover-fallback__title {
   display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
   max-width: 100%;
   overflow: hidden;
   overflow-wrap: anywhere;
+  font-family: 'Libre Caslon Display', Georgia, serif;
+  font-size: 17px;
+  line-height: 1.18;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
-div > span[aria-hidden],
-small {
-  flex-shrink: 0;
+
+:host(.book-thumb) {
+  width: 50px;
+  height: 70px;
+  flex: 0 0 50px;
 }
-small {
-  font:
-    12px 'DM Sans',
-    sans-serif;
+
+:host(.book-thumb) .book-cover-fallback {
+  padding: 7px 5px;
+  border-radius: 6px;
 }
+
+:host(.book-thumb) .book-cover-fallback__title {
+  font-size: 7px;
+  line-height: 1.1;
+  -webkit-line-clamp: 2;
+}
+

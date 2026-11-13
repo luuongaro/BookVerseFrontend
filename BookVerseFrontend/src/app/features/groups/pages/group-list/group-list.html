@@ -48,10 +48,11 @@
           <div class="orbit"></div>
           <div class="orbit orbit-two"></div>
 
-          <span class="person person-one">JM</span>
-          <span class="person person-two">SK</span>
-          <span class="person person-three">EL</span>
-          <span class="person person-main">AL</span>
+          <div class="hero-people">
+            <span class="person person-one">YGL</span>
+            <span class="person person-two">LOR</span>
+            <span class="person person-three">ASG</span>
+          </div>
 
           <div class="book book-one">
             ☾
@@ -78,7 +79,51 @@
         <section class="reading-groups" aria-labelledby="discover-title">
           <div class="reading-groups-heading">
             <div><h2 id="discover-title">Buscá grupos sobre tus lecturas</h2><p>Encontrá grupos por nombre o lectura.</p></div>
-            <label class="group-search"><span class="visually-hidden">Buscar grupos o lecturas</span><input type="search" [(ngModel)]="discoverSearch" placeholder="Buscar grupo o lectura…" /></label>
+            <div class="group-search discover-search">
+              <label class="visually-hidden" for="discoverGroupSearch">
+                Buscar grupos, libros o historias
+              </label>
+
+              <svg
+                class="discover-search__icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <circle
+                  cx="10.8"
+                  cy="10.8"
+                  r="6.8"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                />
+                <path
+                  d="m16 16 4.5 4.5"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                />
+              </svg>
+
+              <input
+                id="discoverGroupSearch"
+                type="search"
+                [(ngModel)]="discoverSearch"
+                placeholder="Buscar grupo, libro o historia…"
+                autocomplete="off"
+              />
+
+              @if (discoverSearch) {
+                <button
+                  class="discover-search__clear"
+                  type="button"
+                  aria-label="Limpiar búsqueda"
+                  (click)="discoverSearch = ''"
+                >
+                  ×
+                </button>
+              }
+            </div>
           </div>
           @if (discoverLoading) { <p class="state-message" role="status">Cargando grupos…</p> }
           @else if (discoverError) { <p class="state-message state-error" role="alert">{{ discoverError }}</p><button type="button" (click)="showDiscover()">Reintentar</button> }
@@ -86,12 +131,99 @@
           @else {
             <div class="discover-cards">
               @for (group of filteredDiscover; track group.idExternal) {
-                <article class="discover-card">
-                  <h3>{{ group.name }}</h3><p>{{ group.activeContentTitle || 'Lectura por definir' }}</p><p>{{ group.activeMembersCount }} integrantes</p>
-                  @if (group.membershipState === 'NOT_MEMBER') { <button type="button" [disabled]="!!requestingId" (click)="requestGroup(group)">{{ requestingId === group.idExternal ? 'Enviando…' : 'Solicitar acceso' }}</button> }
-                  @else if (group.membershipState === 'JOIN_REQUEST_PENDING') { <span>Solicitud enviada</span> }
-                  @else if (group.membershipState === 'INVITATION_PENDING') { <span>Tenés una invitación pendiente</span> }
-                  @else { <a [routerLink]="['/groups', group.idExternal]">Ver grupo</a> }
+                <article class="group-card discover-card">
+                  <div
+                    class="card-banner"
+                    [class.banner-lilac]="!group.activeReadingCycle"
+                    [class.banner-green]="!!group.activeReadingCycle?.storyId"
+                    [class.banner-pink]="!!group.activeReadingCycle?.bookId"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      @if (!group.activeReadingCycle) {
+                        <circle cx="9" cy="8" r="3" />
+                        <path d="M3 20c0-3 2.5-5 6-5s6 2 6 5" />
+                        <path d="M16 11a3 3 0 0 0 0-6" />
+                        <path d="M17 15c2.5.5 4 2.2 4 5" />
+                      } @else if (group.activeReadingCycle.storyId) {
+                        <path
+                          d="M12 5C8 2 4 3 2 4v15c3-1 6-1 10 2 4-3 7-3 10-2V4c-2-1-6-1-10 1Zm0 0v16"
+                        />
+                      } @else {
+                        <path d="M20 4c-8 0-14 4-14 11a5 5 0 0 0 5 5c7 0 11-6 9-16Z" />
+                        <path d="M4 22c2-5 6-9 12-12" />
+                      }
+                    </svg>
+                    <span>
+                      @if (!group.activeReadingCycle) {
+                        GRUPO DE LECTURA
+                      } @else if (group.activeReadingCycle.storyId) {
+                        GRUPO DE LECTURA DE HISTORIA
+                      } @else {
+                        GRUPO DE LECTURA DE LIBRO
+                      }
+                    </span>
+                  </div>
+
+                  <div class="card-content">
+                    <p class="card-type">
+                      @if (!group.activeReadingCycle) {
+                        LECTURA POR DEFINIR
+                      } @else if (group.activeReadingCycle.storyId) {
+                        HISTORIA DE LA COMUNIDAD
+                      } @else {
+                        LIBRO PUBLICADO
+                      }
+                    </p>
+
+                    <h3>{{ group.name }}</h3>
+
+                    <p class="card-description">
+                      {{
+                        !group.activeReadingCycle
+                          ? 'Este grupo todavía no tiene una lectura planificada.'
+                          : group.activeContentTitle ||
+                            'Un espacio para compartir lecturas, ideas y conversaciones.'
+                      }}
+                    </p>
+
+                    <div class="card-divider"></div>
+
+                    <p class="card-meta-label">INTEGRANTES</p>
+                    <p class="card-date">
+                      {{ group.activeMembersCount }}
+                      {{ group.activeMembersCount === 1 ? 'integrante' : 'integrantes' }}
+                    </p>
+
+                    <div class="card-bottom discover-card-bottom">
+                      @if (group.membershipState === 'NOT_MEMBER') {
+                        <button
+                          class="primary-button discover-action"
+                          type="button"
+                          [disabled]="!!requestingId"
+                          (click)="requestGroup(group)"
+                        >
+                          {{ requestingId === group.idExternal ? 'Enviando…' : 'Solicitar acceso' }}
+                          <span aria-hidden="true">→</span>
+                        </button>
+                      } @else if (group.membershipState === 'JOIN_REQUEST_PENDING') {
+                        <span class="group-status">Solicitud enviada</span>
+                      } @else if (group.membershipState === 'INVITATION_PENDING') {
+                        <span class="group-status">Tenés una invitación pendiente</span>
+                      } @else {
+                        <a class="primary-button discover-action" [routerLink]="['/groups', group.idExternal]">
+                          Ver grupo <span aria-hidden="true">→</span>
+                        </a>
+                      }
+                    </div>
+                  </div>
                 </article>
               }
             </div>
