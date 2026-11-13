@@ -25,7 +25,10 @@ import { Book } from '../../../books/models/book.model';
 import { BooksService } from '../../../books/services/books.service';
 import { ReadingStatus } from '../../../library/models/library-book.model';
 import { LibraryService } from '../../../library/services/library.service';
-import { GroupComment } from '../../models/group-comment.model';
+import {
+  GroupComment,
+  GroupCommentsVisibility,
+} from '../../models/group-comment.model';
 import { GroupGoal } from '../../models/group-goal.model';
 import { GroupMember } from '../../models/group-member.model';
 import { GroupProgress } from '../../models/group-progress.model';
@@ -77,8 +80,6 @@ export class GroupDetail implements OnInit {
     viewChild.required<ElementRef<HTMLDialogElement>>('newCycleDialog');
   readonly referenceUpdateDialog =
     viewChild.required<ElementRef<HTMLDialogElement>>('referenceUpdateDialog');
-  readonly memberTrack =
-    viewChild<ElementRef<HTMLDivElement>>('memberTrack');
 
   group: ReadingGroup | null = null;
   currentCycle: GroupReadingCycle | null = null;
@@ -98,6 +99,8 @@ export class GroupDetail implements OnInit {
   referenceUpdatedForJoin = false;
   referenceUpdateErrorMessage = '';
   members: GroupMember[] = [];
+  membersPage = 0;
+  readonly membersPerPage = 4;
   goals: GroupGoal[] = [];
   activeGoal: GroupGoal | null = null;
   goalHistory: GroupGoal[] = [];
@@ -113,6 +116,7 @@ export class GroupDetail implements OnInit {
   isLoadingReadingHistory = false;
   progress: GroupProgress | null = null;
   comments: GroupComment[] = [];
+  commentVisibility: GroupCommentsVisibility | null = null;
   linkedBook: Book | null = null;
   linkedStory: StoryDetailResponse | null = null;
   isLoadingLinkedContent = false;
@@ -130,6 +134,7 @@ export class GroupDetail implements OnInit {
   targetDatePastError = false;
   commentContent = '';
   commentProgress = 0;
+  commentChapter = 0;
   selectedInviteUser: UserProfile | null = null;
   selectedLeaveCreator: GroupMember | null = null;
   leaveCreatorSearch = '';
@@ -156,6 +161,8 @@ export class GroupDetail implements OnInit {
   goalActionMessage = '';
   cycleActionMessage = '';
   commentActionMessage = '';
+  deleteConfirmationCommentId: string | null = null;
+  deletingCommentId: string | null = null;
   memberActionMessage = '';
   memberSuccessMessage = '';
 
@@ -336,14 +343,41 @@ export class GroupDetail implements OnInit {
     this.closeLeaveCreatorCandidates();
   }
 
-  scrollMembers(direction: -1 | 1): void {
-    const track = this.memberTrack()?.nativeElement;
-    if (!track) return;
+  get membersPageCount(): number {
+    return Math.ceil(this.members.length / this.membersPerPage);
+  }
 
-    track.scrollBy({
-      left: direction * track.clientWidth * 0.8,
-      behavior: 'smooth',
-    });
+  get paginatedMembers(): GroupMember[] {
+    const start = this.membersPage * this.membersPerPage;
+    return this.members.slice(start, start + this.membersPerPage);
+  }
+
+  scrollMembers(direction: -1 | 1): void {
+    const nextPage = this.membersPage + direction;
+
+    if (nextPage < 0 || nextPage >= this.membersPageCount) {
+      return;
+    }
+
+    this.membersPage = nextPage;
+  }
+
+  changeCommentChapter(direction: -1 | 1): void {
+    const max = this.libraryChapterProgress;
+
+    if (max < 1) {
+      return;
+    }
+
+    const current = Math.min(
+      max,
+      Math.max(1, this.commentChapter || 1),
+    );
+
+    this.commentChapter = Math.min(
+      max,
+      Math.max(1, current + direction),
+    );
   }
 
   memberProfileLink(userId: string): string[] {
@@ -695,14 +729,95 @@ export class GroupDetail implements OnInit {
 
   get hasPercentageCommentProgress(): boolean {
     const reading = this.libraryReadingStatus;
+    const allowedStatuses = ['IN_PROGRESS', 'RE_READING', 'FINISHED'];
 
     return (
-      !this.isStoryGroup &&
+      this.commentProgressType === 'PERCENTAGE' &&
       this.currentCycle?.status === 'ACTIVE' &&
-      reading !== null &&
+      !!reading &&
+      allowedStatuses.includes(reading.status) &&
+      this.libraryProgressPercent > 0
+    );
+  }
+
+  get commentProgressType(): 'CHAPTER' | 'PERCENTAGE' {
+    if (this.isStoryGroup) {
+      return 'CHAPTER';
+    }
+
+    if (this.activeGoal?.goalType === 'CHAPTER') {
+      return 'CHAPTER';
+    }
+
+    if (this.activeGoal?.goalType === 'PERCENTAGE') {
+      return 'PERCENTAGE';
+    }
+
+    return this.libraryReadingStatus?.progressType === 'CHAPTER'
+      ? 'CHAPTER'
+      : 'PERCENTAGE';
+  }
+
+  get storyChapterTotal(): number {
+    return this.linkedStory?.publishedChaptersCount ?? 0;
+  }
+
+  get commentChapterTotal(): number {
+    if (this.currentCycle?.storyId) {
+      return this.storyChapterTotal;
+    }
+
+    return this.currentCycle?.totalChapters ?? 0;
+  }
+
+  get libraryChapterProgress(): number {
+    const reading = this.libraryReadingStatus;
+    const total = this.commentChapterTotal;
+
+    if (!reading || total <= 0) {
+      return 0;
+    }
+
+    if (reading.status === 'FINISHED') {
+      return total;
+    }
+
+    if (
+      reading.progressType === 'CHAPTER' &&
+      reading.progressValue !== null
+    ) {
+      return Math.min(total, Math.max(0, reading.progressValue));
+    }
+
+    if (
       reading.progressType === 'PERCENTAGE' &&
-      reading.progressValue !== null &&
-      reading.progressValue > 0
+      reading.progressValue !== null
+    ) {
+      return Math.floor((reading.progressValue * total) / 100);
+    }
+
+    return 0;
+  }
+
+  get hasChapterCommentProgress(): boolean {
+    const reading = this.libraryReadingStatus;
+    const allowedStatuses = ['IN_PROGRESS', 'RE_READING', 'FINISHED'];
+
+    return (
+      this.commentProgressType === 'CHAPTER' &&
+      this.currentCycle?.status === 'ACTIVE' &&
+      !!reading &&
+      allowedStatuses.includes(reading.status) &&
+      this.commentChapterTotal > 0 &&
+      this.libraryChapterProgress > 0
+    );
+  }
+
+  get isCommentChapterInvalid(): boolean {
+    return (
+      !Number.isInteger(this.commentChapter) ||
+      this.commentChapter < 1 ||
+      this.commentChapter > this.libraryChapterProgress
     );
   }
 
@@ -712,22 +827,6 @@ export class GroupDetail implements OnInit {
     }
 
     if (this.currentCycle.status === 'PLANNED') {
-      if (this.isCheckingLibraryStatus) {
-        return 'La lectura está planificada. Estamos comprobando si el libro está en tu biblioteca.';
-      }
-
-      if (this.libraryStatusError) {
-        return 'La lectura está planificada, pero no pudimos comprobar si el libro está en tu biblioteca.';
-      }
-
-      if (this.isWorkInLibrary === false) {
-        return 'Este libro todavía no está en tu biblioteca. Agregalo para registrar tu avance; la conversación se habilitará cuando el creador inicie la lectura.';
-      }
-
-      if (this.isWorkInLibrary === true) {
-        return 'Este libro está en tu biblioteca. La conversación se habilitará cuando el creador inicie la lectura.';
-      }
-
       return 'La lectura está planificada. La conversación se habilitará cuando el creador la inicie.';
     }
 
@@ -740,7 +839,7 @@ export class GroupDetail implements OnInit {
     }
 
     if (this.isCheckingLibraryStatus) {
-      return 'Estamos comprobando el estado de lectura de este libro…';
+      return 'Estamos comprobando tu estado de lectura…';
     }
 
     if (this.libraryStatusError) {
@@ -748,30 +847,38 @@ export class GroupDetail implements OnInit {
     }
 
     if (!this.libraryReadingStatus) {
-      return 'Este libro todavía no está guardado en tu biblioteca. Agregalo primero para registrar tu avance y participar de la conversación.';
+      const work = this.isStoryGroup ? 'Esta historia' : 'Este libro';
+
+      return `${work} todavía no está guardado en tu biblioteca. Agregalo para registrar tu avance y participar de la conversación.`;
     }
 
-    if (this.libraryReadingStatus.progressType === 'CHAPTER') {
-      return 'El libro está en tu biblioteca, pero tu avance está registrado por capítulos. Para participar de la conversación sin spoilers, cambiá el seguimiento a porcentaje y guardá cuánto leíste.';
+    const chapterMode = this.commentProgressType === 'CHAPTER';
+    const progress = chapterMode
+      ? this.libraryChapterProgress
+      : this.libraryProgressPercent;
+    const progressLabel = chapterMode
+      ? `el capítulo ${progress}`
+      : `${progress}%`;
+
+    if (this.commentVisibility?.totalActiveComments === 0) {
+      return 'Todavía no hay comentarios publicados para esta lectura.';
     }
 
-    if (
-      this.libraryReadingStatus.progressType !== 'PERCENTAGE' ||
-      this.libraryReadingStatus.progressValue === null ||
-      this.libraryReadingStatus.progressValue <= 0
-    ) {
-      return 'El libro ya está en tu biblioteca, pero todavía no registraste cuánto leíste en porcentaje. Abrí Mi biblioteca, buscá este libro, elegí el seguimiento por porcentaje y guardá tu avance. Después, volvé al grupo para ver y publicar comentarios.';
+    if (progress <= 0) {
+      return chapterMode
+        ? 'Registrá tu avance por capítulos en Mi biblioteca para acceder a la conversación.'
+        : 'Registrá tu avance en Mi biblioteca para acceder a la conversación.';
     }
 
-    if (this.libraryProgressPercent >= 100) {
-      return 'Todavía no hay comentarios publicados para este grupo.';
+    if ((this.commentVisibility?.hiddenByProgressCount ?? 0) > 0) {
+      return (
+        `Todavía no hay comentarios visibles hasta ${progressLabel}. ` +
+        'Los comentarios ubicados más adelante se ocultan para evitar spoilers. ' +
+        'Si ya avanzaste más, actualizá tu progreso en Mi biblioteca.'
+      );
     }
 
-    return (
-      `Todavía no hay comentarios visibles para tu avance actual (${this.libraryProgressPercent}%). ` +
-      'Los comentarios ubicados más adelante se ocultan para evitar spoilers. ' +
-      'También puede que todavía no se hayan publicado comentarios. Si ya avanzaste más, actualizá tu progreso en Mi biblioteca.'
-    );
+    return 'Todavía no hay comentarios visibles para esta lectura.';
   }
 
   get canManageGoals(): boolean {
@@ -1086,18 +1193,102 @@ export class GroupDetail implements OnInit {
     this.commentProgress = Number(input.value);
   }
 
+  canDeleteComment(comment: GroupComment): boolean {
+    const currentUserId =
+      this.userService.currentUser()?.idExternal ??
+      localStorage.getItem('userId');
+
+    return (
+      comment.userId === currentUserId ||
+      this.tokens.hasAnyRole('ROLE_ADMIN', 'ROLE_MODERATOR')
+    );
+  }
+
+  requestDeleteComment(comment: GroupComment): void {
+    if (!this.canDeleteComment(comment) || this.deletingCommentId) {
+      return;
+    }
+
+    this.deleteConfirmationCommentId = comment.idExternal;
+  }
+
+  cancelDeleteComment(): void {
+    if (!this.deletingCommentId) {
+      this.deleteConfirmationCommentId = null;
+    }
+  }
+
+  confirmDeleteComment(comment: GroupComment): void {
+    if (!this.canDeleteComment(comment) || this.deletingCommentId) {
+      return;
+    }
+
+    this.deletingCommentId = comment.idExternal;
+    this.commentActionMessage = '';
+
+    this.groupCommentsService
+      .delete(comment.idExternal)
+      .pipe(
+        timeout({ first: 15000 }),
+        finalize(() => {
+          this.deletingCommentId = null;
+          this.changeDetector.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.comments = this.comments.filter(
+            (item) => item.idExternal !== comment.idExternal,
+          );
+
+          if (this.commentVisibility) {
+            this.commentVisibility = {
+              ...this.commentVisibility,
+              comments: this.comments,
+              totalActiveComments: Math.max(
+                0,
+                this.commentVisibility.totalActiveComments - 1,
+              ),
+              visibleCount: Math.max(
+                0,
+                this.commentVisibility.visibleCount - 1,
+              ),
+            };
+          }
+
+          this.deleteConfirmationCommentId = null;
+          this.changeDetector.markForCheck();
+        },
+        error: (error: unknown) => {
+          console.error('Error eliminando comentario:', error);
+          this.commentActionMessage =
+            'No se pudo eliminar el comentario. Intentá nuevamente.';
+          this.changeDetector.markForCheck();
+        },
+      });
+  }
+
   publishComment(): void {
     if (!this.group || !this.commentContent.trim() || this.isSavingComment) {
       return;
     }
 
-    if (this.currentCycle?.status !== 'ACTIVE' || !this.currentCycle?.bookId) {
+    if (
+      this.currentCycle?.status !== 'ACTIVE' ||
+      (!this.currentCycle?.bookId && !this.currentCycle?.storyId)
+    ) {
       this.commentActionMessage =
-        'Los comentarios están disponibles cuando la lectura del grupo está en curso y es de un libro.';
+        'Los comentarios estarán disponibles cuando haya una lectura activa.';
       return;
     }
 
-    if (!this.hasPercentageCommentProgress) {
+    const chapterMode = this.commentProgressType === 'CHAPTER';
+
+    const hasValidProgress = chapterMode
+      ? this.hasChapterCommentProgress
+      : this.hasPercentageCommentProgress;
+
+    if (!hasValidProgress) {
       this.commentActionMessage = this.commentsEmptyStateMessage;
       return;
     }
@@ -1108,10 +1299,16 @@ export class GroupDetail implements OnInit {
       return;
     }
 
-    if (this.isCommentProgressInvalid) {
+    if (chapterMode && this.isCommentChapterInvalid) {
+      this.commentActionMessage =
+        `Elegí un capítulo entero entre 1 y ${this.libraryChapterProgress}, según tu avance guardado.`;
+      return;
+    }
+
+    if (!chapterMode && this.isCommentProgressInvalid) {
       this.commentActionMessage =
         this.commentProgress < 1 || !Number.isInteger(this.commentProgress)
-          ? `Elegí un porcentaje entero entre 1% y ${this.libraryProgressPercent}%, que es tu avance guardado en Mi biblioteca.`
+          ? `Elegí un porcentaje entero entre 1% y ${this.libraryProgressPercent}%.`
           : `El porcentaje del comentario no puede superar el ${this.libraryProgressPercent}% que ya leíste.`;
       return;
     }
@@ -1122,23 +1319,46 @@ export class GroupDetail implements OnInit {
     this.groupCommentsService
       .create(this.group.idExternal, {
         content: this.commentContent.trim(),
-        progressPercent: Number(this.commentProgress),
+        progressType: this.commentProgressType,
+        progressValue: chapterMode
+          ? Number(this.commentChapter)
+          : Number(this.commentProgress),
       })
+      .pipe(
+        timeout({ first: 15000 }),
+        finalize(() => {
+          this.isSavingComment = false;
+          this.changeDetector.markForCheck();
+        }),
+      )
       .subscribe({
         next: (comment) => {
+          const savedComment = {
+            ...comment,
+            userName: this.currentUsername,
+          };
+
           this.comments = [
-            { ...comment, userName: this.currentUsername },
-            ...this.comments,
+            savedComment,
+            ...this.comments.filter(
+              (item) => item.idExternal !== savedComment.idExternal,
+            ),
           ];
+          this.commentsErrorMessage = '';
+          this.commentActionMessage = '';
           this.commentContent = '';
-          this.isSavingComment = false;
           this.changeDetector.markForCheck();
         },
         error: (error: unknown) => {
-          console.error('Error creating group comment:', error);
-          this.commentActionMessage =
-            'No se pudo publicar. Verificá que el porcentaje no supere tu avance guardado y que sigas siendo miembro activo del grupo.';
-          this.isSavingComment = false;
+          console.error('Error creando el comentario del grupo:', error);
+
+          const didTimeout =
+            error instanceof Error && error.name === 'TimeoutError';
+
+          this.commentActionMessage = didTimeout
+            ? 'El servidor tardó en responder. Revisá si el comentario apareció antes de volver a intentarlo.'
+            : 'No se pudo publicar el comentario. Revisá tu conexión y los permisos para participar de esta lectura.';
+
           this.changeDetector.markForCheck();
         },
       });
@@ -1353,6 +1573,9 @@ export class GroupDetail implements OnInit {
 
           this.referenceUpdatedForJoin = false;
           this.groupChapterAtJoin = null;
+          this.commentsErrorMessage = '';
+          this.commentActionMessage = '';
+          this.loadCommentsWhenProgressIsReady(this.currentCycle!);
 
           this.loadCycleParticipants(
             this.group!.idExternal,
@@ -1459,7 +1682,11 @@ export class GroupDetail implements OnInit {
       this.storyService.getById(cycle.storyId).subscribe({
         next: (story) => {
           this.linkedStory = story;
+          this.commentChapter = this.libraryChapterProgress;
           this.isLoadingLinkedContent = false;
+          if (this.currentCycle) {
+            this.loadCommentsWhenProgressIsReady(this.currentCycle);
+          }
           this.changeDetector.markForCheck();
         },
         error: (error: unknown) => {
@@ -1481,11 +1708,14 @@ export class GroupDetail implements OnInit {
     this.isWorkInLibrary = null;
     this.libraryReadingStatus = null;
     this.commentProgress = 0;
+    this.commentChapter = 0;
     this.libraryStatusError = '';
     this.commentsErrorMessage = '';
     this.comments = [];
+    this.commentVisibility = null;
     this.isCheckingLibraryStatus = true;
-    this.isLoadingComments = cycle.status === 'ACTIVE' && !!cycle.bookId;
+    this.isLoadingComments =
+      cycle.status === 'ACTIVE' && (!!cycle.bookId || !!cycle.storyId);
 
     const statusRequest = cycle.bookId
       ? this.libraryService.getBookStatus(cycle.bookId)
@@ -1502,17 +1732,13 @@ export class GroupDetail implements OnInit {
     statusRequest.subscribe({
       next: (readingStatus) => {
         this.libraryReadingStatus = readingStatus;
+        if (cycle.storyId) {
+          this.commentChapter = this.libraryChapterProgress;
+        }
         this.isWorkInLibrary = readingStatus !== null;
         this.commentProgress = this.libraryProgressPercent;
         this.isCheckingLibraryStatus = false;
-
-        if (cycle.bookId && this.hasPercentageCommentProgress) {
-          this.loadComments(cycle.groupId);
-        } else {
-          this.comments = [];
-          this.commentsErrorMessage = '';
-          this.isLoadingComments = false;
-        }
+        this.loadCommentsWhenProgressIsReady(cycle);
 
         this.changeDetector.markForCheck();
       },
@@ -1529,6 +1755,43 @@ export class GroupDetail implements OnInit {
         this.changeDetector.markForCheck();
       },
     });
+  }
+
+  private loadCommentsWhenProgressIsReady(
+    cycle: GroupReadingCycle,
+  ): void {
+    if (cycle.storyId && this.isLoadingLinkedContent) {
+      return;
+    }
+
+    if (this.isCheckingLibraryStatus) {
+      return;
+    }
+
+    if (
+      this.commentProgressType === 'CHAPTER' &&
+      this.libraryReadingStatus &&
+      this.libraryChapterProgress > 0 &&
+      (this.commentChapter < 1 ||
+        this.commentChapter > this.libraryChapterProgress)
+    ) {
+      this.commentChapter = this.libraryChapterProgress;
+    }
+
+    const canLoadComments =
+      this.commentProgressType === 'CHAPTER'
+        ? this.hasChapterCommentProgress
+        : this.hasPercentageCommentProgress;
+
+    if (cycle.status === 'ACTIVE' && canLoadComments) {
+      this.loadComments(cycle.groupId);
+      return;
+    }
+
+    this.comments = [];
+    this.commentVisibility = null;
+    this.commentsErrorMessage = '';
+    this.isLoadingComments = false;
   }
 
   private loadMembers(groupId: string): void {
@@ -1549,6 +1812,7 @@ export class GroupDetail implements OnInit {
             sensitivity: 'base',
           });
         });
+        this.membersPage = 0;
         this.isLoadingMembers = false;
         this.changeDetector.markForCheck();
       },
@@ -1590,6 +1854,9 @@ export class GroupDetail implements OnInit {
         this.goals = goals;
         this.activeGoal =
           goals.find((goal) => goal.status === 'ACTIVE') ?? null;
+        if (this.currentCycle) {
+          this.loadCommentsWhenProgressIsReady(this.currentCycle);
+        }
         this.isLoadingGoals = false;
 
         if (this.activeGoal) {
@@ -1624,10 +1891,6 @@ export class GroupDetail implements OnInit {
   }
 
   private commentLoadErrorMessage(error: unknown): string {
-    if (this.isStoryGroup) {
-      return 'Los comentarios todavía están disponibles solo para grupos de libros.';
-    }
-
     if (!(error instanceof HttpErrorResponse)) {
       return 'Ocurrió un problema al cargar los comentarios. Intentá nuevamente.';
     }
@@ -1638,18 +1901,22 @@ export class GroupDetail implements OnInit {
         : '';
 
     if (error.status === 404 && apiMessage.includes('reading status')) {
-      return 'Este libro no está guardado en tu biblioteca. Agregalo y registrá tu progreso para acceder a los comentarios.';
+      const work = this.isStoryGroup ? 'Esta historia' : 'Este libro';
+
+      return `${work} no está guardado en tu biblioteca. Agregalo y registrá tu progreso para acceder a los comentarios.`;
     }
 
     if (
       error.status === 400 &&
       apiMessage.includes('percentage-based reading status')
     ) {
-      return 'Tu estado de lectura no tiene un porcentaje. Elegí el seguimiento por porcentaje en Mi biblioteca para ver y publicar comentarios sin spoilers.';
+      const progressType = this.isStoryGroup ? 'por capítulos' : 'en porcentaje';
+
+      return `Tu estado de lectura no tiene un avance válido para esta conversación. Actualizalo ${progressType} en Mi biblioteca.`;
     }
 
     if (error.status === 403) {
-      return 'Necesitás ser miembro activo de este grupo para ver sus comentarios.';
+      return 'Necesitás ser miembro activo del grupo y haberte unido a esta lectura para acceder a sus comentarios.';
     }
 
     if (error.status === 401) {
@@ -1670,10 +1937,14 @@ export class GroupDetail implements OnInit {
     this.groupCommentsService
       .getVisibleByGroup(groupId)
       .pipe(
-        switchMap((comments) => {
-          const userIds = [...new Set(comments.map((comment) => comment.userId))];
+        switchMap((visibility) => {
+          const userIds = [
+            ...new Set(visibility.comments.map((comment) => comment.userId)),
+          ];
 
-          if (userIds.length === 0) return of(comments);
+          if (userIds.length === 0) {
+            return of(visibility);
+          }
 
           return forkJoin(
             userIds.map((userId) =>
@@ -1687,17 +1958,21 @@ export class GroupDetail implements OnInit {
                   .map((profile) => [profile.idExternal, profile.username]),
               );
 
-              return comments.map((comment) => ({
-                ...comment,
-                userName: usernames.get(comment.userId) ?? comment.userName,
-              }));
+              return {
+                ...visibility,
+                comments: visibility.comments.map((comment) => ({
+                  ...comment,
+                  userName: usernames.get(comment.userId) ?? comment.userName,
+                })),
+              };
             }),
           );
         }),
       )
       .subscribe({
-        next: (comments) => {
-          this.comments = comments;
+        next: (visibility) => {
+          this.commentVisibility = visibility;
+          this.comments = visibility.comments;
           this.isLoadingComments = false;
           this.changeDetector.markForCheck();
         },
@@ -1712,9 +1987,21 @@ export class GroupDetail implements OnInit {
 
   private onGoalStatusChanged(goal: GroupGoal): void {
     this.activeGoal = null;
+
     this.goals = this.goals.map((current) =>
       current.idExternal === goal.idExternal ? goal : current,
     );
+
+    const goalExistsInHistory = this.goalHistory.some(
+      (current) => current.idExternal === goal.idExternal,
+    );
+
+    this.goalHistory = goalExistsInHistory
+      ? this.goalHistory.map((current) =>
+          current.idExternal === goal.idExternal ? goal : current,
+        )
+      : [...this.goalHistory, goal];
+
     this.isChangingGoal = false;
     this.progress = null;
     this.loadGoals(

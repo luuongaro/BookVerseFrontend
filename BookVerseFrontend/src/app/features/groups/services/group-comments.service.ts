@@ -6,6 +6,7 @@ import { API_URL } from '../../../core/api/api.config';
 import {
   CreateGroupCommentRequest,
   GroupComment,
+  GroupCommentsVisibility,
 } from '../models/group-comment.model';
 
 @Service()
@@ -13,8 +14,10 @@ export class GroupCommentsService {
   private readonly http = inject(HttpClient);
   private readonly url = `${API_URL}/group-comments`;
 
-  getVisibleByGroup(groupId: string): Observable<GroupComment[]> {
-    return this.http.get<GroupComment[]>(`${this.url}/group/${groupId}`);
+  getVisibleByGroup(groupId: string): Observable<GroupCommentsVisibility> {
+    return this.http.get<GroupCommentsVisibility>(
+      `${this.url}/group/${groupId}`,
+    );
   }
 
   create(
@@ -25,5 +28,9 @@ export class GroupCommentsService {
       `${this.url}/group/${groupId}`,
       request,
     );
+  }
+
+  delete(commentId: string): Observable<void> {
+    return this.http.delete<void>(`${this.url}/${commentId}`);
   }
 }

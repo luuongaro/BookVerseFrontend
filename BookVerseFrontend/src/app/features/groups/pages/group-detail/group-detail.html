@@ -369,7 +369,7 @@
                     <small>Máximo: {{ maxChapterTarget }} capítulos.</small>
 
                     @if (targetProgress > maxChapterTarget) {
-                      <small>
+                      <small class="state-error">
                         @if (isStoryGroup) {
                           La meta no puede superar los {{ maxChapterTarget }} capítulos publicados
                           actualmente.
@@ -404,7 +404,9 @@
                     goalType === 'PERCENTAGE' &&
                     (targetProgress < 1 || targetProgress > 100)
                   ) {
-                    <small>El porcentaje debe estar entre 1 y 100.</small>
+                    <small class="state-error">
+                      El porcentaje debe estar entre 1 y 100.
+                    </small>
                   }
                 </label>
 
@@ -419,7 +421,9 @@
                     required
                   />
                   @if (targetDatePastError) {
-                    <small>La fecha límite debe ser posterior a hoy.</small>
+                    <small class="state-error">
+                      La fecha límite debe ser posterior a hoy.
+                    </small>
                   }
                 </label>
 
@@ -535,7 +539,7 @@
                           >
                             {{
                               goal.status === 'COMPLETED'
-                                ? 'Cumplida'
+                                ? 'Completada'
                                 : goal.status === 'CANCELLED'
                                   ? 'Cancelada'
                                   : 'Pendiente'
@@ -633,6 +637,7 @@
                   class="member-carousel-arrow"
                   type="button"
                   aria-label="Ver miembros anteriores"
+                  [disabled]="membersPage === 0"
                   (click)="scrollMembers(-1)"
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -640,8 +645,8 @@
                   </svg>
                 </button>
 
-                <div #memberTrack class="member-track" aria-label="Miembros del grupo">
-                @for (member of members; track member.idExternal; let i = $index) {
+                <div class="member-track" aria-label="Miembros del grupo">
+                @for (member of paginatedMembers; track member.idExternal; let i = $index) {
                   <article class="member-card">
                     <a
                       class="member-profile-link"
@@ -674,7 +679,11 @@
                     }
 
                     @if (isParticipatingInCurrentCycle(member.userId)) {
-                      <span class="participant-badge">
+                      <span
+                        class="participant-badge"
+                        aria-label="Participa en esta lectura"
+                        title="Participa en esta lectura"
+                      >
                         <span aria-hidden="true">✓</span>
                         Participa en esta lectura
                       </span>
@@ -687,6 +696,7 @@
                   class="member-carousel-arrow"
                   type="button"
                   aria-label="Ver miembros siguientes"
+                  [disabled]="membersPage >= membersPageCount - 1"
                   (click)="scrollMembers(1)"
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -815,7 +825,8 @@
           <div class="conversation-heading">
             <h2><span aria-hidden="true">◯</span> Conversación</h2>
             <span class="conversation-count">
-              {{ comments.length }} comentarios visibles
+              {{ comments.length }}
+              {{ comments.length === 1 ? 'comentario visible' : 'comentarios visibles' }}
             </span>
           </div>
 
@@ -826,7 +837,7 @@
               <p class="member-state state-error" role="alert">
                 {{ commentsErrorMessage }}
               </p>
-            } @else if (!isStoryGroup && comments.length === 0) {
+            } @else if (comments.length === 0) {
               <div class="comments-empty-state">
                 <p class="member-state" role="status">
                   {{ commentsEmptyStateMessage }}
@@ -840,19 +851,31 @@
                     >
                       Agregar el libro a mi biblioteca
                     </a>
-                  } @else if (
-                    libraryReadingStatus &&
-                    libraryReadingStatus.progressType !== 'PERCENTAGE'
-                  ) {
-                    <a class="comment-library-link" routerLink="/library">
-                      Actualizar mi estado de lectura
+                  } @else if (!libraryReadingStatus && currentCycle?.storyId) {
+                    <a
+                      class="comment-library-link"
+                      [routerLink]="['/stories', currentCycle?.storyId]"
+                    >
+                      Guardar la historia en mi biblioteca
                     </a>
                   } @else if (
+                    commentVisibility &&
+                    commentVisibility.totalActiveComments > 0 &&
+                    commentVisibility.hiddenByProgressCount > 0 &&
                     libraryReadingStatus &&
-                    libraryProgressPercent < 100
+                    (
+                      (commentProgressType === 'CHAPTER' &&
+                        libraryChapterProgress < commentChapterTotal) ||
+                      (commentProgressType === 'PERCENTAGE' &&
+                        libraryProgressPercent < 100)
+                    )
                   ) {
                     <a class="comment-library-link" routerLink="/library">
-                      Actualizar mi progreso
+                      @if (commentProgressType === 'CHAPTER') {
+                        Actualizar mi avance por capítulos
+                      } @else {
+                        Actualizar mi progreso
+                      }
                     </a>
                   }
                 }
@@ -875,9 +898,54 @@
                       <span>{{ comment.createdAt | date: 'd MMM, HH:mm' }}</span>
                     </div>
                     <p>{{ comment.content }}</p>
-                    <small>
-                      Progreso al comentar: {{ comment.progressPercent }}%
-                    </small>
+                    <div class="comment-meta-row">
+                      <small>
+                        Avance al comentar:
+                        @if (comment.progressType === 'CHAPTER') {
+                          capítulo {{ comment.progressValue }}
+                        } @else {
+                          {{ comment.progressValue }}%
+                        }
+                      </small>
+
+                      @if (canDeleteComment(comment)) {
+                        <div class="comment-actions">
+                          @if (deleteConfirmationCommentId === comment.idExternal) {
+                            <span>¿Eliminar este comentario?</span>
+
+                            <button
+                              type="button"
+                              class="comment-action-button comment-action-button--danger"
+                              [disabled]="deletingCommentId === comment.idExternal"
+                              (click)="confirmDeleteComment(comment)"
+                            >
+                              {{
+                                deletingCommentId === comment.idExternal
+                                  ? 'Eliminando…'
+                                  : 'Sí, eliminar'
+                              }}
+                            </button>
+
+                            <button
+                              type="button"
+                              class="comment-action-button"
+                              [disabled]="deletingCommentId === comment.idExternal"
+                              (click)="cancelDeleteComment()"
+                            >
+                              Cancelar
+                            </button>
+                          } @else {
+                            <button
+                              type="button"
+                              class="comment-action-button comment-action-button--danger"
+                              (click)="requestDeleteComment(comment)"
+                            >
+                              Eliminar
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
                   </div>
                 </article>
               }
@@ -886,13 +954,22 @@
 
           @if (
             currentCycle?.status === 'ACTIVE' &&
-            !isStoryGroup &&
-            hasPercentageCommentProgress
+            (
+              (commentProgressType === 'CHAPTER' && hasChapterCommentProgress) ||
+              (commentProgressType === 'PERCENTAGE' && hasPercentageCommentProgress)
+            )
           ) {
             <p class="comment-progress-info" role="status">
-              Tu avance guardado en Mi biblioteca es
-              <strong>{{ libraryProgressPercent }}%</strong>.
-              El comentario comienza en ese porcentaje. Podés ubicarlo en un porcentaje menor que ya hayas leído.
+              @if (commentProgressType === 'CHAPTER') {
+                Tu avance guardado es hasta el capítulo
+                <strong>{{ libraryChapterProgress }}</strong>
+                de {{ commentChapterTotal }}.
+                Podés ubicar el comentario en un capítulo anterior que ya hayas leído.
+              } @else {
+                Tu avance guardado en Mi biblioteca es
+                <strong>{{ libraryProgressPercent }}%</strong>.
+                El comentario comienza en ese porcentaje. Podés ubicarlo en un porcentaje menor que ya hayas leído.
+              }
             </p>
 
             <form class="comment-form" (ngSubmit)="publishComment()">
@@ -911,28 +988,65 @@
                 required
               />
 
-              <div class="comment-progress-control">
-                <label for="commentProgress">
-                  Progreso al comentar
-                </label>
+              @if (commentProgressType === 'CHAPTER') {
+                <div class="comment-progress-control">
+                  <label id="commentChapterLabel">Capítulo del comentario</label>
 
-                <div class="comment-progress-slider">
-                  <input
-                    id="commentProgress"
-                    type="range"
-                    min="1"
-                    [max]="libraryProgressPercent"
-                    step="1"
-                    [value]="commentProgress"
-                    (input)="onCommentProgressSliderInput($event)"
-                    aria-label="Porcentaje leído al que corresponde el comentario"
-                  />
+                  <div
+                    class="chapter-stepper"
+                    role="group"
+                    aria-labelledby="commentChapterLabel"
+                  >
+                    <div class="chapter-stepper-controls">
+                      <button
+                        type="button"
+                        aria-label="Restar un capítulo"
+                        [disabled]="commentChapter <= 1 || isSavingComment"
+                        (click)="changeCommentChapter(-1)"
+                      >
+                        −
+                      </button>
 
-                  <output for="commentProgress">
-                    {{ commentProgress }}%
-                  </output>
+                      <output aria-live="polite">{{ commentChapter }}</output>
+
+                      <button
+                        type="button"
+                        aria-label="Sumar un capítulo"
+                        [disabled]="
+                          commentChapter >= libraryChapterProgress || isSavingComment
+                        "
+                        (click)="changeCommentChapter(1)"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    <span>de {{ commentChapterTotal }} capítulos</span>
+                  </div>
+
                 </div>
-              </div>
+              } @else {
+                <div class="comment-progress-control">
+                  <label for="commentProgress">Progreso al comentar</label>
+
+                  <div class="comment-progress-slider">
+                    <input
+                      id="commentProgress"
+                      type="range"
+                      min="1"
+                      [max]="libraryProgressPercent"
+                      step="1"
+                      [value]="commentProgress"
+                      (input)="onCommentProgressSliderInput($event)"
+                      aria-label="Porcentaje leído al que corresponde el comentario"
+                    />
+
+                    <output for="commentProgress">
+                      {{ commentProgress }}%
+                    </output>
+                  </div>
+                </div>
+              }
 
               <button
                 class="button button-primary"
@@ -941,21 +1055,25 @@
                   isSavingComment ||
                   isCheckingLibraryStatus ||
                   !!libraryStatusError ||
-                  isCommentProgressInvalid ||
+                  (commentProgressType === 'CHAPTER' && isCommentChapterInvalid) ||
+                  (commentProgressType === 'PERCENTAGE' && isCommentProgressInvalid) ||
                   !commentContent.trim()
                 "
               >
                 {{ isSavingComment ? 'Publicando…' : 'Publicar' }}
               </button>
             </form>
-          } @else if (isStoryGroup) {
+          } @else if (currentCycle?.status === 'ACTIVE') {
             <p class="member-state">
-              Los comentarios todavía están disponibles solo para grupos de libros.
+              @if (commentProgressType === 'CHAPTER') {
+                Registrá tu avance por capítulos en Mi biblioteca para participar de la conversación.
+              } @else {
+                Registrá tu avance en Mi biblioteca para participar de la conversación.
+              }
             </p>
           } @else if (currentCycle?.status === 'PLANNED') {
             <p class="member-state">
-              La conversación se habilitará al iniciar esta lectura. Para comentar sobre una
-              libro, cada lector debe tenerlo en su biblioteca y registrar su avance.
+              La conversación se habilitará cuando el creador inicie esta lectura.
             </p>
           }
 
