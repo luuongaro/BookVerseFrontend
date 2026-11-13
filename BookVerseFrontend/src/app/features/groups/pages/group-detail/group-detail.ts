@@ -39,6 +39,7 @@ import {
 } from '../../models/reading-group.model';
 
 import { GroupCommentsService } from '../../services/group-comments.service';
+import { GroupCommentReportsService } from '../../services/group-comment-reports.service';
 import { GroupGoalsService } from '../../services/group-goals.service';
 import { GroupMembersService } from '../../services/group-members.service';
 import { GroupProgressService } from '../../services/group-progress.service';
@@ -67,6 +68,7 @@ export class GroupDetail implements OnInit {
   private readonly groupMembersService = inject(GroupMembersService);
   private readonly groupGoalsService = inject(GroupGoalsService);
   private readonly groupCommentsService = inject(GroupCommentsService);
+  private readonly commentReports = inject(GroupCommentReportsService);
   private readonly groupProgressService = inject(GroupProgressService);
   private readonly booksService = inject(BooksService);
   private readonly libraryService = inject(LibraryService);
@@ -135,6 +137,13 @@ export class GroupDetail implements OnInit {
   commentContent = '';
   commentProgress = 0;
   commentChapter = 0;
+  editingCommentId: string | null = null;
+  editedCommentContent = '';
+  reportingCommentId: string | null = null;
+  reportReason = '';
+  reportDetails = '';
+  commentFormBusy = false;
+  commentFormMessage = '';
   selectedInviteUser: UserProfile | null = null;
   selectedLeaveCreator: GroupMember | null = null;
   leaveCreatorSearch = '';
@@ -1202,6 +1211,59 @@ export class GroupDetail implements OnInit {
       comment.userId === currentUserId ||
       this.tokens.hasAnyRole('ROLE_ADMIN', 'ROLE_MODERATOR')
     );
+  }
+
+  isCommentAuthor(comment: GroupComment): boolean {
+    const id = this.userService.currentUser()?.idExternal ?? localStorage.getItem('userId');
+    return !!id && comment.userId === id;
+  }
+
+  editComment(comment: GroupComment): void {
+    if (!this.isCommentAuthor(comment) || this.commentFormBusy) return;
+    this.reportingCommentId = null;
+    this.editingCommentId = comment.idExternal;
+    this.editedCommentContent = comment.content;
+    this.commentFormMessage = '';
+  }
+
+  saveEditedComment(comment: GroupComment): void {
+    const content = this.editedCommentContent.trim();
+    if (!this.isCommentAuthor(comment) || !content || this.commentFormBusy) return;
+    this.commentFormBusy = true;
+    this.commentFormMessage = '';
+    this.groupCommentsService.update(comment.idExternal, {
+      content, progressType: comment.progressType, progressValue: comment.progressValue,
+    }).pipe(finalize(() => { this.commentFormBusy = false; this.changeDetector.markForCheck(); })).subscribe({
+      next: updated => {
+        this.comments = this.comments.map(item => item.idExternal === comment.idExternal ? updated : item);
+        this.editingCommentId = null;
+        this.commentFormMessage = 'Comentario actualizado.';
+        this.changeDetector.markForCheck();
+      },
+      error: () => { this.commentFormMessage = 'No se pudo editar el comentario. Revisá tu progreso e intentá de nuevo.'; this.changeDetector.markForCheck(); },
+    });
+  }
+
+  reportComment(comment: GroupComment): void {
+    if (!this.isCurrentUserActiveMember || this.isCommentAuthor(comment) || this.commentFormBusy) return;
+    this.editingCommentId = null;
+    this.reportingCommentId = comment.idExternal;
+    this.reportReason = '';
+    this.reportDetails = '';
+    this.commentFormMessage = '';
+  }
+
+  submitCommentReport(comment: GroupComment): void {
+    const reason = this.reportReason.trim();
+    if (!this.isCurrentUserActiveMember || this.isCommentAuthor(comment) || this.commentFormBusy || reason.length < 5 || reason.length > 1000 || this.reportDetails.length > 3000) return;
+    this.commentFormBusy = true;
+    this.commentFormMessage = '';
+    this.commentReports.create(comment.idExternal, reason, this.reportDetails.trim() || null)
+      .pipe(finalize(() => { this.commentFormBusy = false; this.changeDetector.markForCheck(); }))
+      .subscribe({
+        next: () => { this.reportingCommentId = null; this.commentFormMessage = 'Reporte enviado.'; this.changeDetector.markForCheck(); },
+        error: (error: HttpErrorResponse) => { this.commentFormMessage = error.status === 409 ? 'Ya tenés un reporte pendiente para este comentario.' : 'No se pudo enviar el reporte. Intentá nuevamente.'; this.changeDetector.markForCheck(); },
+      });
   }
 
   requestDeleteComment(comment: GroupComment): void {

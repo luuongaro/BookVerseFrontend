@@ -33,4 +33,8 @@ export class GroupCommentsService {
   delete(commentId: string): Observable<void> {
     return this.http.delete<void>(`${this.url}/${commentId}`);
   }
+
+  update(commentId: string, request: CreateGroupCommentRequest): Observable<GroupComment> {
+    return this.http.put<GroupComment>(`${this.url}/${encodeURIComponent(commentId)}`, request);
+  }
 }

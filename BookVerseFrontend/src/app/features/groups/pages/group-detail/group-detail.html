@@ -897,7 +897,14 @@
                       <a [routerLink]="['/users', comment.userId]"><strong>{{ comment.userName || 'Lector' }}</strong></a>
                       <span>{{ comment.createdAt | date: 'd MMM, HH:mm' }}</span>
                     </div>
-                    <p>{{ comment.content }}</p>
+                    @if (editingCommentId === comment.idExternal) {
+                      <label [for]="'edit-comment-' + comment.idExternal">Editar comentario</label>
+                      <textarea [id]="'edit-comment-' + comment.idExternal" [(ngModel)]="editedCommentContent" [ngModelOptions]="{standalone: true}" [disabled]="commentFormBusy"></textarea>
+                      <div class="comment-actions">
+                        <button type="button" class="comment-action-button" [disabled]="commentFormBusy || !editedCommentContent.trim()" (click)="saveEditedComment(comment)">Guardar</button>
+                        <button type="button" class="comment-action-button" [disabled]="commentFormBusy" (click)="editingCommentId = null">Cancelar</button>
+                      </div>
+                    } @else { <p>{{ comment.content }}</p> }
                     <div class="comment-meta-row">
                       <small>
                         Avance al comentar:
@@ -908,6 +915,12 @@
                         }
                       </small>
 
+                      @if (isCommentAuthor(comment) && editingCommentId !== comment.idExternal) {
+                        <button type="button" class="comment-action-button" [disabled]="commentFormBusy" (click)="editComment(comment)">Editar</button>
+                      }
+                      @if (isCurrentUserActiveMember && !isCommentAuthor(comment) && reportingCommentId !== comment.idExternal) {
+                        <button type="button" class="comment-action-button" [disabled]="commentFormBusy" (click)="reportComment(comment)">Reportar</button>
+                      }
                       @if (canDeleteComment(comment)) {
                         <div class="comment-actions">
                           @if (deleteConfirmationCommentId === comment.idExternal) {
@@ -946,11 +959,25 @@
                         </div>
                       }
                     </div>
+                    @if (reportingCommentId === comment.idExternal) {
+                      <div class="comment-report-form">
+                        <label [for]="'report-reason-' + comment.idExternal">Motivo del reporte</label>
+                        <textarea [id]="'report-reason-' + comment.idExternal" [(ngModel)]="reportReason" [ngModelOptions]="{standalone: true}" maxlength="1000" [disabled]="commentFormBusy"></textarea>
+                        <small>Ingresá al menos 5 caracteres.</small>
+                        <label [for]="'report-details-' + comment.idExternal">Detalle (opcional)</label>
+                        <textarea [id]="'report-details-' + comment.idExternal" [(ngModel)]="reportDetails" [ngModelOptions]="{standalone: true}" maxlength="3000" [disabled]="commentFormBusy"></textarea>
+                        <div class="comment-actions">
+                          <button type="button" class="comment-action-button" [disabled]="commentFormBusy || reportReason.trim().length < 5" (click)="submitCommentReport(comment)">Enviar reporte</button>
+                          <button type="button" class="comment-action-button" [disabled]="commentFormBusy" (click)="reportingCommentId = null">Cancelar</button>
+                        </div>
+                      </div>
+                    }
                   </div>
                 </article>
               }
             }
           </div>
+          @if (commentFormMessage) { <p role="status">{{ commentFormMessage }}</p> }
 
           @if (
             currentCycle?.status === 'ACTIVE' &&

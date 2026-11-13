@@ -1,0 +1,12 @@
+:host { display: block; min-height: 100vh; background: #fbf9fd; color: #302b43; font-family: 'DM Sans', Arial, sans-serif; }
+.comment-reports { max-width: 1050px; margin: auto; padding: 48px 32px; }
+h1, h2 { font-family: 'Libre Caslon Display', Georgia, serif; font-weight: 400; }
+h1 { font-size: 42px; } a { color: #665498; } select, textarea { display: block; padding: 10px; border: 1px solid #ded5ea; border-radius: 8px; font: inherit; }
+button { padding: 10px 14px; border: 1px solid #7465ad; border-radius: 8px; background: #7465ad; color: white; font: inherit; cursor: pointer; }
+button:disabled { opacity: .6; cursor: default; }
+.report-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px; margin-top: 14px; border: 1px solid #e8e2ef; border-radius: 12px; background: white; }
+.report-card p { overflow-wrap: anywhere; } small { color: #797486; }
+.modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; background: #302b4380; }
+.modal { width: min(100%, 600px); max-height: 90vh; overflow: auto; box-sizing: border-box; padding: 28px; border-radius: 16px; background: #fbf9fd; }
+.modal p { overflow-wrap: anywhere; } textarea { box-sizing: border-box; width: 100%; min-height: 90px; margin: 10px 0; } .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+@media (max-width: 600px) { .comment-reports { padding: 32px 20px; } .report-card { align-items: flex-start; flex-direction: column; } }
