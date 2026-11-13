@@ -513,9 +513,9 @@ export class Profile implements OnInit {
       return;
     }
 
-    if (username.length < 3 || username.length > 15) {
+    if (username.length < 3 || username.length > 30) {
       this.usernameError.set(
-        'El nombre de usuario debe tener entre 3 y 15 caracteres.',
+        'El nombre de usuario debe tener entre 3 y 30 caracteres.',
       );
       return;
     }

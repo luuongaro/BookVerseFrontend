@@ -21,4 +21,12 @@ describe('Register', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('accepts usernames up to 30 characters', () => {
+    const username = component.registerForm.controls.username;
+    username.setValue('a'.repeat(30));
+    expect(username.valid).toBe(true);
+    username.setValue('a'.repeat(31));
+    expect(username.hasError('maxlength')).toBe(true);
+  });
 });

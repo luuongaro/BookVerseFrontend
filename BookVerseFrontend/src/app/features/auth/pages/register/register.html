@@ -54,7 +54,7 @@
           placeholder="Tu seudónimo"
           autocomplete="username"
         />
-        <small class="field-hint">De 3 a 15 caracteres. Hacelo tuyo.</small>
+        <small class="field-hint">De 3 a 30 caracteres.</small>
 
         @if (registerForm.controls.username.touched &&
         registerForm.controls.username.hasError('required')) {
@@ -65,7 +65,7 @@
         (registerForm.controls.username.hasError('minlength') ||
         registerForm.controls.username.hasError('maxlength'))) {
           <small class="field-error">
-            Debe tener entre 3 y 15 caracteres.
+            Debe tener entre 3 y 30 caracteres.
           </small>
         }
 
@@ -176,6 +176,10 @@
         <span class="form-switch">
           ¿Ya tenés una cuenta?
           <a routerLink="/login">Iniciar sesión</a>
+        </span>
+        <span class="form-switch">
+          ¿Diste de baja tu cuenta?
+          <a routerLink="/forgot-password">Recuperar cuenta</a>
         </span>
       </form>
     </div>
