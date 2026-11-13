@@ -36,6 +36,7 @@
           <option value="IN_PROGRESS">Leyendo</option>
           <option value="FINISHED">Finalizados</option>
           <option value="RE_READING">Releyendo</option>
+          <option value="ABANDONED">Abandonados</option>
         </select>
       </div>
       <div>
@@ -171,14 +172,18 @@
               <span aria-hidden="true">✧</span>
               <h2>
                 {{
-                  libraryBooks().length
+                  filter() === 'ABANDONED'
+                    ? 'No tenés libros abandonados.'
+                    : libraryBooks().length
                     ? 'Cada libro tiene su momento.'
                     : 'Tu estantería empieza con un libro.'
                 }}
               </h2>
               <p>
                 {{
-                  libraryBooks().length
+                  filter() === 'ABANDONED'
+                    ? 'Los libros que marques como abandonados aparecerán acá.'
+                    : libraryBooks().length
                     ? 'Todavía no tenés libros en este estado.'
                     : 'Buscá en el catálogo y elegí «Guardar en mi biblioteca» para verlo acá.'
                 }}
@@ -274,7 +279,9 @@
             <div class="empty-shelf">
               <h2>
                 {{
-                  libraryStories().length
+                  filter() === 'ABANDONED'
+                    ? 'No tenés historias abandonadas.'
+                    : libraryStories().length
                     ? 'No hay historias en este estado.'
                     : 'Todavía no guardaste historias.'
                 }}
