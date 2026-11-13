@@ -7,7 +7,7 @@
   @if (!friendsLoading() && !friendsError() && !friendRequests().length) { <p class="empty">No tenés solicitudes de amistad pendientes.</p> }
   <div class="notice-list">
     @for (request of friendRequests(); track request.id) {
-      <article class="notice"><div><p><strong>{{ request.username }}</strong> quiere agregarte a sus amigos.</p><time>{{ request.createdAt | date:'d MMM yyyy' }}</time></div>
+      <article class="notice"><div class="notice-person"><app-user-avatar class="notice-avatar" [userId]="request.userId" [username]="request.username" /><div><p><strong>{{ request.username }}</strong> quiere agregarte a sus amigos.</p><time>{{ request.createdAt | date:'d MMM yyyy' }}</time></div></div>
         <div class="actions"><button type="button" class="secondary" [disabled]="!!friendBusy()" (click)="respondFriend(request, 'reject')">Rechazar</button><button type="button" [disabled]="!!friendBusy()" (click)="respondFriend(request, 'accept')">Aceptar</button></div>
       </article>
     }
@@ -19,10 +19,13 @@
   <div class="notice-list">
     @for (notice of notices(); track notice.idExternal) {
       <article class="notice">
-        <div>
+        <div class="notice-person">
+          <app-user-avatar class="notice-avatar" [userId]="notice.type === 'INVITATION' ? notice.createdById : notice.targetUserId" [username]="notice.userName" />
+          <div>
           @if (notice.type === 'INVITATION') { <p><strong>{{ notice.userName }}</strong> te invitó a <strong>{{ notice.groupName }}</strong>.</p> }
           @else { <p><strong>{{ notice.userName }}</strong> solicitó unirse a <strong>{{ notice.groupName }}</strong>.</p> }
           <time>{{ notice.createdAt | date:'d MMM yyyy' }}</time>
+          </div>
         </div>
         <div class="actions"><button type="button" class="secondary" [disabled]="!!busy()" (click)="respond(notice, 'reject')">Rechazar</button><button type="button" [disabled]="!!busy()" (click)="respond(notice, 'accept')">Aceptar</button></div>
       </article>

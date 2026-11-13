@@ -16,7 +16,11 @@ describe('Group notifications', () => {
         getCreatedByUser: () => of([{ idExternal: 'group' }]),
         getById: () => of({ name: 'Lecturas' }),
       } },
-      { provide: UserService, useValue: { getProfile: () => of({ username: 'Ana' }) } },
+      { provide: UserService, useValue: {
+        getProfile: () => of({ username: 'Ana' }),
+        getProfileAppearance: () => of(null),
+        getCachedProfileAppearance: () => undefined,
+      } },
     ] });
     const fixture = TestBed.createComponent(Notifications);
     const http = TestBed.inject(HttpTestingController);
@@ -30,6 +34,10 @@ describe('Group notifications', () => {
     expect(fixture.nativeElement.textContent).toContain('Ana');
     expect(fixture.nativeElement.textContent).toContain('Lecturas');
     expect(fixture.nativeElement.textContent).toContain('Lu');
+    const avatars = fixture.nativeElement.querySelectorAll('app-user-avatar');
+    expect(avatars).toHaveLength(2);
+    expect(avatars[0].textContent.trim()).toBe('LU');
+    expect(avatars[1].textContent.trim()).toBe('AN');
     fixture.componentInstance.respondFriend(fixture.componentInstance.friendRequests()[0], 'accept');
     http.expectOne(req => req.url.endsWith('/friendships/friend-request/accept') && req.method === 'POST').flush(null);
     expect(fixture.componentInstance.friendRequests()).toHaveLength(0);

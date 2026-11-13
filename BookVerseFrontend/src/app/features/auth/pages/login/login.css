@@ -466,3 +466,9 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+.auth-form .button:disabled { opacity: .7; cursor: wait; }
+.login-transition { position: fixed; inset: 0; z-index: 1000; overflow: hidden; background: #302b43; pointer-events: none; }
+.login-transition img { width: 100%; height: 100%; object-fit: cover; object-position: 44% center; animation: enter-library 1.1s ease-in forwards; }
+@keyframes enter-library { from { transform: scale(1); } to { transform: scale(1.35); opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .login-transition img { animation: none; } }
