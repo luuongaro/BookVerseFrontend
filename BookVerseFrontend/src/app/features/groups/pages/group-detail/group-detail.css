@@ -653,35 +653,27 @@
 }
 
 .member-track {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
   flex: 1;
   min-width: 0;
-  align-items: flex-start;
   gap: 12px;
-  overflow-x: auto;
+  overflow: visible;
   padding: 10px 4px 12px;
-  scroll-behavior: smooth;
-  scroll-padding-inline: 4px;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
-}
-
-.member-track::-webkit-scrollbar {
-  display: none;
 }
 
 .member-card {
-  flex: 0 0 max-content;
-  min-width: calc((100% - 36px) / 4);
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 7px;
-  scroll-snap-align: start;
 }
 
 .member-profile-link {
   width: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -708,9 +700,8 @@
   width: max-content;
   max-width: none;
   overflow: visible;
-  white-space: nowrap;
   text-overflow: clip;
-  overflow-wrap: normal;
+  white-space: nowrap;
   font-size: 12px;
   line-height: 1.35;
 }
@@ -765,21 +756,26 @@
 }
 
 .participant-badge {
+  box-sizing: border-box;
   max-width: 100%;
+  min-width: 0;
   margin-top: 6px;
   padding: 4px 9px;
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 5px;
   border: 1px solid #cfe2d2;
-  border-radius: 999px;
+  border-radius: 12px;
   background: #eef6ee;
   color: #4d7754;
   font-size: 11px;
   font-weight: 700;
   line-height: 1.3;
   text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .member-avatar {
@@ -873,8 +869,8 @@
 }
 
 .comment {
-  min-height: 65px;
-  padding: 9px 2px;
+  min-height: 0;
+  padding: 10px 2px;
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr);
   align-items: start;
@@ -907,6 +903,11 @@
   font-size: 11px;
 }
 
+.comment-author a {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .comment-author span {
   color: #a39aae;
   font-size: 10px;
@@ -919,19 +920,63 @@
   line-height: 1.4;
 }
 
+.comment-meta-row {
+  margin-top: 5px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
 .comment-content small {
   display: inline-block;
-  margin-top: 5px;
+  margin-top: 0;
   color: #9a91a5;
   font-size: 10px;
+}
+
+.comment-actions {
+  margin-top: 0;
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: #827995;
+  font-size: 11px;
+}
+
+.comment-action-button {
+  padding: 4px 8px;
+  border: 1px solid #ded4ee;
+  border-radius: 6px;
+  background: #fff;
+  color: #665498;
+  font: inherit;
+  cursor: pointer;
+}
+
+.comment-action-button--danger {
+  border-color: #efd2d8;
+  color: #a44d68;
+}
+
+.comment-action-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .comment-form {
   padding-top: 8px;
   display: grid;
   grid-template-columns: 39px minmax(0, 1fr) minmax(170px, 240px) auto;
-  align-items: center;
-  gap: 10px;
+  align-items: end;
+  gap: 8px;
+}
+
+.comment-form > app-user-avatar {
+  align-self: center;
 }
 
 .comment-form input {
@@ -944,6 +989,10 @@
   color: var(--ink);
   font-family: var(--sans);
   font-size: 11px;
+}
+
+.comment-form > input {
+  align-self: stretch;
 }
 
 .comment-form input::placeholder {
@@ -959,6 +1008,54 @@
 .comment-progress-control > label {
   color: #827995;
   font-size: 11px;
+}
+
+.chapter-stepper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.chapter-stepper-controls {
+  display: grid;
+  grid-template-columns: 26px 36px 26px;
+  align-items: center;
+  gap: 3px;
+}
+
+.chapter-stepper-controls button,
+.chapter-stepper-controls output {
+  min-height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #ded4ee;
+  border-radius: 5px;
+  background: #fff;
+  color: #665498;
+  font: inherit;
+  font-weight: 700;
+}
+
+.chapter-stepper-controls button {
+  cursor: pointer;
+}
+
+.chapter-stepper-controls button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.chapter-stepper-controls output {
+  color: var(--ink);
+  font-size: 10px;
+}
+
+.chapter-stepper > span {
+  color: #6e5b9a;
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .comment-progress-slider {
@@ -986,6 +1083,7 @@
   font-size: 11px;
   font-weight: 700;
   text-align: right;
+  white-space: nowrap;
 }
 
 .comment-progress-info {
@@ -1078,6 +1176,10 @@
 }
 
 .state-error {
+  color: #a44d68;
+}
+
+.reference-update-dialog p.state-error {
   color: #a44d68;
 }
 
@@ -1206,6 +1308,10 @@
     padding: 16px;
   }
 
+  .member-track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .goal-panel .panel-heading {
     flex-wrap: wrap;
     gap: 10px;
@@ -1278,12 +1384,14 @@
 .member-success { color: #416c59; }
 
 .reference-update-dialog {
-  width: min(92vw, 560px);
+  box-sizing: border-box;
+  width: min(560px, calc(100% - 32px));
   max-width: 560px;
-  max-height: 90vh;
+  max-height: calc(100dvh - 32px);
   padding: 28px;
   overflow-y: auto;
   border: 1px solid var(--line);
+  border-top: 6px solid #b798d4;
   border-radius: 24px;
   background: #fff;
   color: var(--ink);
@@ -1517,6 +1625,14 @@
   .reference-comparison {
     grid-template-columns: 1fr;
   }
+
+  .reference-update-dialog .dialog-actions {
+    flex-direction: column-reverse;
+  }
+
+  .reference-update-dialog .dialog-actions button {
+    width: 100%;
+  }
 }
 
 .reading-history-cycle {
@@ -1620,10 +1736,12 @@
 }
 
 .group-goal-history-item__work-title {
+  min-width: 0;
   color: var(--ink);
   font-family: var(--serif);
   font-size: 17px;
   line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 
 .group-goal-history-item__status {
@@ -1781,4 +1899,62 @@
   .goal-history-disclosure__chevron {
     transition: none;
   }
+}
+
+.comment-author strong {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.comment-content p {
+  margin-top: 5px;
+  color: #514b5f;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.comment-actions {
+  margin-top: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.comment-actions > span {
+  margin-right: auto;
+  font-size: 11px;
+}
+
+.comment-action-button {
+  min-height: 25px;
+  padding: 3px 7px;
+  border: 0;
+  background: transparent;
+  color: #8a7180;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.comment-action-button--danger {
+  color: #a44d68;
+}
+
+.comment-action-button:hover:not(:disabled) {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.goal-create-form small {
+  display: block;
+  color: #756b83;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.goal-create-form small.state-error {
+  color: #a44d68;
+  font-weight: 600;
 }

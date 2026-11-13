@@ -103,9 +103,11 @@
 }
 
 .cycle-current-card h3 {
+  min-width: 0;
   margin: 0;
   color: #302b43;
   font: 400 30px / 1.15 var(--serif);
+  overflow-wrap: anywhere;
 }
 
 .cycle-status-pill {
@@ -342,6 +344,14 @@
   font-size: 12px;
 }
 
+.leave-creator-option > span,
+.leave-creator-selected > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .leave-creator-selected {
   min-height: 58px;
   margin-top: 10px;
@@ -404,93 +414,3 @@
   }
 }
 
-.reference-update-dialog {
-  box-sizing: border-box;
-  width: min(560px, calc(100% - 32px));
-  max-width: none;
-  max-height: calc(100dvh - 32px);
-  margin: auto;
-  padding: 30px;
-  overflow-y: auto;
-  border: 1px solid #e3d9f0;
-  border-top: 6px solid #b798d4;
-  border-radius: 18px;
-  background: #fff;
-  color: #302b43;
-  box-shadow: 0 24px 70px rgb(48 43 67 / 22%);
-}
-
-.reference-update-dialog::backdrop {
-  background: rgb(48 43 67 / 48%);
-  backdrop-filter: blur(3px);
-}
-
-.reference-update-dialog h2 {
-  margin: 0 0 18px;
-  font: 400 clamp(26px, 4vw, 34px) / 1.15 var(--serif);
-}
-
-.reference-update-dialog h3 {
-  margin: 22px 0 8px;
-  color: #7059a2;
-  font: 400 20px / 1.2 var(--serif);
-}
-
-.reference-update-dialog p {
-  margin: 8px 0;
-  color: #797486;
-  line-height: 1.5;
-}
-
-.reference-update-dialog label {
-  display: block;
-  margin-top: 20px;
-  color: #302b43;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.reference-chapter-input {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 8px;
-  color: #797486;
-}
-
-.reference-chapter-input input {
-  box-sizing: border-box;
-  width: 110px;
-  min-height: 44px;
-  padding: 8px 12px;
-  border: 1px solid #cfc2df;
-  border-radius: 10px;
-  color: #302b43;
-  font: 16px var(--sans);
-}
-
-.reference-chapter-input input:focus {
-  border-color: #806bb5;
-  outline: 3px solid rgb(128 107 181 / 18%);
-}
-
-.reference-update-dialog .dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-@media (max-width: 560px) {
-  .reference-update-dialog {
-    padding: 26px 20px 22px;
-  }
-
-  .reference-update-dialog .dialog-actions {
-    flex-direction: column-reverse;
-  }
-
-  .reference-update-dialog .dialog-actions button {
-    width: 100%;
-  }
-}
