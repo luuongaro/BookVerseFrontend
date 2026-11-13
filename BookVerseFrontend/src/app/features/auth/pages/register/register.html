@@ -161,6 +161,9 @@
         @if (errorMessage) {
           <small class="field-error" role="alert">
             {{ errorMessage }}
+            @if (showRecoveryLink) {
+              <a routerLink="/forgot-password">Recuperar cuenta</a>
+            }
           </small>
         }
 
