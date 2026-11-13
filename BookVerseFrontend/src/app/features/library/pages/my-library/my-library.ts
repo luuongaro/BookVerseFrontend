@@ -445,10 +445,18 @@ export class MyLibrary implements OnInit {
   readonly colors = ['#42445e', '#93a897', '#766081', '#caa6b4', '#8c9bb9', '#d2ad93'];
   readonly inkColors = ['#e7dab6', '#263c32', '#fff0db', '#4d2b45', '#24324b', '#49352d'];
   readonly libraryBooks = computed(() =>
-    this.entries().filter((entry) => entry.reading.status !== 'ABANDONED'),
+    this.entries().filter((entry) =>
+      this.filter() === 'ABANDONED'
+        ? entry.reading.status === 'ABANDONED'
+        : entry.reading.status !== 'ABANDONED',
+    ),
   );
   readonly libraryStories = computed(() =>
-    this.stories().filter((entry) => entry.reading.status !== 'ABANDONED'),
+    this.stories().filter((entry) =>
+      this.filter() === 'ABANDONED'
+        ? entry.reading.status === 'ABANDONED'
+        : entry.reading.status !== 'ABANDONED',
+    ),
   );
   readonly filteredBooks = computed(() =>
     this.libraryBooks().filter(
@@ -464,7 +472,10 @@ export class MyLibrary implements OnInit {
     ),
   );
   private groupByState<T extends LibraryBook | LibraryStory>(entries: T[]) {
-    return this.shelfStates
+    const states: readonly ReadingState[] = this.filter() === 'ABANDONED'
+      ? ['ABANDONED']
+      : this.shelfStates;
+    return states
       .map((state) => ({
         state,
         entries: this.sortShelf(entries.filter((entry) => entry.reading.status === state), state),
@@ -582,7 +593,7 @@ export class MyLibrary implements OnInit {
       : this.statusLabel(state);
   }
   setFilter(value: string): void {
-    if (value !== 'all' && !this.shelfStates.some((state) => state === value)) return;
+    if (value !== 'all' && !this.readingStates.some((state) => state === value)) return;
     this.filter.set(value);
     for (const shelf of this.shelves()) shelf.nativeElement.scrollLeft = 0;
   }

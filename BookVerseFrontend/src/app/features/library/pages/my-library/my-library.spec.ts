@@ -229,7 +229,7 @@ describe('Personal bookshelf screen', () => {
       }
     }
     expect(el.querySelector('.library-toolbar p')?.textContent).toContain('4 libros · 4 historias');
-    expect(el.querySelector('#reading-filter option[value="ABANDONED"]')).toBeNull();
+    expect(el.querySelector('#reading-filter option[value="ABANDONED"]')).not.toBeNull();
     expect(el.querySelector('a[href="/books/book-4"]')).toBeNull();
     expect(el.querySelector('a[href="/stories/story-4"]')).toBeNull();
 
@@ -296,6 +296,24 @@ describe('Personal bookshelf screen', () => {
     expect(el.querySelector('.library-toolbar p')?.textContent).toContain('0 libros · 0 historias');
     expect(component.entries()[0].reading.status).toBe('ABANDONED');
     expect(component.stories()[0].reading.status).toBe('ABANDONED');
+
+    const filter = el.querySelector<HTMLSelectElement>('#reading-filter')!;
+    filter.value = 'ABANDONED';
+    filter.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(el.querySelectorAll('.shelf-section[data-state="ABANDONED"] .book-spine')).toHaveLength(2);
+    for (const reading of [entry, story]) {
+      const abandoned = 'book' in reading ? component.entries()[0] : component.stories()[0];
+      component.editStatus(abandoned);
+      component.chooseStatus('WANT_TO_READ');
+      updateStatus.mockReturnValueOnce(of({ ...abandoned.reading, status: 'WANT_TO_READ' }));
+      component.saveStatus();
+      fixture.detectChanges();
+    }
+    expect(el.querySelectorAll('.book-spine')).toHaveLength(0);
+    component.setFilter('all');
+    fixture.detectChanges();
+    expect(el.querySelectorAll('.shelf-section[data-state="WANT_TO_READ"] .book-spine')).toHaveLength(2);
   });
   it('keeps only the title on the spine and edits the state from its separate label', async () => {
     const entry = savedEntry();
