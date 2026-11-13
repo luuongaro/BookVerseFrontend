@@ -447,30 +447,154 @@
               }
             }
 
-            @if (completedGoals.length > 0) {
-              <section class="goal-history" aria-labelledby="completed-goals-title">
-                <p class="panel-label" id="completed-goals-title">METAS CUMPLIDAS</p>
+            <details class="goal-history-disclosure">
+              <summary class="goal-history-disclosure__summary">
+                <span class="goal-history-disclosure__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M4 5h16M4 12h10M4 19h7"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                    />
+                    <circle
+                      cx="18"
+                      cy="17"
+                      r="3"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                    />
+                    <path
+                      d="M18 15.5V17l1 1"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </span>
 
-                @for (goal of completedGoals; track goal.idExternal) {
-                  <div class="goal-history-item">
-                    <strong>
-                      {{ goal.targetProgress }}
-                      {{
-                        goal.goalType === 'PERCENTAGE'
-                          ? '%'
-                          : goal.targetProgress === 1
-                            ? ' capítulo'
-                            : ' capítulos'
-                      }}
-                    </strong>
+                <span class="goal-history-disclosure__label">
+                  <strong>Historial de metas</strong>
+                  @if (isLoadingGoalHistory) {
+                    <small>Cargando historial…</small>
+                  } @else {
                     <small>
-                      Completada · Fecha límite
-                      {{ goal.targetDate | date: 'd MMM y' }}
+                      {{ historicalGoals.length }}
+                      {{ historicalGoals.length === 1 ? 'meta registrada' : 'metas registradas' }}
                     </small>
+                  }
+                </span>
+
+                <svg
+                  class="goal-history-disclosure__chevron"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="m6 9 6 6 6-6"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </summary>
+
+              <div class="goal-history-disclosure__content">
+                @if (isLoadingGoalHistory) {
+                  <p class="member-state" role="status">Cargando historial de metas…</p>
+                } @else if (goalHistoryErrorMessage) {
+                  <p class="member-state state-error" role="alert">
+                    {{ goalHistoryErrorMessage }}
+                  </p>
+                } @else if (historicalGoals.length === 0) {
+                  <p class="member-state">Todavía no hay metas anteriores para mostrar.</p>
+                } @else {
+                  <div class="group-goal-history-list">
+                    @for (goal of historicalGoals; track goal.idExternal) {
+                      @let cycle = getReadingCycleForGoal(goal);
+
+                      <article class="group-goal-history-item">
+                        <div class="group-goal-history-item__top">
+                          <strong class="group-goal-history-item__target">
+                            {{ goal.targetProgress }}
+                            {{
+                              goal.goalType === 'PERCENTAGE'
+                                ? '%'
+                                : goal.targetProgress === 1
+                                  ? ' capítulo'
+                                  : ' capítulos'
+                            }}
+                          </strong>
+
+                          <span
+                            class="group-goal-history-item__status"
+                            [class.status-completed]="goal.status === 'COMPLETED'"
+                            [class.status-cancelled]="goal.status === 'CANCELLED'"
+                          >
+                            {{
+                              goal.status === 'COMPLETED'
+                                ? 'Cumplida'
+                                : goal.status === 'CANCELLED'
+                                  ? 'Cancelada'
+                                  : 'Pendiente'
+                            }}
+                          </span>
+                        </div>
+
+                        @if (goal.readingCycleId) {
+                          <strong class="group-goal-history-item__work-title">
+                            {{
+                              readingTitles[goal.readingCycleId] ??
+                                (cycle?.bookId
+                                  ? 'Libro'
+                                  : cycle?.storyId
+                                    ? 'Historia'
+                                    : 'Lectura')
+                            }}
+                          </strong>
+                        }
+
+                        <div class="group-goal-history-item__context">
+                          @if (cycle?.bookId) {
+                            <span class="history-context">
+                              Libro · {{ cycle.editionReference }}
+                              · {{ cycle.totalChapters }} capítulos
+                            </span>
+                          } @else if (cycle?.storyId) {
+                            <span class="history-context">Lectura de historia</span>
+                          } @else {
+                            <span class="history-context">Lectura asociada</span>
+                          }
+                        </div>
+
+                        <small class="group-goal-history-item__date">
+                          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <rect
+                              x="3.5"
+                              y="5"
+                              width="17"
+                              height="16"
+                              rx="2"
+                              stroke="currentColor"
+                              stroke-width="1.6"
+                            />
+                            <path
+                              d="M7 3v4M17 3v4M4 10h16"
+                              stroke="currentColor"
+                              stroke-width="1.6"
+                              stroke-linecap="round"
+                            />
+                          </svg>
+                          Fecha límite {{ goal.targetDate | date: 'd MMM y' }}
+                        </small>
+                      </article>
+                    }
                   </div>
                 }
-              </section>
-            }
+              </div>
+            </details>
 
             @if (goalActionMessage) {
               <p class="member-state state-error" role="alert">

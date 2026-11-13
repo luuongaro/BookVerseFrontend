@@ -100,6 +100,17 @@ export class GroupDetail implements OnInit {
   members: GroupMember[] = [];
   goals: GroupGoal[] = [];
   activeGoal: GroupGoal | null = null;
+  goalHistory: GroupGoal[] = [];
+  readingCycles: GroupReadingCycle[] = [];
+  readingTitles: Record<string, string> = {};
+  isLoadingGoalHistory = false;
+  goalHistoryErrorMessage = '';
+  readingHistory: Array<{
+    cycle: GroupReadingCycle;
+    goals: GroupGoal[];
+  }> = [];
+
+  isLoadingReadingHistory = false;
   progress: GroupProgress | null = null;
   comments: GroupComment[] = [];
   linkedBook: Book | null = null;
@@ -154,6 +165,14 @@ export class GroupDetail implements OnInit {
 
   get completedGoals(): GroupGoal[] {
     return this.goals.filter((goal) => goal.status === 'COMPLETED');
+  }
+
+  get historicalGoals(): GroupGoal[] {
+    return this.goalHistory.filter(
+      (goal) =>
+        goal.readingCycleId !== null &&
+        goal.idExternal !== this.activeGoal?.idExternal,
+    );
   }
 
   get canEditGroup(): boolean {
@@ -335,6 +354,18 @@ export class GroupDetail implements OnInit {
     return userId === currentUserId
       ? ['/profile']
       : ['/users', userId];
+  }
+
+  getReadingCycleForGoal(goal: GroupGoal): GroupReadingCycle | null {
+    if (!goal.readingCycleId) {
+      return null;
+    }
+
+    return (
+      this.readingCycles.find(
+        (cycle) => cycle.idExternal === goal.readingCycleId,
+      ) ?? null
+    );
   }
 
   private getTomorrowDate(): string {
@@ -1120,6 +1151,7 @@ export class GroupDetail implements OnInit {
     this.readingGroupsService.getById(groupId).subscribe({
       next: (group) => {
         this.group = group;
+        this.loadGroupGoalHistory(groupId);
         this.loadCurrentCycle(groupId);
       },
       error: (error: unknown) => {
@@ -1136,6 +1168,8 @@ export class GroupDetail implements OnInit {
   private loadCurrentCycle(groupId: string): void {
     this.readingGroupsService.getCycles(groupId).subscribe({
       next: (cycles) => {
+        this.readingCycles = cycles;
+        this.loadReadingTitles(cycles);
         const latestCycle = [...cycles].sort(
           (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
         )[0];
@@ -1362,6 +1396,38 @@ export class GroupDetail implements OnInit {
       });
   }
 
+  private loadReadingTitles(cycles: GroupReadingCycle[]): void {
+    const requests = cycles.map((cycle) => {
+      if (cycle.bookId) {
+        return this.booksService.getById(cycle.bookId).pipe(
+          map((book) => [cycle.idExternal, book.title] as const),
+          catchError(() => of([cycle.idExternal, 'Libro'] as const)),
+        );
+      }
+
+      if (cycle.storyId) {
+        return this.storyService.getById(cycle.storyId).pipe(
+          map((story) => [cycle.idExternal, story.title] as const),
+          catchError(() => of([cycle.idExternal, 'Historia'] as const)),
+        );
+      }
+
+      return of([cycle.idExternal, 'Lectura'] as const);
+    });
+
+    if (requests.length === 0) {
+      this.readingTitles = {};
+      return;
+    }
+
+    forkJoin(requests).subscribe({
+      next: (entries) => {
+        this.readingTitles = Object.fromEntries(entries);
+        this.changeDetector.markForCheck();
+      },
+    });
+  }
+
   private loadLinkedContent(cycle: GroupReadingCycle): void {
     this.linkedBook = null;
     this.linkedStory = null;
@@ -1490,6 +1556,26 @@ export class GroupDetail implements OnInit {
         console.error('Error loading group members:', error);
         this.membersErrorMessage = 'No se pudieron cargar los miembros.';
         this.isLoadingMembers = false;
+        this.changeDetector.markForCheck();
+      },
+    });
+  }
+
+  private loadGroupGoalHistory(groupId: string): void {
+    this.isLoadingGoalHistory = true;
+    this.goalHistoryErrorMessage = '';
+
+    this.groupGoalsService.getHistoryByGroup(groupId).subscribe({
+      next: (history) => {
+        this.goalHistory = history;
+        this.isLoadingGoalHistory = false;
+        this.changeDetector.markForCheck();
+      },
+      error: (error: unknown) => {
+        console.error('No se pudo cargar el historial de metas:', error);
+        this.goalHistoryErrorMessage =
+          'No se pudo cargar el historial de metas del grupo.';
+        this.isLoadingGoalHistory = false;
         this.changeDetector.markForCheck();
       },
     });
