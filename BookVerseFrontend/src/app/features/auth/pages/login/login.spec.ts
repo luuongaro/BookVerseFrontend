@@ -38,9 +38,9 @@ describe('Login transition', () => {
     fixture.componentInstance.loginForm.setValue({ email: 'reader@example.com', password: 'test' });
     fixture.componentInstance.onSubmit();
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.login-transition img')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.login-transition img').getAttribute('src')).toBe('/assets/library.jpg');
     expect(navigate).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(1100);
+    vi.advanceTimersByTime(2100);
     expect(navigate).toHaveBeenCalledWith('/stories');
   });
 

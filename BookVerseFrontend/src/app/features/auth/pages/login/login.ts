@@ -67,7 +67,7 @@ export class Login {
             const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
             this.navigationTimer = setTimeout(() => {
               void this.router.navigateByUrl(this.getReturnUrl());
-            }, reducedMotion ? 0 : 1100);
+            }, reducedMotion ? 0 : 2100);
           },
           error: () => {
             localStorage.removeItem('token');
