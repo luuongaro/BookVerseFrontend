@@ -19,6 +19,7 @@ export class Register {
   showPassword = false;
   isSubmitting = false;
   errorMessage = '';
+  showRecoveryLink = false;
 
   registerForm = this.formBuilder.nonNullable.group({
     username: [
@@ -55,6 +56,7 @@ export class Register {
 
     this.isSubmitting = true;
     this.errorMessage = '';
+    this.showRecoveryLink = false;
 
     this.authService.register(this.registerForm.getRawValue()).subscribe({
       next: () => {
@@ -70,9 +72,12 @@ export class Register {
           error.error?.message ?? error.error?.detail ?? '',
         ).toLocaleLowerCase();
 
+        this.showRecoveryLink = error.status === 409 &&
+          (serverMessage.includes('email') || !serverMessage.includes('username'));
+
         this.errorMessage =
           error.status === 409 && serverMessage.includes('email')
-            ? 'Este correo ya está registrado. Iniciá sesión o usá otro correo.'
+            ? 'Este correo ya está registrado. Iniciá sesión o recuperá tu cuenta.'
             : error.status === 409 && serverMessage.includes('username')
               ? 'Ese nombre de usuario ya está registrado. Elegí otro.'
               : error.status === 409
