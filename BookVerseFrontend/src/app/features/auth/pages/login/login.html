@@ -121,7 +121,7 @@
 
         <a class="forgot-password" routerLink="/forgot-password">Olvidé mi contraseña</a>
 
-        <button class="button primary full" type="submit" [disabled]="signingIn">
+        <button class="button primary full" type="submit" [disabled]="signingIn()">
           Entrar a mi universo
         </button>
 
@@ -137,7 +137,7 @@
     </span>
   </section>
 </main>
-@if (entering) {
+@if (entering()) {
   <div class="login-transition" aria-hidden="true">
     <img src="/assets/login-library.png" alt="" />
   </div>
