@@ -276,7 +276,7 @@
                   type="text"
                   [(ngModel)]="usernameDraft"
                   minlength="3"
-                  maxlength="15"
+                  maxlength="30"
                   autocomplete="username"
                   [disabled]="savingUsername()"
                 />
@@ -300,7 +300,7 @@
                     [disabled]="
                       savingUsername() ||
                       usernameDraft.trim().length < 3 ||
-                      usernameDraft.trim().length > 15
+                      usernameDraft.trim().length > 30
                     "
                   >
                     Guardar

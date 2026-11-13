@@ -26,7 +26,7 @@ export class Register {
       [
         Validators.required,
         Validators.minLength(3),
-        Validators.maxLength(15),
+        Validators.maxLength(30),
       ],
     ],
     email: ['', [Validators.required, Validators.email]],

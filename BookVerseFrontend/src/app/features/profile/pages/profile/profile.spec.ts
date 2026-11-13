@@ -14,6 +14,9 @@ describe('Preserving the profile layout and personal appearance', () => {
     const users = {
       getProfileBadge: vi.fn(() => of({ badge: null })),
       getProfile: vi.fn(() => of({ idExternal: 'me', username: 'Lu' })),
+      updateUser: vi.fn((_id: string, data: { username: string; email: string }) =>
+        of({ idExternal: 'me', ...data, status: 'ACTIVE' })),
+      setCurrentUser: vi.fn(),
       loadCurrentUser: () =>
         of({ idExternal: 'me', username: 'Lu', email: 'me@example.test', status: 'ACTIVE' }),
       currentUser: () => ({
@@ -97,5 +100,21 @@ describe('Preserving the profile layout and personal appearance', () => {
     component.loadActivity();
     expect(component.readingCounts().wantToRead).toBe('—');
     expect(component.activityError()).not.toBe('');
+  });
+
+  it('allows usernames up to 30 characters in profile settings', async () => {
+    const { component, users, harness } = await setup();
+    component.usernameDraft = 'a'.repeat(30);
+    component.saveUsername();
+    expect(users.updateUser).toHaveBeenCalledWith('me', {
+      username: 'a'.repeat(30), email: 'me@example.test',
+    });
+    component.settingsMode.set('username');
+    harness.detectChanges();
+    expect(harness.routeNativeElement!.querySelector('#profile-username')?.getAttribute('maxlength')).toBe('30');
+    component.usernameDraft = 'a'.repeat(31);
+    component.saveUsername();
+    expect(component.usernameError()).toContain('30 caracteres');
+    expect(users.updateUser).toHaveBeenCalledTimes(1);
   });
 });
