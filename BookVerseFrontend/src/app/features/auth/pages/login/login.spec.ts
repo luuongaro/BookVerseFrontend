@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { AuthService } from '../../../../core/services/auth.service';
 import { UserService } from '../../../profile/services/user.service';
@@ -51,8 +51,25 @@ describe('Login transition', () => {
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl');
     fixture.componentInstance.loginForm.setValue({ email: 'reader@example.com', password: 'bad' });
     fixture.componentInstance.onSubmit();
-    expect(fixture.componentInstance.entering).toBe(false);
-    expect(fixture.componentInstance.signingIn).toBe(false);
+    expect(fixture.componentInstance.entering()).toBe(false);
+    expect(fixture.componentInstance.signingIn()).toBe(false);
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('renders the transition when the profile arrives asynchronously', async () => {
+    vi.useRealTimers();
+    const profile = new Subject<{ idExternal: string }>();
+    login.mockReturnValue(of({ token: 'test', userId: 'user' }));
+    getByIdExternal.mockReturnValue(profile);
+    const fixture = TestBed.createComponent(Login);
+    fixture.detectChanges();
+    fixture.componentInstance.loginForm.setValue({ email: 'reader@example.com', password: 'test' });
+    fixture.componentInstance.onSubmit();
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('.login-transition')).toBeNull();
+    profile.next({ idExternal: 'user' });
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('.login-transition img')).not.toBeNull();
+    fixture.destroy();
   });
 });

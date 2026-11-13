@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -21,8 +21,8 @@ export class Login {
   private destroyRef = inject(DestroyRef);
 
   showPassword = false;
-  signingIn = false;
-  entering = false;
+  readonly signingIn = signal(false);
+  readonly entering = signal(false);
   private navigationTimer?: ReturnType<typeof setTimeout>;
 
   constructor() {
@@ -47,13 +47,13 @@ export class Login {
   }
 
   onSubmit(): void {
-    if (this.signingIn) return;
+    if (this.signingIn()) return;
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       return;
     }
 
-    this.signingIn = true;
+    this.signingIn.set(true);
     this.authService.login(this.loginForm.getRawValue()).subscribe({
       next: (response) => {
         localStorage.setItem('token', response.token);
@@ -63,7 +63,7 @@ export class Login {
           next: (user) => {
             this.userService.setCurrentUser(user);
             this.sessionExpired.clear();
-            this.entering = true;
+            this.entering.set(true);
             const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
             this.navigationTimer = setTimeout(() => {
               void this.router.navigateByUrl(this.getReturnUrl());
@@ -73,13 +73,13 @@ export class Login {
             localStorage.removeItem('token');
             localStorage.removeItem('userId');
             this.userService.clearCurrentUser();
-            this.signingIn = false;
+            this.signingIn.set(false);
             alert('Iniciaste sesión, pero no se pudo cargar tu perfil.');
           },
         });
       },
       error: () => {
-        this.signingIn = false;
+        this.signingIn.set(false);
         alert('No se pudo iniciar sesión. Revisá el email y la contraseña.');
       },
     });
