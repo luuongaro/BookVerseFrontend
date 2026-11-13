@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -18,8 +18,16 @@ export class Login {
   private route = inject(ActivatedRoute);
   private userService = inject(UserService);
   private sessionExpired = inject(SessionExpiredService);
+  private destroyRef = inject(DestroyRef);
 
   showPassword = false;
+  signingIn = false;
+  entering = false;
+  private navigationTimer?: ReturnType<typeof setTimeout>;
+
+  constructor() {
+    this.destroyRef.onDestroy(() => clearTimeout(this.navigationTimer));
+  }
 
   loginForm = this.formBuilder.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -39,11 +47,13 @@ export class Login {
   }
 
   onSubmit(): void {
+    if (this.signingIn) return;
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       return;
     }
 
+    this.signingIn = true;
     this.authService.login(this.loginForm.getRawValue()).subscribe({
       next: (response) => {
         localStorage.setItem('token', response.token);
@@ -53,17 +63,23 @@ export class Login {
           next: (user) => {
             this.userService.setCurrentUser(user);
             this.sessionExpired.clear();
-            void this.router.navigateByUrl(this.getReturnUrl());
+            this.entering = true;
+            const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+            this.navigationTimer = setTimeout(() => {
+              void this.router.navigateByUrl(this.getReturnUrl());
+            }, reducedMotion ? 0 : 1100);
           },
           error: () => {
             localStorage.removeItem('token');
             localStorage.removeItem('userId');
             this.userService.clearCurrentUser();
+            this.signingIn = false;
             alert('Iniciaste sesión, pero no se pudo cargar tu perfil.');
           },
         });
       },
       error: () => {
+        this.signingIn = false;
         alert('No se pudo iniciar sesión. Revisá el email y la contraseña.');
       },
     });

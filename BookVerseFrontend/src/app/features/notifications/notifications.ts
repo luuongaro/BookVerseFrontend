@@ -6,6 +6,7 @@ import { API_URL } from '../../core/api/api.config';
 import { ReadingGroupsService } from '../groups/services/reading-groups.service';
 import { UserService } from '../profile/services/user.service';
 import { NotificationIndicatorService } from './notification-indicator.service';
+import { UserAvatar } from '../../shared/components/user-avatar/user-avatar';
 
 interface MembershipRequest {
   idExternal: string; groupId: string; targetUserId: string; createdById: string;
@@ -15,7 +16,7 @@ interface Notice extends MembershipRequest { groupName: string; userName: string
 interface FriendRequest { id: string; userId: string; username: string; createdAt: string; }
 
 @Component({
-  selector: 'app-notifications', imports: [DatePipe],
+  selector: 'app-notifications', imports: [DatePipe, UserAvatar],
   templateUrl: './notifications.html', styleUrl: './notifications.css',
 })
 export class Notifications implements OnInit {
