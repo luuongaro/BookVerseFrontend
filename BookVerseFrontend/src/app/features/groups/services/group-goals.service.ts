@@ -24,6 +24,12 @@ export class GroupGoalsService {
     );
   }
 
+  getHistoryByGroup(groupId: string): Observable<GroupGoal[]> {
+    return this.http.get<GroupGoal[]>(
+      `${this.url}/${groupId}/goals/history`,
+    );
+  }
+
   getActiveByCycle(
     groupId: string,
     cycleId: string,
