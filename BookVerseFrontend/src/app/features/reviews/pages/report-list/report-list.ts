@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ReviewReportsService } from '../../services/review-reports.service';
 import { StoryReport } from '../../models/story-report.model';
 import { StoryReportsService } from '../../services/story-reports.service';
@@ -20,6 +20,7 @@ export class ReviewReportList implements OnInit {
   private readonly service = inject(ReviewReportsService);
   private readonly storyService = inject(StoryReportsService);
   private readonly formBuilder = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
   reports = signal<ReviewReport[]>([]);
   storyReports = signal<StoryReport[]>([]);
   activeCategory = signal<'REVIEWS' | 'STORIES'>('REVIEWS');
@@ -176,6 +177,9 @@ export class ReviewReportList implements OnInit {
   });
 
   ngOnInit(): void {
+    if (this.route.snapshot.queryParamMap.get('category') === 'stories') {
+      this.activeCategory.set('STORIES');
+    }
     this.showingAll.set(true);
     this.load();
   }

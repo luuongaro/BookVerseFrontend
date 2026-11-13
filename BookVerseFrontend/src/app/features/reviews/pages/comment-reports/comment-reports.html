@@ -2,6 +2,11 @@
   <a routerLink="/reports">← Volver a reportes</a>
   <h1>Reportes de comentarios</h1>
   <p>Revisá los comentarios reportados en grupos de lectura.</p>
+  <nav class="category-tabs" aria-label="Tipo de reporte">
+    <a class="category-tab" routerLink="/reports">Reportes de reseñas</a>
+    <a class="category-tab" routerLink="/reports" [queryParams]="{ category: 'stories' }">Reportes de historias</a>
+    <a class="category-tab active" routerLink="/reports/comments" aria-current="page">Reportes de comentarios</a>
+  </nav>
   <label for="comment-report-filter">Estado</label>
   <select id="comment-report-filter" [ngModel]="filter()" (ngModelChange)="filter.set($event)">
     <option value="ALL">Todos</option><option value="PENDING">Pendientes</option><option value="APPROVED">Aprobados</option><option value="REJECTED">Rechazados</option>

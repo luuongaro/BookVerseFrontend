@@ -19,7 +19,6 @@
           {{ activeCategory() === 'REVIEWS' ? 'Reportes de reseñas' : 'Reportes de historias' }}
         </h1>
         <p>Revisá los reportes recibidos y registrá la decisión de moderación.</p>
-        <a routerLink="/reports/comments">Ver reportes de comentarios de grupos</a>
       </div>
 
       <aside class="head-note">
@@ -98,6 +97,7 @@
         >
           Reportes de historias
         </button>
+        <a class="category-tab" routerLink="/reports/comments">Reportes de comentarios</a>
       </div>
 
       <div class="toolbar">
