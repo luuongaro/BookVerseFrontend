@@ -46,20 +46,65 @@ export class GroupList implements OnInit {
   discoverLoading = false;
   discoverError = '';
   requestingId = '';
+  private discoverLoaded = false;
 
   showDiscover(): void {
     this.view = 'discover';
+    this.loadDiscover();
+  }
+
+  private loadDiscover(): void {
+    if (this.discoverLoaded || this.discoverLoading) {
+      return;
+    }
+
     this.discoverLoading = true;
     this.discoverError = '';
     this.readingGroupsService.discover().subscribe({
-      next: groups => { this.discovered = groups; this.discoverLoading = false; this.changeDetector.markForCheck(); },
+      next: groups => {
+        this.discovered = groups;
+        this.discoverLoading = false;
+        this.discoverLoaded = true;
+        this.changeDetector.markForCheck();
+      },
       error: () => { this.discoverError = 'No pudimos cargar los grupos. Intentá de nuevo.'; this.discoverLoading = false; this.changeDetector.markForCheck(); },
     });
   }
 
   get filteredDiscover(): DiscoveredGroup[] {
-    const query = this.discoverSearch.trim().toLocaleLowerCase();
-    return this.discovered.filter(group => `${group.name} ${group.activeContentTitle ?? ''}`.toLocaleLowerCase().includes(query));
+    const query = this.normalizeSearchText(this.discoverSearch);
+    const terms = query.split(/\s+/).filter(Boolean);
+
+    if (terms.length === 0) {
+      return this.discovered;
+    }
+
+    return this.discovered.filter((group) => {
+      const readingType = group.activeReadingCycle?.storyId
+        ? 'historia'
+        : group.activeReadingCycle?.bookId
+          ? 'libro'
+          : 'lectura por definir';
+
+      const searchableText = this.normalizeSearchText(
+        [
+          group.name,
+          group.activeContentTitle ?? '',
+          readingType,
+          group.activeReadingCycle?.editionReference ?? '',
+        ].join(' '),
+      );
+
+      return terms.every((term) => searchableText.includes(term));
+    });
+  }
+
+  private normalizeSearchText(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
   }
 
   requestGroup(group: DiscoveredGroup): void {
@@ -82,6 +127,7 @@ export class GroupList implements OnInit {
 
   ngOnInit(): void {
     this.loadGroups();
+    this.loadDiscover();
   }
 
   private loadGroups(): void {
@@ -119,38 +165,16 @@ export class GroupList implements OnInit {
             (group): group is ReadingGroup => group !== null && group.isActive,
           ),
         ),
-        switchMap((groups) => {
-          if (groups.length === 0) {
-            return of([]);
-          }
-
-          return forkJoin(
-            groups.map((group) =>
-              this.readingGroupsService.getCycles(group.idExternal).pipe(
-                map((cycles) => {
-                  const latestCycle = [...cycles].sort(
-                    (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
-                  )[0];
-
-                  const currentCycle =
-                    cycles.find((cycle) => cycle.status === 'ACTIVE') ??
-                    cycles.find((cycle) => cycle.status === 'PLANNED') ??
-                    latestCycle ??
-                    null;
-
-                  return { ...group, currentCycle };
-                }),
-                catchError(() => of({ ...group, currentCycle: null })),
-              ),
-            ),
-          );
-        }),
       )
       .subscribe({
         next: (groups) => {
-          this.groups = groups;
+          this.groups = groups.map((group) => ({
+            ...group,
+            currentCycle: null,
+          }));
           this.isLoading = false;
           this.changeDetector.markForCheck();
+          this.loadCurrentCycles(groups);
         },
         error: (error: unknown) => {
           console.error('Error al cargar los grupos del usuario:', error);
@@ -159,6 +183,47 @@ export class GroupList implements OnInit {
           this.changeDetector.markForCheck();
         },
       });
+  }
+
+  private loadCurrentCycles(groups: ReadingGroup[]): void {
+    if (groups.length === 0) {
+      return;
+    }
+
+    forkJoin(
+      groups.map((group) =>
+        this.readingGroupsService.getCycles(group.idExternal).pipe(
+          map((cycles) => {
+            const latestCycle = [...cycles].sort(
+              (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
+            )[0];
+
+            const currentCycle =
+              cycles.find((cycle) => cycle.status === 'ACTIVE') ??
+              cycles.find((cycle) => cycle.status === 'PLANNED') ??
+              latestCycle ??
+              null;
+
+            return { groupId: group.idExternal, currentCycle };
+          }),
+          catchError(() =>
+            of({ groupId: group.idExternal, currentCycle: null }),
+          ),
+        ),
+      ),
+    ).subscribe({
+      next: (cycleResults) => {
+        const cyclesByGroup = new Map(
+          cycleResults.map((result) => [result.groupId, result.currentCycle]),
+        );
+
+        this.groups = this.groups.map((group) => ({
+          ...group,
+          currentCycle: cyclesByGroup.get(group.idExternal) ?? null,
+        }));
+        this.changeDetector.markForCheck();
+      },
+    });
   }
 
   get filteredGroups(): ReadingGroupListItem[] {

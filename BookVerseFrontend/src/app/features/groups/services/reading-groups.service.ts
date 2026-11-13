@@ -17,6 +17,7 @@ export interface DiscoveredGroup {
   idExternal: string;
   name: string;
   activeMembersCount: number;
+  activeReadingCycle: GroupReadingCycle | null;
   activeContentTitle: string | null;
   membershipState: 'NOT_MEMBER' | 'MEMBER' | 'JOIN_REQUEST_PENDING' | 'INVITATION_PENDING';
 }
