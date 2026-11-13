@@ -847,6 +847,7 @@ img.review-cover.book-cover {
 }
 
 .category-tab {
+  text-decoration: none;
   padding: 10px 14px;
   border: 0;
   border-bottom: 2px solid transparent;

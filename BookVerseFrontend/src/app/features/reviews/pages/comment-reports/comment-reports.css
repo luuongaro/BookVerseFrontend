@@ -1,5 +1,9 @@
 :host { display: block; min-height: 100vh; background: #fbf9fd; color: #302b43; font-family: 'DM Sans', Arial, sans-serif; }
 .comment-reports { max-width: 1050px; margin: auto; padding: 48px 32px; }
+.category-tabs { display: flex; gap: 4px; margin: 24px 0; border-bottom: 1px solid #e8e2ef; overflow-x: auto; }
+.category-tab { flex: 0 0 auto; padding: 10px 14px; border-bottom: 2px solid transparent; color: #827a8e; text-decoration: none; }
+.category-tab.active { border-bottom-color: #7465ad; color: #665498; font-weight: 700; }
+.category-tab:focus-visible { outline: 2px solid #7465ad; outline-offset: -2px; }
 h1, h2 { font-family: 'Libre Caslon Display', Georgia, serif; font-weight: 400; }
 h1 { font-size: 42px; } a { color: #665498; } select, textarea { display: block; padding: 10px; border: 1px solid #ded5ea; border-radius: 8px; font: inherit; }
 button { padding: 10px 14px; border: 1px solid #7465ad; border-radius: 8px; background: #7465ad; color: white; font: inherit; cursor: pointer; }
