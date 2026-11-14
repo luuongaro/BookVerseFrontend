@@ -1,6 +1,6 @@
 <section class="badge-section" aria-labelledby="profile-badges-title">
   <div class="section-heading">
-    <h2 id="profile-badges-title">Badges</h2>
+    <h2 id="profile-badges-title">Insignias</h2>
     @if (admin && !loading()) {
       @if (selected) {
         <button class="edit" type="button" aria-label="Cambiar insignia" title="Cambiar insignia" (click)="open()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15l-1 6Z" /></svg></button>
@@ -17,9 +17,9 @@
       </figure>
     </div>
   } @else if (loading()) {
-    <p class="empty" role="status">Cargando badges…</p>
+    <p class="empty" role="status">Cargando insignias…</p>
   } @else if (!error()) {
-    <p class="empty">Todavía no hay badges.</p>
+    <p class="empty">Todavía no hay insignias.</p>
   }
   @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
 </section>
