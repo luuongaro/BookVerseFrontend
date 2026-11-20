@@ -23,11 +23,13 @@ import {
   ReadingState,
   ReadingStatus,
 } from '../../models/library-book.model';
+import { PremiumUpgradeDialog } from '../../../subscriptions/components/premium-upgrade-dialog/premium-upgrade-dialog';
+import { isFreeStoryLimitError } from '../../../stories/services/reading-status-errors';
 type ShelfOrder = 'original' | 'title' | 'progress' | 'custom';
 type LibraryProgressMode = 'PERCENTAGE' | 'CHAPTER';
 @Component({
   selector: 'app-my-library',
-  imports: [RouterLink, ReadingStateBadge, ReadingStateSelect],
+  imports: [RouterLink, ReadingStateBadge, ReadingStateSelect, PremiumUpgradeDialog],
   templateUrl: './my-library.html',
   styleUrl: './my-library.css',
 })
@@ -45,6 +47,7 @@ export class MyLibrary implements OnInit {
   private readonly customOrders = signal<Record<string, string[]>>(this.readCustomOrders());
   private dragged: { shelf: string; id: string } | null = null;
   readonly statusDialog = viewChild.required<ElementRef<HTMLDialogElement>>('statusDialog');
+  readonly premiumDialog = viewChild.required(PremiumUpgradeDialog);
   private readonly shelves = viewChildren<ElementRef<HTMLDivElement>>('readingShelf');
   readonly shelfStates = READING_STATES.filter((state) => state !== 'ABANDONED');
   readonly readingStates = READING_STATES;
@@ -340,6 +343,11 @@ export class MyLibrary implements OnInit {
   closeEditor(): void {
     if (!this.saving()) this.statusDialog().nativeElement.close();
   }
+  restoreAbandonedStatus(): void {
+    if (this.editing()?.reading.status === 'ABANDONED') {
+      this.draftStatus.set('ABANDONED');
+    }
+  }
   askToRemoveEntry(): void {
     if (this.saving() || !this.editing()) return;
     this.confirmingDelete.set(true);
@@ -437,8 +445,20 @@ export class MyLibrary implements OnInit {
           this.statusDialog().nativeElement.close();
         },
         error: (error) => {
-          this.saveError.set(libraryError(error));
           this.saving.set(false);
+
+          const isReactivatingAbandonedStory =
+            'story' in entry &&
+            entry.reading.status === 'ABANDONED' &&
+            this.draftStatus() === 'IN_PROGRESS';
+
+          if (isReactivatingAbandonedStory && isFreeStoryLimitError(error)) {
+            this.saveError.set('');
+            this.premiumDialog().open();
+            return;
+          }
+
+          this.saveError.set(libraryError(error));
         },
       });
   }
