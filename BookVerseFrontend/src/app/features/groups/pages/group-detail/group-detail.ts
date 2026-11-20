@@ -1118,12 +1118,33 @@ export class GroupDetail implements OnInit {
         },
         error: (error: unknown) => {
           console.error('Error inviting group member:', error);
-          const status = (error as { status?: number })?.status;
-          this.memberActionMessage = status === 409
-            ? 'Este usuario ya pertenece al grupo.'
-            : status === 403
-              ? 'No se puede agregar a este usuario al grupo.'
-              : 'No pudimos agregar al usuario. Intentá de nuevo.';
+
+          const response =
+            error instanceof HttpErrorResponse ? error : null;
+
+          const serverMessage =
+            typeof response?.error?.message === 'string'
+              ? response.error.message
+              : '';
+
+          if (response?.status === 409) {
+            this.memberActionMessage =
+              serverMessage === 'User is already an active member of this group'
+                ? 'Este usuario ya es miembro activo del grupo.'
+                : 'Este usuario ya tiene una solicitud o invitación pendiente para este grupo.';
+          } else if (
+            response?.status === 403 &&
+            serverMessage === 'A removed user cannot rejoin this group'
+          ) {
+            this.memberActionMessage =
+              'Este usuario fue retirado del grupo y no puede volver a unirse.';
+          } else if (response?.status === 403) {
+            this.memberActionMessage =
+              'No se puede agregar a este usuario al grupo.';
+          } else {
+            this.memberActionMessage =
+              'No pudimos agregar al usuario. Intentá de nuevo.';
+          }
           this.isUpdatingMembers = false;
           this.changeDetector.markForCheck();
         },
