@@ -54,6 +54,14 @@ import { StoryService } from '../../../stories/services/story.services';
 
 type CycleWorkType = 'book' | 'story';
 
+interface CycleCommentHistoryState {
+  comments: GroupComment[];
+  page: number;
+  loading: boolean;
+  loaded: boolean;
+  error: string;
+}
+
 @Component({
   selector: 'app-group-detail',
   imports: [UserAvatar, DatePipe, DecimalPipe, FormsModule, RouterLink, UserSearch],
@@ -107,6 +115,15 @@ export class GroupDetail implements OnInit {
   activeGoal: GroupGoal | null = null;
   goalHistory: GroupGoal[] = [];
   readingCycles: GroupReadingCycle[] = [];
+  historicalComments: Record<string, CycleCommentHistoryState> = {};
+  readonly historicalCommentsPageSize = 10;
+
+  get completedReadingCycles(): GroupReadingCycle[] {
+    return this.readingCycles.filter(
+      (cycle) => cycle.status === 'COMPLETED',
+    );
+  }
+
   readingTitles: Record<string, string> = {};
   isLoadingGoalHistory = false;
   goalHistoryErrorMessage = '';
@@ -369,6 +386,65 @@ export class GroupDetail implements OnInit {
     }
 
     this.membersPage = nextPage;
+  }
+
+  memberUsernameParts(username: string): string[] {
+    return username
+      .replace(/([a-záéíóúüñ0-9])([A-ZÁÉÍÓÚÜÑ])/g, '$1|$2')
+      .split('|');
+  }
+
+  isLowercaseSingleWord(username: string): boolean {
+    return (
+      !/\s/.test(username) &&
+      !/[A-ZÁÉÍÓÚÜÑ]/.test(username)
+    );
+  }
+
+  historicalCommentsPageCount(cycleId: string): number {
+    const total = this.historicalComments[cycleId]?.comments.length ?? 0;
+    return Math.ceil(total / this.historicalCommentsPageSize);
+  }
+
+  historicalCommentsPage(cycleId: string): GroupComment[] {
+    const state = this.historicalComments[cycleId];
+
+    if (!state) {
+      return [];
+    }
+
+    const start = state.page * this.historicalCommentsPageSize;
+
+    return state.comments.slice(
+      start,
+      start + this.historicalCommentsPageSize,
+    );
+  }
+
+  changeHistoricalCommentsPage(
+    cycleId: string,
+    direction: -1 | 1,
+  ): void {
+    const state = this.historicalComments[cycleId];
+
+    if (!state) {
+      return;
+    }
+
+    const lastPage = Math.max(
+      0,
+      this.historicalCommentsPageCount(cycleId) - 1,
+    );
+
+    const page = Math.min(
+      lastPage,
+      Math.max(0, state.page + direction),
+    );
+
+    this.historicalComments[cycleId] = {
+      ...state,
+      page,
+    };
   }
 
   changeCommentChapter(direction: -1 | 1): void {
@@ -1447,10 +1523,111 @@ export class GroupDetail implements OnInit {
     });
   }
 
+  onHistoricalCycleToggle(cycleId: string, event: Event): void {
+    const details = event.currentTarget as HTMLDetailsElement;
+
+    if (details.open) {
+      this.loadHistoricalComments(cycleId);
+    }
+  }
+
+  private loadHistoricalComments(cycleId: string): void {
+    const groupId = this.group?.idExternal;
+    const state = this.historicalComments[cycleId];
+
+    if (!groupId || !state || state.loading || state.loaded) {
+      return;
+    }
+
+    this.historicalComments[cycleId] = {
+      ...state,
+      loading: true,
+      error: '',
+    };
+
+    this.groupCommentsService
+      .getVisibleByCycle(groupId, cycleId)
+      .pipe(
+        switchMap((visibility) => {
+          const userIds = [
+            ...new Set(visibility.comments.map((comment) => comment.userId)),
+          ];
+
+          if (userIds.length === 0) {
+            return of(visibility);
+          }
+
+          return forkJoin(
+            userIds.map((userId) =>
+              this.userService
+                .getProfile(userId)
+                .pipe(catchError(() => of(null))),
+            ),
+          ).pipe(
+            map((profiles) => {
+              const usernames = new Map(
+                profiles
+                  .filter(
+                    (profile): profile is UserProfile => profile !== null,
+                  )
+                  .map((profile) => [profile.idExternal, profile.username]),
+              );
+
+              return {
+                ...visibility,
+                comments: visibility.comments.map((comment) => ({
+                  ...comment,
+                  userName: usernames.get(comment.userId) ?? 'Lector',
+                })),
+              };
+            }),
+          );
+        }),
+      )
+      .subscribe({
+        next: (visibility) => {
+          this.historicalComments[cycleId] = {
+            comments: visibility.comments,
+            page: 0,
+            loading: false,
+            loaded: true,
+            error: '',
+          };
+
+          this.changeDetector.markForCheck();
+        },
+        error: (error: unknown) => {
+          console.error(
+            'No se pudieron cargar los comentarios de la lectura:',
+            error,
+          );
+
+          this.historicalComments[cycleId] = {
+            ...this.historicalComments[cycleId],
+            loading: false,
+            error: 'No se pudieron cargar los comentarios de esta lectura.',
+          };
+
+          this.changeDetector.markForCheck();
+        },
+      });
+  }
+
   private loadCurrentCycle(groupId: string): void {
     this.readingGroupsService.getCycles(groupId).subscribe({
       next: (cycles) => {
         this.readingCycles = cycles;
+        for (const cycle of cycles) {
+          if (cycle.status === 'COMPLETED') {
+            this.historicalComments[cycle.idExternal] ??= {
+              comments: [],
+              page: 0,
+              loading: false,
+              loaded: false,
+              error: '',
+            };
+          }
+        }
         this.loadReadingTitles(cycles);
         const latestCycle = [...cycles].sort(
           (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),

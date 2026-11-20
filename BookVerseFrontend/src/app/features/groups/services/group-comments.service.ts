@@ -20,6 +20,15 @@ export class GroupCommentsService {
     );
   }
 
+  getVisibleByCycle(
+    groupId: string,
+    cycleId: string,
+  ): Observable<GroupCommentsVisibility> {
+    return this.http.get<GroupCommentsVisibility>(
+      `${API_URL}/reading-groups/${groupId}/cycles/${cycleId}/comments`,
+    );
+  }
+
   create(
     groupId: string,
     request: CreateGroupCommentRequest,
