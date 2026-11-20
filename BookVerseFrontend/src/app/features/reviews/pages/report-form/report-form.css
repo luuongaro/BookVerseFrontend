@@ -5,3 +5,77 @@ input, textarea { display: block; width: 100%; margin: 8px 0; padding: 12px; bor
 textarea { min-height: 130px; }
 .hint { color: #6d6878; font-size: .9rem; }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 18px; }
+
+.report-success-dialog {
+  box-sizing: border-box;
+  width: min(520px, calc(100% - 32px));
+  padding: 0;
+  border: 1px solid #e4dced;
+  border-radius: 24px;
+  background: #fffdfd;
+  color: #302b43;
+  box-shadow: 0 24px 70px rgb(48 43 67 / 22%);
+}
+
+.report-success-dialog::backdrop {
+  background: rgb(48 43 67 / 52%);
+  backdrop-filter: blur(4px);
+}
+
+.report-success-dialog__content {
+  padding: 36px;
+  text-align: center;
+}
+
+.report-success-dialog__icon {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 18px;
+  place-items: center;
+  border-radius: 22px;
+  background: #f1eaf7;
+  color: #7867b5;
+  font: 700 32px/1 'DM Sans', sans-serif;
+}
+
+.report-success-dialog__eyebrow {
+  color: #7867b5;
+  font: 700 13px/1.4 'DM Sans', sans-serif;
+  letter-spacing: 0.16em;
+}
+
+.report-success-dialog h2 {
+  margin: 12px 0;
+  color: #302b43;
+  font: 400 36px/1.2 'Cormorant Garamond', Georgia, serif;
+}
+
+.report-success-dialog p {
+  margin: 0;
+  color: #797486;
+  font: 16px/1.6 'DM Sans', sans-serif;
+}
+
+.report-success-dialog button {
+  width: 100%;
+  min-height: 52px;
+  margin-top: 24px;
+  border: 0;
+  border-radius: 12px;
+  background: #7867b5;
+  color: #fff;
+  font: 700 16px/1.4 'DM Sans', sans-serif;
+  cursor: pointer;
+}
+
+.report-success-dialog button:focus-visible {
+  outline: 3px solid #a99bd2;
+  outline-offset: 4px;
+}
+
+@media (max-width: 520px) {
+  .report-success-dialog__content {
+    padding: 28px 22px;
+  }
+}

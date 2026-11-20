@@ -11,15 +11,17 @@
       {{ loadError() }} <button (click)="load()">Reintentar</button>
     </div>
   }
-  @if (!allowed()) {
+  @if (id && !allowed()) {
     <p class="state error" role="alert">
-      No podés editar esta reseña o la obra seleccionada no es válida.
+      Solo el autor de la reseña puede editarla.
     </p>
+    <a [routerLink]="['/reviews', id]">Volver a la reseña</a>
   }
   @if (!id && !session.userId()) {
     <p class="state" role="status">Iniciá sesión para publicar tu reseña.</p>
   }
-  <form class="panel" [formGroup]="form" (ngSubmit)="submit()">
+  @if (!id || allowed()) {
+    <form class="panel" [formGroup]="form" (ngSubmit)="submit()">
     @if (selectedWork(); as work) {
       <span class="eyebrow">{{ work.kind === 'book' ? 'LIBRO' : 'HISTORIA' }}</span>
       <h2>{{ work.title }}</h2>
@@ -173,5 +175,6 @@
         {{ saving() ? 'Guardando…' : id ? 'Guardar cambios' : 'Publicar reseña' }}</button
       ><a routerLink="/reviews" [queryParams]="{ bookId: bookId, storyId: storyId }">Cancelar</a>
     </div>
-  </form>
+    </form>
+  }
 </main>

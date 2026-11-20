@@ -32,7 +32,7 @@ import { isPremiumStoryAccessError } from '../../services/reading-status-errors'
 })
 export class StoryDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
-  readonly router = inject(Router);
+  private readonly router = inject(Router);
   private readonly service = inject(StoryService);
   private readonly users = inject(UserService);
   readonly favorite = signal<boolean | null>(null);
@@ -72,6 +72,10 @@ export class StoryDetail implements OnInit {
 
   ngOnInit(): void {
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.load());
+  }
+
+  returnToStories(): void {
+    void this.router.navigate(['/stories']);
   }
 
   load(): void {
