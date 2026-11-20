@@ -2,6 +2,10 @@
   <a [routerLink]="section">{{ writing ? '← Escritorio' : '← Historias' }}</a>
   @if (isLoading()) {
     <p class="state" role="status">Cargando historia…</p>
+  } @else if (premiumAccessRequired()) {
+    <p class="state">
+      Esta historia y sus capítulos están disponibles con Premium.
+    </p>
   } @else if (errorMessage()) {
     <div class="state error" role="alert">
       {{ errorMessage() }} <button (click)="load()">Reintentar</button>
@@ -219,6 +223,14 @@
     </div>
   }
 </main>
+<app-premium-upgrade-dialog
+  [heading]="'Esta historia es Premium'"
+  [description]="
+    'El plan Gratis permite leer historias gratuitas. Para acceder a esta historia y a sus capítulos, pasate a Premium.'
+  "
+  [secondaryLabel]="'Volver a historias gratuitas'"
+  (dismissed)="router.navigate(['/stories'])"
+/> 
 <dialog
   #deleteDialog
   class="confirm-dialog"

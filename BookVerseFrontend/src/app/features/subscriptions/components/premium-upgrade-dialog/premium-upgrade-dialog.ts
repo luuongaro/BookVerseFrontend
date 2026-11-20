@@ -1,4 +1,12 @@
-import { Component, ElementRef, inject, output, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  inject,
+  input,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { SubscriptionService } from '../../services/subscription.service';
 
 @Component({
@@ -14,6 +22,11 @@ export class PremiumUpgradeDialog {
   readonly dismissed = output<void>();
   readonly isOpeningCheckout = signal(false);
   readonly checkoutError = signal('');
+  readonly heading = input('¡Tu próxima lectura te espera!');
+  readonly description = input(
+    'Con el plan Gratis podés guardar el progreso de hasta 3 historias activas. Si querés registrar el avance de esta historia también, pasate a Premium.',
+  );
+  readonly secondaryLabel = input('Seguir leyendo sin guardar el progreso');
 
   open(): void {
     this.checkoutError.set('');

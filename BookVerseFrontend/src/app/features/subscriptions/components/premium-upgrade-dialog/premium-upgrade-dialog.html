@@ -23,11 +23,10 @@
 
   <span class="premium-dialog__eyebrow">PLAN GRATIS</span>
 
-  <h2 id="premium-dialog-title">¡Tu próxima lectura te espera!</h2>
+  <h2 id="premium-dialog-title">{{ heading() }}</h2>
 
   <p id="premium-dialog-description" class="premium-dialog__description">
-    Con el plan Gratis podés guardar el progreso de hasta 3 historias activas.
-    Si querés registrar el avance de esta historia también, pasate a Premium.
+    {{ description() }}
   </p>
 
   @if (checkoutError()) {
@@ -49,7 +48,7 @@
       class="premium-dialog__secondary"
       (click)="close()"
     >
-      Seguir leyendo sin guardar el progreso
+      {{ secondaryLabel() }}
     </button>
   </div>
 
