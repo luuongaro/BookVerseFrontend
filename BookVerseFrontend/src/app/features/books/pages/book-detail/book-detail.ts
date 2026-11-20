@@ -23,6 +23,27 @@ export class BookDetail implements OnInit {
   loading = signal(true);
   error = signal('');
   private request?: Subscription;
+  formatLanguage(language: string | null): string {
+    const code = language?.trim();
+
+    if (!code) {
+      return 'Sin información';
+    }
+
+    const normalizedCode = code.replace('_', '-');
+    const displayName = new Intl.DisplayNames(['es'], {
+      type: 'language',
+    }).of(normalizedCode);
+
+    if (!displayName || displayName.toLowerCase() === normalizedCode.toLowerCase()) {
+      return code.toUpperCase();
+    }
+
+    return (
+      displayName.charAt(0).toLocaleUpperCase('es') +
+      displayName.slice(1)
+    );
+  }
   ngOnInit(): void {
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.load());
   }
