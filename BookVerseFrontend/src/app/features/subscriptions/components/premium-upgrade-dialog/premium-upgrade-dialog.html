@@ -1,0 +1,59 @@
+<dialog
+  #dialog
+  class="premium-dialog"
+  aria-labelledby="premium-dialog-title"
+  aria-describedby="premium-dialog-description"
+>
+  <button
+    type="button"
+    class="premium-dialog__close"
+    aria-label="Cerrar"
+    (click)="close()"
+  >
+    ×
+  </button>
+
+  <div class="premium-dialog__icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" focusable="false">
+      <path
+        d="M12 2.5 14.7 9l6.8 3-6.8 3-2.7 6.5L9.3 15 2.5 12l6.8-3L12 2.5Z"
+      />
+    </svg>
+  </div>
+
+  <span class="premium-dialog__eyebrow">PLAN GRATIS</span>
+
+  <h2 id="premium-dialog-title">¡Tu próxima lectura te espera!</h2>
+
+  <p id="premium-dialog-description" class="premium-dialog__description">
+    Con el plan Gratis podés guardar el progreso de hasta 3 historias activas.
+    Si querés registrar el avance de esta historia también, pasate a Premium.
+  </p>
+
+  @if (checkoutError()) {
+    <p class="premium-dialog__error" role="alert">{{ checkoutError() }}</p>
+  }
+
+  <div class="premium-dialog__actions">
+    <button
+      type="button"
+      class="premium-dialog__primary"
+      [disabled]="isOpeningCheckout()"
+      (click)="upgradeToPremium()"
+    >
+      {{ isOpeningCheckout() ? 'Conectando…' : 'Pasar a Premium' }}
+    </button>
+
+    <button
+      type="button"
+      class="premium-dialog__secondary"
+      (click)="close()"
+    >
+      Seguir leyendo sin guardar el progreso
+    </button>
+  </div>
+
+  <p class="premium-dialog__footer">
+    Vas a continuar en Mercado Pago para completar el cambio a Premium.
+  </p>
+</dialog>
