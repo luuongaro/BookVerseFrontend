@@ -125,15 +125,7 @@
       </section>
       <section class="filters" aria-label="Filtros de reseñas">
         <div class="tabs" aria-label="Tipo de reseñas">
-          @for (
-            tab of [
-              { value: 'all', label: 'Todas' },
-              { value: 'book', label: 'Libros' },
-              { value: 'story', label: 'Historias' },
-              { value: 'mine', label: 'Mis reseñas' },
-            ];
-            track tab.value
-          ) {
+          @for (tab of reviewTabs; track tab.value) {
             <button
               class="tab"
               [class.active]="activeTab() === tab.value"

@@ -57,6 +57,19 @@ export class ReviewList implements OnInit {
   }
   readonly ratingLevels = [5, 4, 3, 2, 1];
   activeTab = computed(() => (this.mine() ? 'mine' : this.kind()));
+  get reviewTabs(): { value: string; label: string }[] {
+    const tabs = [{ value: 'all', label: 'Todas' }];
+
+    if (!this.bookId && !this.storyId) {
+      tabs.push(
+        { value: 'book', label: 'Libros' },
+        { value: 'story', label: 'Historias' },
+      );
+    }
+
+    tabs.push({ value: 'mine', label: 'Mis reseñas' });
+    return tabs;
+  }
   selectTab(tab: string): void {
     this.mine.set(tab === 'mine');
     this.kind.set(tab === 'mine' ? 'all' : tab);
@@ -194,8 +207,19 @@ export class ReviewList implements OnInit {
   );
   ngOnInit(): void {
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-      this.bookId = params.get('bookId');
-      this.storyId = params.get('storyId');
+      const nextBookId = params.get('bookId');
+      const nextStoryId = params.get('storyId');
+
+      if (nextBookId !== this.bookId || nextStoryId !== this.storyId) {
+        this.mine.set(false);
+        this.kind.set('all');
+        this.genre.set('');
+        this.search.set('');
+        this.sort.set('newest');
+      }
+
+      this.bookId = nextBookId;
+      this.storyId = nextStoryId;
       this.load();
     });
   }
