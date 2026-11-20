@@ -1,7 +1,9 @@
 <main>
   <h1>Catálogo de libros</h1>
-  <a class="button secondary" routerLink="/library">Mi biblioteca</a>
-  <a class="button" routerLink="/google-books">Buscar en Google Books</a>
+  <div class="catalog-actions">
+    <a class="button secondary" routerLink="/library">Mi biblioteca</a>
+    <a class="button" routerLink="/google-books">Buscar en Google Books</a>
+  </div>
   @if (loading()) {
     <p class="state" role="status">Cargando libros…</p>
   } @else if (error()) {
@@ -24,11 +26,40 @@
       }
     </div>
     @if (page.totalPages > 1) {
-      <div class="actions">
-        <button [disabled]="page.first" (click)="load(page.number - 1)">Anterior</button
-        ><span>Página {{ page.number + 1 }} de {{ page.totalPages }}</span
-        ><button [disabled]="page.last" (click)="load(page.number + 1)">Siguiente</button>
-      </div>
+      <nav class="actions catalog-pagination" aria-label="Paginación del catálogo">
+        <button
+          type="button"
+          [disabled]="page.first || loading()"
+          (click)="load(page.number - 1)"
+        >
+          Anterior
+        </button>
+
+        <div class="page-numbers" aria-label="Elegir página">
+          @for (pageNumber of pageNumbers(); track pageNumber) {
+            <button
+              type="button"
+              class="page-number"
+              [class.active]="page.number === pageNumber"
+              [attr.aria-current]="page.number === pageNumber ? 'page' : null"
+              [disabled]="loading() || page.number === pageNumber"
+              (click)="load(pageNumber)"
+            >
+              {{ pageNumber + 1 }}
+            </button>
+          }
+        </div>
+
+        <span>Página {{ page.number + 1 }} de {{ page.totalPages }}</span>
+
+        <button
+          type="button"
+          [disabled]="page.last || loading()"
+          (click)="load(page.number + 1)"
+        >
+          Siguiente
+        </button>
+      </nav>
     }
   }
 </main>
