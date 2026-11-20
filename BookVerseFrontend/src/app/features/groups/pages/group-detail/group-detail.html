@@ -600,6 +600,179 @@
               </div>
             </details>
 
+            <details class="goal-history-disclosure">
+              <summary class="goal-history-disclosure__summary">
+                <span class="goal-history-disclosure__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M4 5h16v11H9l-5 4V5Z"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                      stroke-linejoin="round"
+                    />
+                    <path
+                      d="M8 9h8M8 12h5"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </span>
+
+                <span class="goal-history-disclosure__label">
+                  <strong>Historial de comentarios</strong>
+                  <small>
+                    {{ completedReadingCycles.length }}
+                    {{ completedReadingCycles.length === 1 ? 'lectura completada' : 'lecturas completadas' }}
+                  </small>
+                </span>
+
+                <svg
+                  class="goal-history-disclosure__chevron"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="m6 9 6 6 6-6"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </summary>
+
+              <div class="goal-history-disclosure__content">
+                @if (completedReadingCycles.length === 0) {
+                  <p class="member-state">
+                    Todavía no hay lecturas completadas.
+                  </p>
+                } @else {
+                  @for (cycle of completedReadingCycles; track cycle.idExternal) {
+                    @let state = historicalComments[cycle.idExternal];
+
+                    <details
+                      class="cycle-comments-history-item"
+                      (toggle)="onHistoricalCycleToggle(cycle.idExternal, $event)"
+                    >
+                      <summary class="cycle-comments-history-item__summary">
+                        <span>
+                          <strong>
+                            {{ readingTitles[cycle.idExternal] ?? 'Lectura del grupo' }}
+                          </strong>
+                          <small>
+                            Completada
+                            @if (cycle.completedAt) {
+                              · {{ cycle.completedAt | date: 'd MMM y' }}
+                            }
+                          </small>
+                        </span>
+                        <svg
+                          class="cycle-comments-history-item__chevron"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="m6 9 6 6 6-6"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </summary>
+
+                      @if (state?.loading) {
+                        <p class="member-state" role="status">Cargando comentarios…</p>
+                      } @else if (state?.error) {
+                        <p class="member-state state-error" role="alert">
+                          {{ state.error }}
+                        </p>
+                      } @else if (state?.loaded && state.comments.length === 0) {
+                        <p class="member-state">
+                          Esta lectura no tiene comentarios visibles.
+                        </p>
+                      } @else if (state?.loaded) {
+                        <div class="cycle-comments-history-list">
+                          @for (
+                            comment of historicalCommentsPage(cycle.idExternal);
+                            track comment.idExternal;
+                            let i = $index
+                          ) {
+                            <article class="comment">
+                              <app-user-avatar
+                                class="comment-avatar"
+                                [class.avatar-rose]="i % 3 === 0"
+                                [class.avatar-blue]="i % 3 === 1"
+                                [class.avatar-green]="i % 3 === 2"
+                                [userId]="comment.userId"
+                                [username]="comment.userName || 'Lector'"
+                              />
+
+                              <div class="comment-content">
+                                <div class="comment-author">
+                                  <a [routerLink]="['/users', comment.userId]">
+                                    <strong>{{ comment.userName || 'Lector' }}</strong>
+                                  </a>
+                                  <span>{{ comment.createdAt | date: 'd MMM, HH:mm' }}</span>
+                                </div>
+
+                                <p>{{ comment.content }}</p>
+
+                                <small>
+                                  Avance al comentar:
+                                  @if (comment.progressType === 'CHAPTER') {
+                                    capítulo {{ comment.progressValue }}
+                                  } @else {
+                                    {{ comment.progressValue }}%
+                                  }
+                                </small>
+                              </div>
+                            </article>
+                          }
+                        </div>
+
+                        @if (historicalCommentsPageCount(cycle.idExternal) > 1) {
+                          <nav
+                            class="history-pagination"
+                            aria-label="Paginación de comentarios"
+                          >
+                            <button
+                              type="button"
+                              class="comment-action-button"
+                              (click)="changeHistoricalCommentsPage(cycle.idExternal, -1)"
+                              [disabled]="state.page === 0"
+                            >
+                              Anterior
+                            </button>
+
+                            <span>
+                              Página {{ state.page + 1 }} de
+                              {{ historicalCommentsPageCount(cycle.idExternal) }}
+                            </span>
+
+                            <button
+                              type="button"
+                              class="comment-action-button"
+                              (click)="changeHistoricalCommentsPage(cycle.idExternal, 1)"
+                              [disabled]="
+                                state.page + 1 >=
+                                historicalCommentsPageCount(cycle.idExternal)
+                              "
+                            >
+                              Siguiente
+                            </button>
+                          </nav>
+                        }
+                      }
+                    </details>
+                  }
+                }
+              </div>
+            </details>
+
             @if (goalActionMessage) {
               <p class="member-state state-error" role="alert">
                 {{ goalActionMessage }}
@@ -666,9 +839,11 @@
                         [decorative]="false"
                       />
 
-                      <span class="member-name" [title]="member.userName">
-                        {{ member.userName }}
-                      </span>
+                      <span
+                        class="member-name"
+                        [class.member-name--single-word]="isLowercaseSingleWord(member.userName)"
+                        [title]="member.userName"
+                      >@for (part of memberUsernameParts(member.userName); track $index) {<wbr />{{ part }}}</span>
                     </a>
 
                     @if (member.memberType === 'CREATOR') {
