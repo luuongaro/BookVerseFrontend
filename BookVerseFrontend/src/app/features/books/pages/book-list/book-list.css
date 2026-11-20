@@ -1,2 +1,33 @@
 @import '../../../../shared/styles/catalog.css';
 @import '../../../../shared/styles/book-cards.css';
+
+.catalog-pagination {
+  flex-wrap: wrap;
+}
+
+.page-numbers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.catalog-pagination .page-number {
+  min-width: 40px;
+  padding: 8px 12px;
+  border: 1px solid #d9cfe5;
+  background: white;
+  color: #665498;
+}
+
+.catalog-pagination .page-number.active {
+  border-color: #7465ad;
+  background: #7465ad;
+  color: white;
+}
+
+.catalog-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}

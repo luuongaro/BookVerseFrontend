@@ -1,5 +1,5 @@
 import { BookCover } from '../../../../shared/components/book-cover/book-cover';
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule } from '@angular/forms';
 import { apiError } from '../../../../core/api/api.config';
@@ -14,6 +14,12 @@ import { BookPage } from '../../models/book.model';
 export class BookList implements OnInit {
   private readonly service = inject(BooksService);
   result = signal<BookPage | null>(null);
+  pageNumbers = computed(() =>
+    Array.from(
+      { length: this.result()?.totalPages ?? 0 },
+      (_, index) => index,
+    ),
+  );
   loading = signal(false);
   error = signal('');
   ngOnInit(): void {
