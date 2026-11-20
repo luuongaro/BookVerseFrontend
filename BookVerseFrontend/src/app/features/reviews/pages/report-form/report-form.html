@@ -26,3 +26,26 @@
     </div>
   </form>
 </main>
+<dialog
+  #reportSuccessDialog
+  class="report-success-dialog"
+  aria-labelledby="report-success-title"
+  aria-describedby="report-success-description"
+  (cancel)="$event.preventDefault(); returnToReviews()"
+>
+  <div class="report-success-dialog__content">
+    <span class="report-success-dialog__icon" aria-hidden="true">✓</span>
+
+    <span class="report-success-dialog__eyebrow">REPORTE ENVIADO</span>
+
+    <h2 id="report-success-title">Gracias por ayudarnos</h2>
+
+    <p id="report-success-description">
+      Recibimos tu reporte de la reseña. El equipo de moderación lo revisará.
+    </p>
+
+    <button type="button" (click)="returnToReviews()">
+      Volver a reseñas
+    </button>
+  </div>
+</dialog>

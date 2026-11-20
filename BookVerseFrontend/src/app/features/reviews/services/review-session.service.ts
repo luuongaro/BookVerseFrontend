@@ -10,18 +10,6 @@ export class ReviewSessionService {
     return id && UUID_PATTERN.test(id) ? id : null;
   }
   canEdit(review: Review): boolean {
-    if (this.userId() === review.reviewerId) return true;
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return false;
-      const encoded = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-      const claims: { roles?: string[] } = JSON.parse(atob(encoded));
-      return (
-        Array.isArray(claims.roles) &&
-        claims.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_MODERATOR')
-      );
-    } catch {
-      return false;
-    }
+    return this.userId() === review.reviewerId;
   }
 }

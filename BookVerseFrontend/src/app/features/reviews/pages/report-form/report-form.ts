@@ -1,4 +1,11 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  inject,
+  OnInit,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -21,6 +28,8 @@ export class ReviewReportForm implements OnInit {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   readonly session = inject(ReviewSessionService);
+  readonly reportSuccessDialog =
+    viewChild.required<ElementRef<HTMLDialogElement>>('reportSuccessDialog');
   reviewId = '';
   storyId = '';
   isStoryReport = signal(false);
@@ -30,6 +39,11 @@ export class ReviewReportForm implements OnInit {
     reason: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(1000)]],
     details: ['', Validators.maxLength(3000)],
   });
+
+  returnToReviews(): void {
+    this.reportSuccessDialog().nativeElement.close();
+    void this.router.navigate(['/reviews']);
+  }
 
   ngOnInit(): void {
     this.reviewId = this.route.snapshot.queryParamMap.get('reviewId') ?? '';
@@ -103,9 +117,9 @@ export class ReviewReportForm implements OnInit {
       reason,
       details,
     }).subscribe({
-      next: (report) => {
+      next: () => {
         this.saving.set(false);
-        void this.router.navigate(['/reports', report.reportId]);
+        this.reportSuccessDialog().nativeElement.showModal();
       },
       error: (error) => {
         this.error.set(
