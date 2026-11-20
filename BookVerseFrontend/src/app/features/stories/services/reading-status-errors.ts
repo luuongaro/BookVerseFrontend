@@ -17,3 +17,12 @@ export function isFreeStoryLimitError(error: unknown): boolean {
       'You have reached the maximum number of active stories allowed by your current subscription'
   );
 }
+
+export function isPremiumStoryAccessError(error: unknown): boolean {
+  return (
+    error instanceof HttpErrorResponse &&
+    error.status === 403 &&
+    error.error?.message ===
+      'You need a premium subscription to access this story'
+  );
+}
