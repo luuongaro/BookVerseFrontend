@@ -25,7 +25,7 @@
           <dt>ISBN</dt>
           <dd>{{ book.isbn || 'Sin información' }}</dd>
           <dt>Idioma</dt>
-          <dd>{{ book.language || 'Sin información' }}</dd>
+          <dd>{{ formatLanguage(book.language) }}</dd>
         </dl>
         <div class="actions">
           <a class="button" routerLink="/reviews" [queryParams]="{ bookId: book.idExternal }"
