@@ -3,9 +3,7 @@
     <div class="crumb">
       <a routerLink="/dashboard">Mi espacio</a>
       <span aria-hidden="true">/</span>
-      <strong>
-        {{ activeCategory() === 'REVIEWS' ? 'Reportes de reseñas' : 'Reportes de historias' }}
-      </strong>
+      <strong>{{ activeCategoryLabel() }}</strong>
     </div>
 
     <span class="moderation-label">Panel de moderación</span>
@@ -15,9 +13,7 @@
     <section class="head">
       <div>
         <span class="eyebrow">CUIDADO DE LA COMUNIDAD</span>
-        <h1>
-          {{ activeCategory() === 'REVIEWS' ? 'Reportes de reseñas' : 'Reportes de historias' }}
-        </h1>
+        <h1>{{ activeCategoryLabel() }}</h1>
         <p>Revisá los reportes recibidos y registrá la decisión de moderación.</p>
       </div>
 
@@ -36,7 +32,7 @@
         </div>
         <div>
           <strong>
-            {{ activeCategory() === 'REVIEWS' ? pendingCount() : storyPendingCount() }}
+            {{ activePendingCount() }}
           </strong>
           <small>Reportes pendientes</small>
         </div>
@@ -50,11 +46,17 @@
         </div>
         <div>
           <strong>
-            {{ activeCategory() === 'REVIEWS' ? approvedCount() : storyApprovedCount() }}
+            {{ activeApprovedCount() }}
           </strong>
           <small>
             Aprobados ·
-            {{ activeCategory() === 'REVIEWS' ? 'reseña retirada' : 'historia dada de baja' }}
+            {{
+              activeCategory() === 'REVIEWS'
+                ? 'reseña retirada'
+                : activeCategory() === 'STORIES'
+                  ? 'historia dada de baja'
+                  : 'comentario moderado'
+            }}
           </small>
         </div>
       </article>
@@ -67,7 +69,7 @@
         </div>
         <div>
           <strong>
-            {{ activeCategory() === 'REVIEWS' ? rejectedCount() : storyRejectedCount() }}
+            {{ activeRejectedCount() }}
           </strong>
           <small>Reportes rechazados</small>
         </div>
@@ -97,7 +99,16 @@
         >
           Reportes de historias
         </button>
-        <a class="category-tab" routerLink="/reports/comments">Reportes de comentarios</a>
+        <button
+          type="button"
+          role="tab"
+          class="category-tab"
+          [class.active]="activeCategory() === 'COMMENTS'"
+          [attr.aria-selected]="activeCategory() === 'COMMENTS'"
+          (click)="selectCategory('COMMENTS')"
+        >
+          Reportes de comentarios
+        </button>
       </div>
 
       <div class="toolbar">
@@ -110,7 +121,7 @@
           >
             Todos
             <span class="num">
-              {{ activeCategory() === 'REVIEWS' ? reports().length : storyReports().length }}
+              {{ activeTotalCount() }}
             </span>
           </button>
 
@@ -122,7 +133,7 @@
           >
             Pendientes
             <span class="num">
-              {{ activeCategory() === 'REVIEWS' ? pendingCount() : storyPendingCount() }}
+              {{ activePendingCount() }}
             </span>
           </button>
 
@@ -150,11 +161,7 @@
             <span class="visually-hidden">Buscar reportes</span>
             <input
               type="search"
-              [placeholder]="
-                activeCategory() === 'REVIEWS'
-                  ? 'Buscar por reseña o motivo…'
-                  : 'Buscar por historia o motivo…'
-              "
+              [placeholder]="activeSearchPlaceholder()"
               (input)="setSearch($any($event.target).value)"
             />
           </label>
@@ -171,8 +178,12 @@
                 @for (reason of reasonOptions(); track reason) {
                   <option [value]="reason">{{ reason }}</option>
                 }
-              } @else {
+              } @else if (activeCategory() === 'STORIES') {
                 @for (reason of storyReasonOptions(); track reason) {
+                  <option [value]="reason">{{ reason }}</option>
+                }
+              } @else {
+                @for (reason of commentReasonOptions(); track reason) {
                   <option [value]="reason">{{ reason }}</option>
                 }
               }
@@ -194,7 +205,7 @@
             <thead>
               <tr>
                 <th>
-                  {{ activeCategory() === 'REVIEWS' ? 'RESEÑA DENUNCIADA' : 'HISTORIA DENUNCIADA' }}
+                  {{ activeTargetLabel() }}
                 </th>
                 <th>MOTIVO</th>
                 <th>REPORTES</th>
@@ -271,20 +282,26 @@
                   </td>
 
                   <td>
-                    <span
-                      class="status"
-                      [class.pending]="report.status === 'PENDING'"
-                      [class.approved]="report.status === 'APPROVED'"
-                      [class.rejected]="report.status === 'REJECTED'"
-                    >
-                      {{
-                        report.status === 'PENDING'
-                          ? 'Pendiente'
-                          : report.status === 'APPROVED'
-                            ? 'Aprobado'
-                            : 'Rechazado'
-                      }}
-                    </span>
+                    <div class="status-list">
+                      <span
+                        class="status"
+                        [class.pending]="report.status === 'PENDING'"
+                        [class.approved]="report.status === 'APPROVED'"
+                        [class.rejected]="report.status === 'REJECTED'"
+                      >
+                        {{
+                          report.status === 'PENDING'
+                            ? 'Pendiente'
+                            : report.status === 'APPROVED'
+                              ? 'Aprobado'
+                              : 'Rechazado'
+                        }}
+                      </span>
+
+                      @if (report.status === 'APPROVED' && !report.reviewTakenDown) {
+                        <span class="status restored">Restaurada</span>
+                      }
+                    </div>
                   </td>
 
                   <td>
@@ -304,7 +321,7 @@
                     </td>
                   </tr>
                 }
-              } @else {
+              } @else if (activeCategory() === 'STORIES') {
                 @for (report of paginatedStoryReports(); track report.reportId) {
                   <tr>
                     <td>
@@ -345,24 +362,94 @@
                     </td>
 
                     <td>
-                      <span
-                        class="status"
-                        [class.pending]="report.status === 'PENDING'"
-                        [class.approved]="report.status === 'APPROVED'"
-                        [class.rejected]="report.status === 'REJECTED'"
-                      >
-                        {{
-                          report.status === 'PENDING'
-                            ? 'Pendiente'
-                            : report.status === 'APPROVED'
-                              ? 'Aprobado'
-                              : 'Rechazado'
-                        }}
-                      </span>
+                      <div class="status-list">
+                        <span
+                          class="status"
+                          [class.pending]="report.status === 'PENDING'"
+                          [class.approved]="report.status === 'APPROVED'"
+                          [class.rejected]="report.status === 'REJECTED'"
+                        >
+                          {{
+                            report.status === 'PENDING'
+                              ? 'Pendiente'
+                              : report.status === 'APPROVED'
+                                ? 'Aprobado'
+                                : 'Rechazado'
+                          }}
+                        </span>
+
+                        @if (report.status === 'APPROVED' && !report.storyModerationRemoved) {
+                          <span class="status restored">Restaurada</span>
+                        }
+                      </div>
                     </td>
 
                     <td>
                       <button type="button" class="open" (click)="openStoryReport(report)">
+                        Ver caso →
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="6" class="empty">
+                      No hay reportes que coincidan con los filtros.
+                    </td>
+                  </tr>
+                }
+              } @else {
+                @for (report of paginatedCommentReports(); track report.reportId) {
+                  <tr>
+                    <td>
+                      <div class="report-type">
+                        <div class="comment-report-icon" aria-hidden="true">☷</div>
+                        <div class="review-info">
+                          <strong>
+                            Comentario de {{ report.commentAuthorUsername || 'Usuario' }}
+                          </strong>
+                          <small>{{ groupNameFor(report) }} · Reportado por {{ report.reporterUsername || 'Usuario' }}</small>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td>
+                      <div class="reason">
+                        {{ report.reason }}
+                        <small>{{ report.commentContent }}</small>
+                      </div>
+                    </td>
+
+                    <td><span class="report-count">1 reporte</span></td>
+
+                    <td>
+                      <span class="date">{{ report.createdAt | date: 'dd MMM · HH:mm' }}</span>
+                    </td>
+
+                    <td>
+                      <div class="status-list">
+                        <span
+                          class="status"
+                          [class.pending]="report.status === 'PENDING'"
+                          [class.approved]="report.status === 'APPROVED'"
+                          [class.rejected]="report.status === 'REJECTED'"
+                        >
+                          {{
+                            report.status === 'PENDING'
+                              ? 'Pendiente'
+                              : report.status === 'APPROVED'
+                                ? 'Aprobado'
+                                : 'Rechazado'
+                          }}
+                        </span>
+
+                        @if (report.status === 'APPROVED' && report.commentStatus === 'ACTIVE') {
+                          <span class="status restored">Comentario restaurado</span>
+                        }
+                      </div>
+                    </td>
+
+                    <td>
+                      <button type="button" class="open" (click)="openCommentReport(report)">
                         Ver caso →
                       </button>
                     </td>
@@ -521,21 +608,94 @@
             }
           </form>
         } @else {
-          <p class="modal-status-note">
-            Este reporte fue
-            {{ report.status === 'APPROVED' ? 'aprobado' : 'rechazado' }}.
-          </p>
           @if (report.status === 'APPROVED') {
-            @if (restoredReports().has(report.reportId)) {
-              <p role="status">La reseña fue restaurada.</p>
-            } @else if (confirmRestore()) {
-              <p>¿Querés volver a mostrar esta reseña?</p>
-              <button type="button" class="btn btn-approve" [disabled]="saving()" (click)="restoreReview()">{{ saving() ? 'Restaurando…' : 'Sí, restaurar' }}</button>
-              <button type="button" class="btn btn-reject" [disabled]="saving()" (click)="confirmRestore.set(false)">Cancelar</button>
-            } @else {
-              <button type="button" class="btn btn-approve" (click)="confirmRestore.set(true)">Restaurar reseña</button>
+            <div class="moderation-history" aria-label="Historial del reporte">
+              <article class="history-event">
+                <span class="history-event__marker" aria-hidden="true"></span>
+
+                <div class="history-event__content">
+                  <strong>Reporte aprobado</strong>
+                  <span>
+                    Aprobado por {{ report.moderatorUsername || 'moderación' }}
+                    @if (report.resolvedAt) {
+                      · {{ report.resolvedAt | date: 'dd/MM/yyyy · HH:mm' }}
+                    }
+                  </span>
+                  <p>La reseña fue retirada.</p>
+                </div>
+              </article>
+
+              @if (report.restoredAt) {
+                <article class="history-event">
+                  <span class="history-event__marker" aria-hidden="true"></span>
+
+                  <div class="history-event__content">
+                    <strong>Reseña restaurada</strong>
+                    <span>
+                      Restaurada por {{ report.restoredByUsername || 'moderación' }}
+                      · {{ report.restoredAt | date: 'dd/MM/yyyy · HH:mm' }}
+                    </span>
+                    <p>La reseña volvió a estar publicada.</p>
+                  </div>
+                </article>
+              }
+            </div>
+
+            @if (report.reviewTakenDown) {
+              <div class="restore-panel">
+                <div>
+                  <strong>Contenido retirado</strong>
+                  <p>Podés restaurarlo para que vuelva a estar disponible.</p>
+                </div>
+
+                <div class="restore-panel__actions">
+                  @if (confirmRestore()) {
+                    <p>¿Querés volver a mostrar esta reseña?</p>
+                    <div class="modal-inline-actions">
+                      <button
+                        type="button"
+                        class="btn btn-approve"
+                        [disabled]="saving()"
+                        (click)="restoreReview()"
+                      >
+                        {{ saving() ? 'Restaurando…' : 'Sí, restaurar' }}
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-reject"
+                        [disabled]="saving()"
+                        (click)="confirmRestore.set(false)"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  } @else {
+                    <button
+                      type="button"
+                      class="btn btn-approve"
+                      (click)="confirmRestore.set(true)"
+                    >
+                      Restaurar reseña
+                    </button>
+                  }
+                </div>
+              </div>
             }
-            @if (actionError()) { <p class="state error" role="alert">{{ actionError() }}</p> }
+          } @else {
+            <p class="modal-status-note">
+              Este reporte fue rechazado. La reseña permanece publicada.
+            </p>
+          }
+
+          @if (actionError()) {
+            <p class="state error" role="alert">{{ actionError() }}</p>
+          }
+
+          @if (report.resolutionComment) {
+            <section class="resolution-summary">
+              <h3>Comentario de resolución</h3>
+              <p>{{ report.resolutionComment }}</p>
+            </section>
           }
         }
       </div>
@@ -654,16 +814,95 @@
             }
           </form>
         } @else {
-          <p class="modal-status-note">
-            Este reporte fue
-            {{ report.status === 'APPROVED' ? 'aprobado' : 'rechazado' }}.
-          </p>
+          @if (report.status === 'APPROVED') {
+            <div class="moderation-history" aria-label="Historial del reporte">
+              <article class="history-event">
+                <span class="history-event__marker" aria-hidden="true"></span>
+
+                <div class="history-event__content">
+                  <strong>Reporte aprobado</strong>
+                  <span>
+                    Aprobado por {{ report.moderatorUsername || 'moderación' }}
+                    @if (report.resolvedAt) {
+                      · {{ report.resolvedAt | date: 'dd/MM/yyyy · HH:mm' }}
+                    }
+                  </span>
+                  <p>La historia fue retirada.</p>
+                </div>
+              </article>
+
+              @if (report.restoredAt) {
+                <article class="history-event">
+                  <span class="history-event__marker" aria-hidden="true"></span>
+
+                  <div class="history-event__content">
+                    <strong>Historia restaurada</strong>
+                    <span>
+                      Restaurada por {{ report.restoredByUsername || 'moderación' }}
+                      · {{ report.restoredAt | date: 'dd/MM/yyyy · HH:mm' }}
+                    </span>
+                    <p>La historia volvió a estar disponible.</p>
+                  </div>
+                </article>
+              }
+            </div>
+          } @else {
+            <p class="modal-status-note">
+              Este reporte fue rechazado. La historia permanece disponible.
+            </p>
+          }
 
           @if (report.resolutionComment) {
-            <div class="reason-block">
+            <section class="resolution-summary">
               <h3>Comentario de resolución</h3>
               <p>{{ report.resolutionComment }}</p>
+            </section>
+          }
+
+          @if (report.status === 'APPROVED' && report.storyModerationRemoved) {
+            <div class="restore-panel">
+              <div>
+                <strong>Contenido retirado</strong>
+                <p>Podés restaurarlo para que vuelva a estar disponible.</p>
+              </div>
+
+              <div class="restore-panel__actions">
+                @if (confirmRestore()) {
+                  <p>¿Querés volver a publicar esta historia?</p>
+                  <div class="modal-inline-actions">
+                    <button
+                      type="button"
+                      class="btn btn-approve"
+                      [disabled]="saving()"
+                      (click)="restoreStory()"
+                    >
+                      {{ saving() ? 'Restaurando…' : 'Sí, restaurar historia' }}
+                    </button>
+
+                    <button
+                      type="button"
+                      class="btn btn-reject"
+                      [disabled]="saving()"
+                      (click)="confirmRestore.set(false)"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                } @else {
+                  <button
+                    type="button"
+                    class="btn btn-approve"
+                    (click)="confirmRestore.set(true)"
+                  >
+                    Restaurar historia
+                  </button>
+                }
+              </div>
             </div>
+
+            @if (actionError()) {
+              <p class="state error" role="alert">{{ actionError() }}</p>
+            }
           }
         }
       </div>
@@ -686,6 +925,211 @@
             (click)="moderateStory('approve')"
           >
             {{ saving() ? 'Guardando…' : 'Aprobar y dar de baja la historia' }}
+          </button>
+        </div>
+      }
+    </section>
+  </div>
+}
+
+@if (selectedCommentReport(); as report) {
+  <div
+    class="modal-backdrop"
+    role="presentation"
+    (click)="closeReport()"
+  >
+    <section
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="comment-modal-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-header">
+        <div>
+          <span class="eyebrow">DETALLE DE MODERACIÓN</span>
+          <h2 id="comment-modal-title">Reporte de comentario</h2>
+        </div>
+
+        <button
+          type="button"
+          class="close"
+          aria-label="Cerrar"
+          (click)="closeReport()"
+        >
+          ×
+        </button>
+      </header>
+
+      <div class="modal-body">
+        <div class="case-meta">
+          <div class="meta-box">
+            <small>Comentario de</small>
+            <strong>{{ report.commentAuthorUsername || 'Usuario' }}</strong>
+          </div>
+
+          <div class="meta-box">
+            <small>Grupo</small>
+            <strong>{{ groupNameFor(report) }}</strong>
+          </div>
+
+          <div class="meta-box">
+            <small>Reportado por</small>
+            <strong>{{ report.reporterUsername || 'Usuario' }}</strong>
+          </div>
+
+          <div class="meta-box">
+            <small>Fecha</small>
+            <strong>{{ report.createdAt | date: 'dd/MM/yyyy · HH:mm' }}</strong>
+          </div>
+        </div>
+
+        <div class="reason-block">
+          <h3>Motivo</h3>
+          <p>{{ report.reason }}</p>
+
+          @if (report.details) {
+            <h3>Detalle del reporte</h3>
+            <p>{{ report.details }}</p>
+          }
+        </div>
+
+        <div class="review-quote comment-quote">
+          <small>Comentario denunciado</small>
+          <p>{{ report.commentContent }}</p>
+        </div>
+
+        @if (report.status === 'PENDING') {
+          <form [formGroup]="resolutionForm">
+            <div class="resolution">
+              <label for="comment-resolution-comment">
+                Comentario de resolución · opcional
+              </label>
+              <textarea
+                id="comment-resolution-comment"
+                formControlName="resolutionComment"
+                maxlength="3000"
+                placeholder="Dejá constancia breve de la decisión…"
+              ></textarea>
+            </div>
+
+            @if (actionError()) {
+              <p class="state error" role="alert">{{ actionError() }}</p>
+            }
+          </form>
+        } @else {
+          @if (report.status === 'APPROVED') {
+            <div class="moderation-history" aria-label="Historial del reporte">
+              <article class="history-event">
+                <span class="history-event__marker" aria-hidden="true"></span>
+
+                <div class="history-event__content">
+                  <strong>Reporte aprobado</strong>
+                  <span>
+                    Aprobado por {{ report.moderatorUsername || 'moderación' }}
+                    @if (report.resolvedAt) {
+                      · {{ report.resolvedAt | date: 'dd/MM/yyyy · HH:mm' }}
+                    }
+                  </span>
+                  <p>El comentario fue retirado.</p>
+                </div>
+              </article>
+
+              @if (report.restoredAt) {
+                <article class="history-event">
+                  <span class="history-event__marker" aria-hidden="true"></span>
+
+                  <div class="history-event__content">
+                    <strong>Comentario restaurado</strong>
+                    <span>
+                      Restaurado por {{ report.restoredByUsername || 'moderación' }}
+                      · {{ report.restoredAt | date: 'dd/MM/yyyy · HH:mm' }}
+                    </span>
+                    <p>El comentario volvió a estar disponible en el grupo.</p>
+                  </div>
+                </article>
+              }
+            </div>
+
+            @if (report.commentStatus === 'MODERATED') {
+              <div class="restore-panel">
+                <div>
+                  <strong>Contenido retirado</strong>
+                  <p>Podés restaurarlo para que vuelva a estar disponible.</p>
+                </div>
+
+                <div class="restore-panel__actions">
+                  @if (confirmRestore()) {
+                    <p>¿Querés volver a mostrar este comentario en el grupo?</p>
+                    <div class="modal-inline-actions">
+                      <button
+                        type="button"
+                        class="btn btn-approve"
+                        [disabled]="saving()"
+                        (click)="restoreComment()"
+                      >
+                        {{ saving() ? 'Restaurando…' : 'Sí, restaurar comentario' }}
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-reject"
+                        [disabled]="saving()"
+                        (click)="confirmRestore.set(false)"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  } @else {
+                    <button
+                      type="button"
+                      class="btn btn-approve"
+                      (click)="confirmRestore.set(true)"
+                    >
+                      Restaurar comentario
+                    </button>
+                  }
+                </div>
+              </div>
+            } @else if (report.commentStatus === 'DELETED') {
+              <p>El comentario fue eliminado y no se puede restaurar desde este reporte.</p>
+            }
+          } @else {
+            <p class="modal-status-note">
+              Este reporte fue rechazado. El comentario permanece disponible.
+            </p>
+          }
+
+          @if (report.resolutionComment) {
+            <section class="resolution-summary">
+              <h3>Comentario de resolución</h3>
+              <p>{{ report.resolutionComment }}</p>
+            </section>
+          }
+
+          @if (actionError()) {
+            <p class="state error" role="alert">{{ actionError() }}</p>
+          }
+        }
+      </div>
+
+      @if (report.status === 'PENDING') {
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn btn-reject"
+            [disabled]="saving()"
+            (click)="moderateComment('reject')"
+          >
+            Rechazar reporte
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-approve"
+            [disabled]="saving()"
+            (click)="moderateComment('approve')"
+          >
+            {{ saving() ? 'Guardando…' : 'Aprobar y moderar comentario' }}
           </button>
         </div>
       }

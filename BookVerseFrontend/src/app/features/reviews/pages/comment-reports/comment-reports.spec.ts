@@ -5,7 +5,7 @@ import { CommentReports } from './comment-reports';
 import { GroupCommentReportsService, GroupCommentReport } from '../../../groups/services/group-comment-reports.service';
 
 describe('Comment moderation', () => {
-  const report: GroupCommentReport = { reportId: 'report', commentId: 'comment', groupId: 'group', commentAuthorUsername: 'Ana', commentContent: 'Texto', reporterUsername: 'Lu', reason: 'Motivo', details: null, resolutionComment: null, status: 'PENDING', createdAt: '2026-11-13' };
+  const report: GroupCommentReport = { reportId: 'report', commentId: 'comment', groupId: 'group', commentAuthorUsername: 'Ana', commentContent: 'Texto', reporterUsername: 'Lu', moderatorUsername: null, restoredByUserId: null, restoredByUsername: null, restoredAt: null, reason: 'Motivo', details: null, resolutionComment: null, status: 'PENDING', commentStatus: 'ACTIVE', createdAt: '2026-11-13', resolvedAt: null };
 
   it('filters reports and prevents submitting the same decision twice', () => {
     const pending = new Subject<GroupCommentReport>();

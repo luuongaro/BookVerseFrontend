@@ -10,9 +10,14 @@ export interface ReviewReport {
   reviewerName: string | null;
   rating: number | null;
   reviewContent: string | null;
+  reviewTakenDown: boolean;
   reporterUserId: string;
   reporterUsername: string | null;
   moderatorUserId: string | null;
+  moderatorUsername: string | null;
+  restoredByUserId: string | null;
+  restoredByUsername: string | null;
+  restoredAt: string | null;
   reason: string;
   details: string | null;
   resolutionComment: string | null;
