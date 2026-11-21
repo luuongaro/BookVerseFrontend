@@ -47,6 +47,7 @@
         }
       </section>
 
+      @if (canManage()) {
       <form class="editor-layout" [formGroup]="form">
         <!-- SIDEBAR CONTEXTUAL -->
 
@@ -338,6 +339,7 @@
           </footer>
         </section>
       </form>
+      }
     }
   </main>
 </div>

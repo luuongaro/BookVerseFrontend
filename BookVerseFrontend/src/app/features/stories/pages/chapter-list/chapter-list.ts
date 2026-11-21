@@ -41,7 +41,16 @@ export class ChapterList implements OnInit {
   readonly isLoading = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly canManage = computed(
-    () => this.writing && !!this.story() && this.permissions.canManage(this.story()!),
+    () =>
+      this.writing &&
+      !!this.story() &&
+      this.permissions.isAuthor(this.story()!),
+  );
+  readonly canEditOrDeleteChapters = computed(
+    () =>
+      this.writing &&
+      !!this.story() &&
+      this.permissions.isAuthor(this.story()!),
   );
   readonly deleting = signal(false);
   readonly selectedChapter = signal<ChapterResponse | null>(null);
@@ -86,7 +95,13 @@ export class ChapterList implements OnInit {
       });
   }
   confirmDelete(chapter: ChapterResponse): void {
-    if (!this.canManage() || this.deleting() || chapter.storyId !== this.storyId()) return;
+    if (
+      !this.canEditOrDeleteChapters() ||
+      this.deleting() ||
+      chapter.storyId !== this.storyId()
+    ) {
+      return;
+    }
     this.selectedChapter.set(chapter);
     this.deleteError.set('');
     this.deleteDialog().nativeElement.showModal();
@@ -96,7 +111,12 @@ export class ChapterList implements OnInit {
   }
   deleteChapter(): void {
     const chapter = this.selectedChapter();
-    if (!chapter || !this.canManage() || this.deleting() || chapter.storyId !== this.storyId())
+    if (
+      !chapter ||
+      !this.canEditOrDeleteChapters() ||
+      this.deleting() ||
+      chapter.storyId !== this.storyId()
+    )
       return;
     this.deleting.set(true);
     this.deleteError.set('');
