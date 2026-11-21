@@ -5,9 +5,14 @@ export interface StoryReport {
   storyId: string;
   storyTitle: string;
   storyAuthorUsername: string;
+  storyModerationRemoved: boolean;
   reporterUserId: string;
   reporterUsername: string | null;
   moderatorUserId: string | null;
+  moderatorUsername: string | null;
+  restoredByUserId: string | null;
+  restoredByUsername: string | null;
+  restoredAt: string | null;
   reason: string;
   details: string | null;
   resolutionComment: string | null;

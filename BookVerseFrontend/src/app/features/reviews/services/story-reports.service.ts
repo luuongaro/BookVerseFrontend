@@ -44,4 +44,11 @@ export class StoryReportsService {
       request,
     );
   }
+
+  restore(reportId: string): Observable<void> {
+    return this.http.patch<void>(
+      `${this.url}/${encodeURIComponent(reportId)}/restore`,
+      {},
+    );
+  }
 }

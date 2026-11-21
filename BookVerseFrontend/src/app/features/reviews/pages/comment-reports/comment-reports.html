@@ -16,7 +16,14 @@
   @if (!loading() && !error()) {
     @for (report of filteredReports(); track report.reportId) {
         <article class="report-card">
-          <div><strong>{{ report.commentAuthorUsername || 'Usuario' }}</strong><p>{{ report.commentContent }}</p><small>{{ report.reason }} · {{ report.createdAt | date:'dd/MM/yyyy' }} · {{ report.status === 'PENDING' ? 'Pendiente' : report.status === 'APPROVED' ? 'Aprobado' : 'Rechazado' }}</small></div>
+          <div>
+            <strong>{{ report.commentAuthorUsername || 'Usuario' }}</strong>
+            <p>{{ report.commentContent }}</p>
+            <small>{{ report.reason }} · {{ report.createdAt | date:'dd/MM/yyyy' }} · {{ report.status === 'PENDING' ? 'Pendiente' : report.status === 'APPROVED' ? 'Aprobado' : 'Rechazado' }}</small>
+            @if (report.status === 'APPROVED' && report.commentStatus === 'ACTIVE') {
+              <span class="status restored">Comentario restaurado</span>
+            }
+          </div>
           <button type="button" (click)="open(report)">Ver reporte</button>
         </article>
     } @empty { <p>No hay reportes de comentarios en este estado.</p> }
@@ -37,9 +44,91 @@
             <button type="button" [disabled]="busy()" (click)="moderate('reject')">Rechazar reporte</button>
             <button type="button" [disabled]="busy()" (click)="moderate('approve')">Aprobar y retirar comentario</button>
           </div>
-        } @else { <p>Este reporte ya fue moderado.</p> }
+        } @else {
+          @if (report.status === 'APPROVED') {
+            <div class="moderation-history" aria-label="Historial del reporte">
+              <article class="history-event">
+                <span class="history-event__marker" aria-hidden="true"></span>
+
+                <div class="history-event__content">
+                  <strong>Reporte aprobado</strong>
+                  <span>
+                    Aprobado por {{ report.moderatorUsername || 'moderación' }}
+                    @if (report.resolvedAt) {
+                      · {{ report.resolvedAt | date: 'dd/MM/yyyy · HH:mm' }}
+                    }
+                  </span>
+                  <p>El comentario fue retirado.</p>
+                </div>
+              </article>
+
+              @if (report.restoredAt) {
+                <article class="history-event">
+                  <span class="history-event__marker" aria-hidden="true"></span>
+
+                  <div class="history-event__content">
+                    <strong>Comentario restaurado</strong>
+                    <span>
+                      Restaurado por {{ report.restoredByUsername || 'moderación' }}
+                      · {{ report.restoredAt | date: 'dd/MM/yyyy · HH:mm' }}
+                    </span>
+                    <p>El comentario volvió a estar disponible en el grupo.</p>
+                  </div>
+                </article>
+              }
+            </div>
+
+            @if (report.commentStatus === 'MODERATED') {
+              <div class="restore-panel">
+                <div>
+                  <strong>Contenido retirado</strong>
+                  <p>Podés restaurarlo para que vuelva a estar disponible.</p>
+                </div>
+
+                <div class="restore-panel__actions">
+                  @if (confirmRestore()) {
+                    <p>¿Querés volver a mostrar este comentario en el grupo?</p>
+                    <div class="actions">
+                      <button type="button" [disabled]="busy()" (click)="restoreComment()">
+                        {{ busy() ? 'Restaurando…' : 'Sí, restaurar comentario' }}
+                      </button>
+                      <button type="button" [disabled]="busy()" (click)="confirmRestore.set(false)">
+                        Cancelar
+                      </button>
+                    </div>
+                  } @else {
+                    <button type="button" (click)="confirmRestore.set(true)">
+                      Restaurar comentario
+                    </button>
+                  }
+                </div>
+              </div>
+            } @else if (report.commentStatus === 'DELETED') {
+              <p>El comentario fue eliminado y no se puede restaurar desde este reporte.</p>
+            }
+          } @else {
+            <p>Este reporte fue rechazado. El comentario permanece disponible.</p>
+          }
+
+          @if (report.resolutionComment) {
+            <section class="resolution-summary">
+              <h3>Comentario de resolución</h3>
+              <p>{{ report.resolutionComment }}</p>
+            </section>
+          }
+
+          @if (error()) {
+            <p role="alert">{{ error() }}</p>
+          }
+        }
         <button type="button" [disabled]="busy()" (click)="close()">Cerrar</button>
       </section>
     </div>
   }
 </main>
+
+@if (toastMessage()) {
+  <div class="toast" role="status" aria-live="polite">
+    {{ toastMessage() }}
+  </div>
+}
