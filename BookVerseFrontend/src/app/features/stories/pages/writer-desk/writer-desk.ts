@@ -7,7 +7,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
 import { apiError } from '../../../../core/api/api.config';
@@ -24,6 +24,7 @@ import { StoryService } from '../../services/story.services';
   styleUrl: './writer-desk.css',
 })
 export class WriterDesk implements OnInit {
+  private readonly router = inject(Router);
   private readonly stories = inject(StoryService);
   private readonly chapters = inject(ChapterService);
   private readonly destroyRef = inject(DestroyRef);
@@ -35,6 +36,7 @@ export class WriterDesk implements OnInit {
   readonly loading = signal(false);
   readonly loadingChapters = signal(false);
   readonly error = signal('');
+  readonly accessMessage = signal('');
   readonly chapterError = signal('');
   readonly storyPage = signal(0);
   readonly chapterPage = signal(0);
@@ -45,6 +47,13 @@ export class WriterDesk implements OnInit {
     viewChild.required<ElementRef<HTMLDialogElement>>('deleteDialog');
 
   ngOnInit(): void {
+    const message =
+      this.router.getCurrentNavigation()?.extras.state?.['accessMessage'];
+
+    if (typeof message === 'string') {
+      this.accessMessage.set(message);
+    }
+
     this.loadStories();
   }
 

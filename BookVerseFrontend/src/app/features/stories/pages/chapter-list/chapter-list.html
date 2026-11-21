@@ -103,7 +103,7 @@
                   </a>
                 }
 
-                @if (canManage()) {
+                @if (canEditOrDeleteChapters()) {
                   <a
                     class="chapter-action edit"
                     [routerLink]="[

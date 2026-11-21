@@ -202,7 +202,20 @@ export class StoryForm implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (story) => {
-          this.allowed.set(this.permissions.canManage(story));
+          if (!this.permissions.isAuthor(story)) {
+            this.isLoading.set(false);
+
+            void this.router.navigate(['/writer'], {
+              replaceUrl: true,
+              state: {
+                accessMessage: 'Solo el autor puede editar esta historia.',
+              },
+            });
+
+            return;
+          }
+
+          this.allowed.set(true);
           this.form.patchValue({
             title: story.title,
             genre: story.genre ?? '',
@@ -221,12 +234,8 @@ export class StoryForm implements OnInit {
           this.initialDescription.set(story.description);
           this.form.markAsPristine();
           this.isLoading.set(false);
-          if (this.allowed()) {
-            this.form.enable();
-            this.restoreLocalDraft();
-          } else {
-            this.errorMessage.set('No tenés permiso para editar esta historia.');
-          }
+          this.form.enable();
+          this.restoreLocalDraft();
         },
         error: (error) => {
           this.isLoading.set(false);

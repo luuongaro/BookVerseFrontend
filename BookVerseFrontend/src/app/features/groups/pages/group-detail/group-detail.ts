@@ -90,6 +90,10 @@ export class GroupDetail implements OnInit {
     viewChild.required<ElementRef<HTMLDialogElement>>('newCycleDialog');
   readonly referenceUpdateDialog =
     viewChild.required<ElementRef<HTMLDialogElement>>('referenceUpdateDialog');
+  readonly commentReportSuccessDialog =
+    viewChild.required<ElementRef<HTMLDialogElement>>(
+      'commentReportSuccessDialog',
+    );
 
   group: ReadingGroup | null = null;
   currentCycle: GroupReadingCycle | null = null;
@@ -1358,9 +1362,19 @@ export class GroupDetail implements OnInit {
     this.commentReports.create(comment.idExternal, reason, this.reportDetails.trim() || null)
       .pipe(finalize(() => { this.commentFormBusy = false; this.changeDetector.markForCheck(); }))
       .subscribe({
-        next: () => { this.reportingCommentId = null; this.commentFormMessage = 'Reporte enviado.'; this.changeDetector.markForCheck(); },
+        next: () => {
+          this.reportingCommentId = null;
+          this.reportReason = '';
+          this.reportDetails = '';
+          this.commentReportSuccessDialog().nativeElement.showModal();
+          this.changeDetector.markForCheck();
+        },
         error: (error: HttpErrorResponse) => { this.commentFormMessage = error.status === 409 ? 'Ya tenés un reporte pendiente para este comentario.' : 'No se pudo enviar el reporte. Intentá nuevamente.'; this.changeDetector.markForCheck(); },
       });
+  }
+
+  finishCommentReport(): void {
+    this.commentReportSuccessDialog().nativeElement.close();
   }
 
   requestDeleteComment(comment: GroupComment): void {

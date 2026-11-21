@@ -9,6 +9,12 @@
     </a>
   </header>
 
+  @if (accessMessage()) {
+    <p class="state" role="status">
+      {{ accessMessage() }}
+    </p>
+  }
+
   @if (loading()) {
     <p class="state" role="status">Cargando tus historias…</p>
   } @else if (error()) {

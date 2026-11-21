@@ -1296,6 +1296,27 @@
 </div>
 
 <dialog
+  #commentReportSuccessDialog
+  class="comment-report-success-dialog"
+  aria-labelledby="comment-report-success-title"
+  aria-describedby="comment-report-success-description"
+  (cancel)="$event.preventDefault(); finishCommentReport()"
+>
+  <span class="comment-report-success-dialog__icon" aria-hidden="true">✓</span>
+  <span class="comment-report-success-dialog__eyebrow">REPORTE ENVIADO</span>
+
+  <h2 id="comment-report-success-title">Gracias por avisarnos</h2>
+
+  <p id="comment-report-success-description">
+    Recibimos el reporte. El equipo de moderación lo revisará.
+  </p>
+
+  <button type="button" (click)="finishCommentReport()">
+    Volver al grupo
+  </button>
+</dialog>
+
+<dialog
   #leaveGroupDialog
   class="leave-confirm-dialog"
   [class.leave-confirm-dialog--creator]="

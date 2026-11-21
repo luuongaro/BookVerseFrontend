@@ -57,7 +57,10 @@ export class StoryDetail implements OnInit {
   readonly premiumDialog = viewChild.required(PremiumUpgradeDialog);
   readonly premiumAccessRequired = signal(false);
   readonly canManage = computed(
-    () => this.writing && !!this.story() && this.permissions.canManage(this.story()!),
+    () =>
+      this.writing &&
+      !!this.story() &&
+      this.permissions.isAuthor(this.story()!),
   );
   readonly chapterPage = signal<PageResponse<ChapterResponse> | null>(null);
   readonly chaptersLoading = signal(false);

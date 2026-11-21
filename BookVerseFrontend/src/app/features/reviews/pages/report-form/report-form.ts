@@ -40,9 +40,14 @@ export class ReviewReportForm implements OnInit {
     details: ['', Validators.maxLength(3000)],
   });
 
-  returnToReviews(): void {
+  finishReport(): void {
     this.reportSuccessDialog().nativeElement.close();
-    void this.router.navigate(['/reviews']);
+
+    const destination = this.isStoryReport()
+      ? ['/stories']
+      : ['/reviews'];
+
+    void this.router.navigate(destination, { replaceUrl: true });
   }
 
   ngOnInit(): void {
@@ -96,7 +101,7 @@ export class ReviewReportForm implements OnInit {
         .subscribe({
           next: () => {
             this.saving.set(false);
-            void this.router.navigate(['/stories', this.storyId]);
+            this.reportSuccessDialog().nativeElement.showModal();
           },
           error: (error) => {
             this.error.set(

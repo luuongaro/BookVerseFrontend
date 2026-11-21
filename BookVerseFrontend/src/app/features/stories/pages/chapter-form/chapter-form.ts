@@ -15,10 +15,12 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import {
+  EMPTY,
   finalize,
-  forkJoin,
+  map,
   of,
   Subscription,
+  switchMap,
   TimeoutError,
   timeout,
 } from 'rxjs';
@@ -86,7 +88,9 @@ export class ChapterForm implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   readonly saveMessage = signal<string | null>(null);
   readonly isEditMode = computed(() => this.chapterId() !== null);
-  readonly canManage = computed(() => !!this.story() && this.permissions.canManage(this.story()!));
+  readonly canManage = computed(
+    () => !!this.story() && this.permissions.isAuthor(this.story()!),
+  );
   readonly pageTitle = computed(() => (this.isEditMode() ? 'Editar capítulo' : 'Nuevo capítulo'));
   readonly toolbarState = signal<ToolbarState>({ ...EMPTY_TOOLBAR_STATE });
   readonly alignmentLabel = computed(() => {
@@ -141,24 +145,43 @@ export class ChapterForm implements OnInit {
       this.errorMessage.set('No se pudo identificar la historia.');
       return;
     }
-    this.request = forkJoin({
-      story: this.stories.getById(storyId),
-      chapter: chapterId ? this.service.getById(chapterId) : of(null),
-    })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+    this.request = this.stories
+      .getById(storyId)
+      .pipe(
+        switchMap((story) => {
+          this.story.set(story);
+
+          if (!this.canManage()) {
+            this.isLoading.set(false);
+
+            void this.router.navigate(['/writer'], {
+              replaceUrl: true,
+              state: {
+                accessMessage: chapterId
+                  ? 'Solo el autor de la historia puede editar sus capítulos.'
+                  : 'Solo el autor de la historia puede crear capítulos.',
+              },
+            });
+
+            return EMPTY;
+          }
+
+          if (!chapterId) {
+            return of({ story, chapter: null });
+          }
+
+          return this.service.getById(chapterId).pipe(
+            map((chapter) => ({ story, chapter })),
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe({
-        next: ({ story, chapter }) => {
+        next: ({ chapter }) => {
           this.isLoading.set(false);
           if (chapter && chapter.storyId !== storyId) {
             this.loadFailed.set(true);
             this.errorMessage.set('El capítulo no pertenece a esta historia.');
-            return;
-          }
-          this.story.set(story);
-          if (!this.canManage()) {
-            this.errorMessage.set(
-              'No tenés permiso para gestionar los capítulos de esta historia.',
-            );
             return;
           }
           if (chapter) {
