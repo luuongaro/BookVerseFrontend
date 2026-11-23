@@ -41,7 +41,6 @@ import { PROFILE_AVATARS, profileAvatar } from '../../models/profile-avatars';
 import { StoryResponse } from '../../../stories/models/story-response';
 import { StoryService } from '../../../stories/services/story.services';
 import { UserService } from '../../services/user.service';
-import { ProfileBadge } from '../../components/profile-badge/profile-badge';
 import { FriendAction } from '../../components/friend-action/friend-action';
 
 interface CreatorTransferOption {
@@ -54,7 +53,7 @@ interface CreatorTransferOption {
 }
 
 @Component({
-  imports: [UserAvatar, RouterLink, FormsModule, ProfileBadge, FriendAction],
+  imports: [UserAvatar, RouterLink, FormsModule, FriendAction],
   selector: 'app-profile',
   styleUrls: [
     './profile.css',
