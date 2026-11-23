@@ -166,9 +166,6 @@
 
           <div class="identity-badges">
             @if (!isOwnProfile()) { <app-friend-action [userId]="user.idExternal" /> }
-            @if (canSendTip()) {
-              <app-send-tip [storyId]="tipStoryId()!" [recipientName]="profile.name" />
-            }
             @if (canEditProfile()) {
               <button
                 class="profile-button public-profile-link"
@@ -904,7 +901,6 @@
         </section>
 
         <app-profile-badge [userId]="user.idExternal" />
-        <app-favorite-stories [userId]="user.idExternal" [editable]="canEditProfile()" />
 
         <footer class="page-footer">
           <span>Un pequeño mundo propio.</span>

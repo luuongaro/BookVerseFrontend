@@ -26,31 +26,7 @@
         {{ error() }} <button (click)="load()">Reintentar</button>
       </div>
     } @else {
-      <section class="overview" aria-label="Resumen de valoraciones">
-        <div class="rating-panel">
-          <div>
-            <div class="score">{{ average() || '—' }}</div>
-            <div
-              class="stars"
-              [attr.aria-label]="'Promedio ' + (average() || 'sin valoraciones') + ' de 5'"
-            >
-              {{ stars(+(average() || 0)) }}
-            </div>
-            <div class="total">Valoración promedio</div>
-          </div>
-          <div class="rating-breakdown">
-            @for (rating of ratingLevels; track rating) {
-              <div
-                class="bar-row"
-                [attr.aria-label]="rating + ' estrellas: ' + ratingPercent(rating) + '%'"
-              >
-                {{ rating }}
-                <div class="bar"><i [style.width.%]="ratingPercent(rating)"></i></div>
-                <span>{{ ratingPercent(rating) }}%</span>
-              </div>
-            }
-          </div>
-        </div>
+      <section class="overview" aria-label="Reseñas destacadas">
         @if (featured(); as featured) {
           <article class="featured">
             <a class="featured-link" [routerLink]="['/reviews', featured.review.reviewId]">
@@ -161,7 +137,6 @@
             (change)="sort.set(order.value)"
           >
             <option value="newest">Más recientes</option>
-            <option value="rating">Mejor valoradas</option>
           </select>
         </div>
       </section>
@@ -269,9 +244,6 @@
           </small>
         </div>
       </div>
-      <span class="rating-stars" [attr.aria-label]="review.rating + ' de 5 estrellas'">
-        {{ stars(review.rating) }}
-      </span>
     </div>
 
     <div class="review-copy">

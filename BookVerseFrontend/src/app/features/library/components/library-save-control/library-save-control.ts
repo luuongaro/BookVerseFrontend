@@ -4,7 +4,6 @@ import {
   inject,
   input,
   signal,
-  viewChild,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -13,12 +12,10 @@ import { ReadingState, ReadingStatus } from '../../models/library-book.model';
 import { readingStateLabel } from '../../models/reading-state';
 import { ReadingStateBadge } from '../reading-state-badge/reading-state-badge';
 import { ReadingStateSelect } from '../reading-state-select/reading-state-select';
-import { isFreeStoryLimitError } from '../../../stories/services/reading-status-errors';
-import { PremiumUpgradeDialog } from '../../../subscriptions/components/premium-upgrade-dialog/premium-upgrade-dialog';
 
 @Component({
   selector: 'app-library-save-control',
-  imports: [RouterLink, ReadingStateBadge, ReadingStateSelect, PremiumUpgradeDialog],
+  imports: [RouterLink, ReadingStateBadge, ReadingStateSelect],
   template: `
     <section
       class="library-control"
@@ -51,7 +48,6 @@ import { PremiumUpgradeDialog } from '../../../subscriptions/components/premium-
       <p class="confirmation" role="status" aria-live="polite">{{ confirmation() }}</p>
     </section>
 
-    <app-premium-upgrade-dialog />
   `,
   styleUrl: './library-save-control.css',
 })
@@ -66,7 +62,6 @@ export class LibrarySaveControl {
   readonly lookupError = signal('');
   readonly saveError = signal('');
   readonly confirmation = signal('');
-  readonly premiumDialog = viewChild.required(PremiumUpgradeDialog);
 
   private lookupRequest?: Subscription;
   private saveRequest?: Subscription;
@@ -124,15 +119,6 @@ export class LibrarySaveControl {
       error: (error) => {
         this.saving.set(false);
 
-        if (
-          this.kind() === 'story' &&
-          this.selection() === 'IN_PROGRESS' &&
-          isFreeStoryLimitError(error)
-        ) {
-          this.saveError.set('');
-          this.premiumDialog().open();
-          return;
-        }
 
         this.saveError.set(libraryError(error));
       },

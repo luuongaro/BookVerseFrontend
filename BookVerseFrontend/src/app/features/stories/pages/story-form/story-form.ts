@@ -265,10 +265,6 @@ export class StoryForm implements OnInit {
         label: 'Descripción',
         changed: current.description !== original.description,
       },
-      {
-        label: 'Tipo de acceso',
-        changed: current.accessType !== original.accessType,
-      },
     ];
 
     return {

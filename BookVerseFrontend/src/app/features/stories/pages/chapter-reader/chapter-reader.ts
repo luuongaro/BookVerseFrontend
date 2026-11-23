@@ -10,7 +10,6 @@ import {
   OnInit,
   signal,
   ViewChild,
-  viewChild,
 } from '@angular/core';
 
 import {
@@ -34,16 +33,11 @@ import { UserService } from '../../../profile/services/user.service';
 import { ReadingStatusRequest } from '../../models/reading-status-request';
 import { ReadingStatusResponse } from '../../models/reading-status-response';
 import { ReadingStatusService } from '../../services/reading-status.service';
-import {
-  isFreeStoryLimitError,
-  isPremiumStoryPlanError,
-} from '../../services/reading-status-errors';
-import { PremiumUpgradeDialog } from '../../../subscriptions/components/premium-upgrade-dialog/premium-upgrade-dialog';
 
 @Component({
   selector: 'app-chapter-reader',
   standalone: true,
-  imports: [CommonModule, RouterModule, PremiumUpgradeDialog],
+  imports: [CommonModule, RouterModule],
   templateUrl: './chapter-reader.html',
   styleUrl: './chapter-reader.css'
 })
@@ -52,7 +46,6 @@ export class ChapterReader implements OnInit {
   @ViewChild('pageWindow')
   private pageWindow?: ElementRef<HTMLDivElement>;
 
-  readonly premiumDialog = viewChild.required(PremiumUpgradeDialog);
 
   readonly currentPage = signal(0);
   readonly totalPages = signal(1);
@@ -457,17 +450,7 @@ private saveReadingProgress(
       },
 
       error: error => {
-        if (isFreeStoryLimitError(error)) {
-          this.progressError.set(null);
-          this.premiumDialog().open();
-          return;
-        }
-
-        this.progressError.set(
-          isPremiumStoryPlanError(error)
-            ? 'Tu plan actual no permite guardar el progreso de historias Premium.'
-            : 'El capítulo cargó, pero no pudimos guardar tu progreso.'
-        );
+        this.progressError.set('El capítulo cargó, pero no pudimos guardar tu progreso.');
       }
 
     });

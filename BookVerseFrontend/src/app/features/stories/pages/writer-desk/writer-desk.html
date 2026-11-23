@@ -42,12 +42,7 @@
                 <span class="story-mark" aria-hidden="true">✎</span>
                 <span class="story-label">
                   <strong>{{ story.title }}</strong>
-                  <small
-                    >{{ story.accessType === 'PREMIUM' ? 'Premium' : 'Gratuita' }}
-                    @if (story.hidden) {
-                      · Oculta
-                    }
-                  </small>
+                  @if (story.hidden) { <small>Oculta</small> }
                 </span>
                 <span class="story-arrow" aria-hidden="true">›</span>
               </button>
@@ -70,9 +65,6 @@
           <section class="chapter-panel" aria-labelledby="selected-story-title">
             <header class="story-heading">
               <div class="story-meta">
-                <span class="badge" [class.premium]="story.accessType === 'PREMIUM'">{{
-                  story.accessType === 'PREMIUM' ? 'Premium' : 'Gratuita'
-                }}</span>
                 @if (story.hidden) {
                   <span class="badge">Oculta</span>
                 }

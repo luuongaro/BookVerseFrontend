@@ -29,9 +29,6 @@
             <span class="cover-author">{{ story.authorUsername || 'Autor no disponible' }}</span>
           </div>
           <div class="story-content">
-            <span class="story-badge" [class.premium]="story.accessType === 'PREMIUM'">{{
-              story.accessType === 'PREMIUM' ? 'Premium' : 'Gratuita'
-            }}</span>
             <h2>{{ story.title }}</h2>
             <p class="story-author">{{ story.authorUsername ? '@' + story.authorUsername : 'Autor no disponible' }} @if (story.genre) { · {{ story.genre }} }</p>
             <div class="story-description" [innerHTML]="story.description"></div>

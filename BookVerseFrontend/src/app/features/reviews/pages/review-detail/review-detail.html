@@ -30,17 +30,6 @@
             <small>Publicada el {{ review.createdAt | date: 'dd/MM/yyyy' }}</small>
           </div>
         </div>
-
-        <div
-          class="detail-rating"
-          role="img"
-          [attr.aria-label]="review.rating + ' de 5 estrellas'"
-        >
-          @for (star of [1, 2, 3, 4, 5]; track star) {
-            <span [class.filled]="star <= review.rating" aria-hidden="true">★</span>
-          }
-          <strong>{{ review.rating }}/5</strong>
-        </div>
       </header>
 
       <p class="review-detail-content">{{ review.content }}</p>

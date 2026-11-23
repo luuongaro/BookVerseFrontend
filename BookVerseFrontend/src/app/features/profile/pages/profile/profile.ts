@@ -31,7 +31,6 @@ import { GroupMember } from '../../../groups/models/group-member.model';
 import { GroupMembersService } from '../../../groups/services/group-members.service';
 import { ReadingGroupsService } from '../../../groups/services/reading-groups.service';
 import { ReadingGroup } from '../../../groups/models/reading-group.model';
-import { FavoriteStories } from '../../components/favorite-stories/favorite-stories';
 import {
   AccountDeactivationRequest,
   AccountStoryAction,
@@ -42,7 +41,6 @@ import { PROFILE_AVATARS, profileAvatar } from '../../models/profile-avatars';
 import { StoryResponse } from '../../../stories/models/story-response';
 import { StoryService } from '../../../stories/services/story.services';
 import { UserService } from '../../services/user.service';
-import { SendTip } from '../../../tips/components/send-tip/send-tip';
 import { ProfileBadge } from '../../components/profile-badge/profile-badge';
 import { FriendAction } from '../../components/friend-action/friend-action';
 
@@ -56,7 +54,7 @@ interface CreatorTransferOption {
 }
 
 @Component({
-  imports: [UserAvatar, RouterLink, FormsModule, FavoriteStories, SendTip, ProfileBadge, FriendAction],
+  imports: [UserAvatar, RouterLink, FormsModule, ProfileBadge, FriendAction],
   selector: 'app-profile',
   styleUrls: [
     './profile.css',

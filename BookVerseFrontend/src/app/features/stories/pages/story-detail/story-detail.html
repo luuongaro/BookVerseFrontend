@@ -2,10 +2,6 @@
   <a [routerLink]="section">{{ writing ? '← Escritorio' : '← Historias' }}</a>
   @if (isLoading()) {
     <p class="state" role="status">Cargando historia…</p>
-  } @else if (premiumAccessRequired()) {
-    <p class="state">
-      Esta historia y sus capítulos están disponibles con Premium.
-    </p>
   } @else if (errorMessage()) {
     <div class="state error" role="alert">
       {{ errorMessage() }} <button (click)="load()">Reintentar</button>
@@ -15,9 +11,6 @@
   } @else if (story(); as currentStory) {
     <h1>{{ currentStory.title }}</h1>
     <div class="story-meta">
-      <span class="access-badge" [class.premium]="currentStory.accessType === 'PREMIUM'">
-        {{ currentStory.accessType === 'PREMIUM' ? 'Premium' : 'Gratuita' }}
-      </span>
       <span>
         {{ writing ? currentStory.chaptersCount : currentStory.publishedChaptersCount }}
         capítulos{{ writing ? '' : ' disponibles' }}
@@ -40,10 +33,6 @@
             </div>
           </div>
         }
-
-        @if (canSendTip()) {
-          <app-send-tip [storyId]="currentStory.idExternal" [recipientName]="currentStory.title" />
-        }
       </div>
     }
 
@@ -62,28 +51,6 @@
         }
 
         @if (!writing) {
-          <button
-            type="button"
-            class="button secondary save-button"
-            [attr.aria-pressed]="favorite() === true"
-            [disabled]="favorite() === null || favoriteSaving()"
-            (click)="toggleFavorite()"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              [attr.fill]="favorite() ? 'currentColor' : 'none'"
-              stroke="currentColor"
-              stroke-width="1.5"
-              aria-hidden="true"
-            >
-              <path
-                d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"
-              />
-            </svg>
-            {{
-              favoriteSaving() ? 'Guardando…' : favorite() ? 'En favoritas' : 'Agregar a favoritas'
-            }}
-          </button>
           <div class="related-links">
             <a
               class="button secondary"
@@ -121,14 +88,6 @@
         </details>
       }
     </div>
-    @if (favoriteError()) {
-      <p class="validation" role="alert">
-        {{ favoriteError() }}
-        @if (favorite() === null) {
-          <button type="button" (click)="loadFavorite(currentStory.idExternal)">Reintentar</button>
-        }
-      </p>
-    }
     <div class="chapter-section">
       <span class="chapter-ornament" aria-hidden="true">✦</span>
       <h2>Capítulos</h2>
@@ -223,14 +182,6 @@
     </div>
   }
 </main>
-<app-premium-upgrade-dialog
-  [heading]="'Esta historia es Premium'"
-  [description]="
-    'El plan Gratis permite leer historias gratuitas. Para acceder a esta historia y a sus capítulos, pasate a Premium.'
-  "
-  [secondaryLabel]="'Volver a historias gratuitas'"
-  (dismissed)="returnToStories()"
-/> 
 <dialog
   #deleteDialog
   class="confirm-dialog"

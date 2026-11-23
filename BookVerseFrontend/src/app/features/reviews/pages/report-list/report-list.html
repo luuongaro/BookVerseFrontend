@@ -250,12 +250,9 @@
                           {{ report.workTitle ?? (report.bookId ? 'Libro no disponible' : 'Historia') }}
                         </strong>
 
-                        @if (report.reviewerName || report.rating !== null) {
+                        @if (report.reviewerName) {
                           <small>
                             Reseña de {{ report.reviewerName || 'Lector' }}
-                            @if (report.rating !== null) {
-                              · ★ {{ report.rating }}/5
-                            }
                           </small>
                         } @else {
                           <small>ID de reseña: {{ report.reviewId }}</small>

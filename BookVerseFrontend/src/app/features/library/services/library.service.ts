@@ -30,7 +30,7 @@ export class LibrarySessionError extends Error {
 export function libraryError(error: unknown): string {
   if (error instanceof LibrarySessionError) return error.message;
   if (isPremiumStoryPlanError(error)) {
-    return 'Esta historia es Premium. Tu plan actual solo permite guardar historias gratuitas.';
+    return 'No tenés acceso para guardar esta historia.';
   }
   if (
     error instanceof HttpErrorResponse &&
@@ -38,7 +38,7 @@ export function libraryError(error: unknown): string {
     error.error?.message ===
       'You have reached the maximum number of active stories allowed by your current subscription'
   ) {
-    return 'Alcanzaste el límite de historias en curso de tu plan.';
+    return 'No se pudo guardar la historia: alcanzaste el límite de lecturas en curso.';
   }
   return apiError(error);
 }

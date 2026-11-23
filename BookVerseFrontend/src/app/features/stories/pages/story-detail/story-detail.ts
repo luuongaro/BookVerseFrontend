@@ -16,17 +16,15 @@ import { StoryPermissions } from '../../services/story-permissions.service';
 import { StoryDetailResponse } from '../../models/story-detail-response';
 import { apiError } from '../../../../core/api/api.config';
 import { LibrarySaveControl } from '../../../library/components/library-save-control/library-save-control';
-import { SendTip } from '../../../tips/components/send-tip/send-tip';
 import { UserService } from '../../../profile/services/user.service';
 import { ChapterService } from '../../services/chapter.service';
 import { ChapterResponse } from '../../models/chapter-response';
 import { PageResponse } from '../../models/page-response';
-import { PremiumUpgradeDialog } from '../../../subscriptions/components/premium-upgrade-dialog/premium-upgrade-dialog';
 import { isPremiumStoryAccessError } from '../../services/reading-status-errors';
 
 @Component({
   selector: 'app-story-detail',
-  imports: [RouterLink, SendTip, LibrarySaveControl, PremiumUpgradeDialog],
+  imports: [RouterLink, LibrarySaveControl],
   templateUrl: './story-detail.html',
   styleUrl: './story-detail.css',
 })
@@ -54,8 +52,6 @@ export class StoryDetail implements OnInit {
   readonly story = signal<StoryDetailResponse | null>(null);
   readonly isLoading = signal(false);
   readonly errorMessage = signal('');
-  readonly premiumDialog = viewChild.required(PremiumUpgradeDialog);
-  readonly premiumAccessRequired = signal(false);
   readonly canManage = computed(
     () =>
       this.writing &&
@@ -82,7 +78,6 @@ export class StoryDetail implements OnInit {
   }
 
   load(): void {
-    this.premiumAccessRequired.set(false);
     const id = this.route.snapshot.paramMap.get('id');
     this.request?.unsubscribe();
     this.favoriteRequest?.unsubscribe();
@@ -105,20 +100,14 @@ export class StoryDetail implements OnInit {
       .subscribe({
         next: (story) => {
           this.story.set(story);
-          if (!this.writing) this.loadFavorite(story.idExternal);
           this.loadChapters(story.idExternal, 0);
           this.isLoading.set(false);
         },
         error: (error) => {
           this.isLoading.set(false);
-
-          if (!this.writing && isPremiumStoryAccessError(error)) {
-            this.premiumAccessRequired.set(true);
-            this.premiumDialog().open();
-            return;
-          }
-
-          this.errorMessage.set(apiError(error));
+          this.errorMessage.set(isPremiumStoryAccessError(error)
+            ? 'No tenés acceso a esta historia.'
+            : apiError(error));
         },
       });
   }

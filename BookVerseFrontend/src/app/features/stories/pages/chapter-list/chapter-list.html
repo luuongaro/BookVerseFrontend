@@ -30,9 +30,6 @@
         </div>
 
         <div class="hero-meta">
-          <span class="access-badge" [class.premium]="currentStory.accessType === 'PREMIUM'">
-            {{ currentStory.accessType === 'PREMIUM' ? 'PREMIUM' : 'GRATUITA' }}
-          </span>
 
           <span class="chapter-count">
             {{ result()?.totalElements ?? 0 }}
